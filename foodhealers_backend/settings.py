@@ -11,10 +11,17 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import firebase_admin
+from firebase_admin import credentials
+from dotenv import load_dotenv, dotenv_values
+
+# TODO: Aravind to verify this in Linux Env
+config = dotenv_values("envs//.local.env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+PROJECT_DIR = BASE_DIR / "app"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -37,6 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_swagger',
+    'drf_yasg',
+    'app',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -75,12 +86,12 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'foodhealersstagging',
-        'USER': 'postgres',
-        'PASSWORD': 'root',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': config['DB_ENGINE'],
+        'NAME': config['DB_NAME'],
+        'USER': config['DB_USER'],
+        'PASSWORD': config['DB_PASSWORD'],
+        'HOST': config['DB_HOST'],
+        'PORT': config['DB_PORT']
     }
 }
 
@@ -125,3 +136,11 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# firebase admin initialization
+cred = credentials.Certificate('pelagic-core-297908-firebase-adminsdk-9v4jk-8a760b5f82.json')
+firebase_admin.initialize_app(cred)
+
+# Managing  image
+MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media/')
+MEDIA_URL = '/media/'
