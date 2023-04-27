@@ -1,7 +1,3 @@
-# <<<<<<<<<<<<---------------------------------- Necessary Imports for models are here ---------------------------------->>>>>>>>>>>>
-
-# <<<<<<<<<<<<---------------------------------- Necessary Imports for models are here ---------------------------------->>>>>>>>>>>>
-
 from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
