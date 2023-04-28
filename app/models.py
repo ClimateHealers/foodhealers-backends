@@ -9,7 +9,7 @@ VOLUNTEER_TYPE = (
     ('driver','Driver'),
     ('food_donor','Food Donor'),
     ('event_organizer','Event Organizer'),
-    ('event_helper','Event Helper')
+    ('event_helper','Event Helper') # TODO: remove helper, make it volunteer.
 )
 
 # can be modified Accordingly
@@ -21,12 +21,14 @@ DOCUMENT_TYPE = (
 )
 
 # can be modified Accordingly
+# TODO: Convert this into Model. Item types can grow.
 ITEM_TYPE = (
     ('food','Food'),
     ('supplies','Supplies')
 )
 
 # can be modified Accordingly
+# TODO: why not have Category as Model? We can have many more categories in future.
 CATEGORY = (
     ('breakfast','Breakfast'),
     ('lunch','Lunch'),
@@ -46,16 +48,16 @@ FOOD_TYPE = (
 
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
-# Model to store all the files related to driver, food, Events etc 
+# Model to store all the files related to driver, food, Events etc
 class Document(models.Model):
-    documentType =  models.CharField(max_length=50, null=True, blank=True, choices=DOCUMENT_TYPE, default='profile_photo') # To be modified
+    doctype =  models.CharField(max_length=50, null=True, blank=True, choices=DOCUMENT_TYPE, default='profile_photo') # To be modified
     document = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
-    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)   
-    isVerified = models.BooleanField(default=False, blank=True) 
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    isVerified = models.BooleanField(default=False, blank=True)
 
-# Model to Store all types of Address 
+# Model to Store all types of Address
 class Address(models.Model):
-    lat = models.FloatField()
+    lat = models.FloatField() # TODO: define default vaules for floats and integers.
     lng = models.FloatField()
     alt = models.FloatField()
     streetAddress = models.TextField(max_length=500, default='')
@@ -63,10 +65,10 @@ class Address(models.Model):
     state = models.CharField(max_length=30, default='', null=True, blank=True)
     postalCode = models.CharField(max_length=30, default='', null=True, blank=True)
     formattedAddress = models.CharField(max_length=320, default='', null=True, blank=True)
-    
+
     def __str__(self):
         return self.formattedAddress if self.formattedAddress else "Address Not Available"
-    
+
 # model to store the vehicle information for Volunteer Driver
 class Vehicle(models.Model):
     make = models.CharField(max_length=100, null=True, blank=True)
@@ -78,9 +80,9 @@ class Vehicle(models.Model):
     isVerified = models.BooleanField(default=False, null=True, blank=True)
 
     def __str__(self):
-        return str(self.make) + '-' + str(self.model) + '-' +  str(self.plateNumber) 
-    
-# model to store Volunteer information 
+        return str(self.make) + '-' + str(self.model) + '-' +  str(self.plateNumber)
+
+# model to store Volunteer information
 class Volunteer(User):
     name = models.CharField(max_length=300, default='')
     phoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
@@ -93,49 +95,64 @@ class Volunteer(User):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return self.name # TODO: can we add type as well?
 
     class Meta:
         verbose_name = "Volunteer"
 
 # model to store information about food Items
 class FoodItem(models.Model):
-    itemName = models.CharField(max_length=100, default='', null=True, blank=True)
-    quantity = models.CharField(max_length=100, default='', null=True, blank=True)    
-    expiryDate = models.DateTimeField(null=True, blank=True) 
-    itemPhotos = models.ManyToManyField(Document, null=True, blank=True, related_name='food_photos')      
+    itemName = models.CharField(max_length=100, default='', null=True, blank=True) # TODO: FoodItem name cannot be empty. Name is must.
+    quantity = models.CharField(max_length=100, default='', null=True, blank=True)
+    expiryDate = models.DateTimeField(null=True, blank=True)
+    itemPhotos = models.ManyToManyField(Document, null=True, blank=True, related_name='food_photos')
     itemType = models.CharField(max_length=50, choices=ITEM_TYPE, null=True, blank=True, default='food')
 
 # model to store information about Donations
 class Donation(models.Model):
     donationType = models.CharField(max_length=50, choices=ITEM_TYPE, null=True, blank=True, default='food')
-    foodItems = models.ManyToManyField(FoodItem, null=True, blank=True, related_name='donation_food_items')
-    quantity = models.CharField(max_length=100, default='', null=True, blank=True)   
+    foodItems = models.ManyToManyField(FoodItem, null=True, blank=True, related_name='donation_items')
+    quantity = models.CharField(max_length=100, default='', null=True, blank=True)
     address = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
-    pickupDate = models.DateTimeField(null=True, blank=True) 
+    pickupDate = models.DateTimeField(null=True, blank=True) # TODO: pickup date should be NOW.
     donorPhoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='donation_volunteers')
+    # TODO: Can we separate this out? Donation may or may not have volunteers
+    #TODO: we should have a field for knowing who donated this --> DonatedBy
+
 
 # model to store information about Food Events Occuring
+'''
+    Event will be organized by a person -- we need that.
+    Event will have a location and address.
+    Event will have some donations linked.
+    Event may have photos.
+    Event may have some volunteers.
+    Event may have many donations --> Each donation shall have food items or something that was donated.
+    Event can be active or inactive.
+    Event will be automatically expired after a date. ( we should add signal to do that or a celery )
+    Where does FoodType and Category be used? #TODO: Please answer this. Why should FoodType and Cateogry be here?
+
+'''
 class FoodEvent(models.Model):
-    foodItems = models.ManyToManyField(FoodItem, null=True, blank=True, related_name='event_food_items')        
-    quantity = models.CharField(max_length=100, default='', null=True, blank=True)               
+    foodItems = models.ManyToManyField(FoodItem, null=True, blank=True, related_name='event_food_items')
+    quantity = models.CharField(max_length=100, default='', null=True, blank=True)
     address = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
-    organizerPhoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
-    pickupDate = models.DateTimeField(null=True, blank=True) 
+    organizerPhoneNumber = models.CharField(max_length=20, default='', null=True, blank=True) # TODO: we should have a field to know "creator of this event" --> createdBy
+    pickupDate = models.DateTimeField(null=True, blank=True)
     eventPhotos = models.ManyToManyField(Document, null=True, blank=True, related_name='event_photos')
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers')
-    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True) 
+    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
     category = models.CharField(max_length=50, choices=CATEGORY, null=True, blank=True)
 
 # model to store information about FoodRecipes
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
     ingredients = models.TextField(max_length=500, default='', null=True, blank=True)
-    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True) 
-    category = models.CharField(max_length=50, choices=CATEGORY, null=True, blank=True) 
-    foodImage = models.ManyToManyField(Document, null=True, blank=True, related_name='recipe_photos') 
-    cookingInstructions = models.TextField(max_length=500, default='')
+    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
+    category = models.CharField(max_length=50, choices=CATEGORY, null=True, blank=True)
+    foodImage = models.ManyToManyField(Document, null=True, blank=True, related_name='recipe_photos')
+    cookingInstructions = models.TextField(max_length=500, default='') #TODO: can this be RICH TEXT? We can have blob type field to store rich text.
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
