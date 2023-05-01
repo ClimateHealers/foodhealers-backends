@@ -9,7 +9,7 @@ VOLUNTEER_TYPE = (
     ('driver','Driver'),
     ('food_donor','Food Donor'),
     ('event_organizer','Event Organizer'),
-    ('event_helper','Event Helper') # TODO: remove helper, make it volunteer.
+    ('event_volunteer','Event Volunteer') # TODO: remove helper, make it volunteer.
 )
 
 # can be modified Accordingly
@@ -28,19 +28,6 @@ ITEM_TYPE = (
 )
 
 # can be modified Accordingly
-# TODO: why not have Category as Model? We can have many more categories in future.
-CATEGORY = (
-    ('breakfast','Breakfast'),
-    ('lunch','Lunch'),
-    ('dinner','Dinner'),
-    ('soup','Soup'),
-    ('appetizer','Appetizer'),
-    ('vegan_food','Vegan Food'),
-    ('vegeterian_food','Vegeterian Food'),
-    ('non_vegeterian_food','Non-Vegeterian Food')
-)
-
-# can be modified Accordingly
 FOOD_TYPE = (
     ('perishable','Perishable'),
     ('non_perishable','Non Perishable')
@@ -49,6 +36,24 @@ FOOD_TYPE = (
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # Model to store all the files related to driver, food, Events etc
+# TODO: why not have Category as Model? We can have many more categories in future.
+# CATEGORY = (
+#     ('breakfast','Breakfast'),
+#     ('lunch','Lunch'),
+#     ('dinner','Dinner'),
+#     ('soup','Soup'),
+#     ('appetizer','Appetizer'),
+#     ('vegan_food','Vegan Food'),
+#     ('vegeterian_food','Vegeterian Food'),
+#     ('non_vegeterian_food','Non-Vegeterian Food')
+# )
+
+class Category(models.Model):
+    name =  models.CharField(max_length=50, null=True, blank=True)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    active = models.BooleanField(default=False, null=True, blank=True)
+
+
 class Document(models.Model):
     doctype =  models.CharField(max_length=50, null=True, blank=True, choices=DOCUMENT_TYPE, default='profile_photo') # To be modified
     document = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
@@ -143,14 +148,14 @@ class FoodEvent(models.Model):
     eventPhotos = models.ManyToManyField(Document, null=True, blank=True, related_name='event_photos')
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers')
     foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
-    category = models.CharField(max_length=50, choices=CATEGORY, null=True, blank=True)
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
 
 # model to store information about FoodRecipes
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
     ingredients = models.TextField(max_length=500, default='', null=True, blank=True)
     foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
-    category = models.CharField(max_length=50, choices=CATEGORY, null=True, blank=True)
+    category =  models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
     foodImage = models.ManyToManyField(Document, null=True, blank=True, related_name='recipe_photos')
     cookingInstructions = models.TextField(max_length=500, default='') #TODO: can this be RICH TEXT? We can have blob type field to store rich text.
     slug = models.SlugField(unique=True, max_length=100)
