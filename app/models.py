@@ -27,12 +27,6 @@ ITEM_TYPE = (
     ('supplies','Supplies')
 )
 
-# can be modified Accordingly
-FOOD_TYPE = (
-    ('perishable','Perishable'),
-    ('non_perishable','Non Perishable')
-)
-
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # Model to store all the files related to driver, food, Events etc
@@ -147,14 +141,13 @@ class FoodEvent(models.Model):
     pickupDate = models.DateTimeField(null=True, blank=True)
     eventPhotos = models.ManyToManyField(Document, null=True, blank=True, related_name='event_photos')
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers')
-    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
+    perishable = models.BooleanField(default=False, null=True, blank=True)
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
 
 # model to store information about FoodRecipes
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
     ingredients = models.TextField(max_length=500, default='', null=True, blank=True)
-    foodType = models.CharField(max_length=50, choices=FOOD_TYPE, null=True, blank=True)
     category =  models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
     foodImage = models.ManyToManyField(Document, null=True, blank=True, related_name='recipe_photos')
     cookingInstructions = models.TextField(max_length=500, default='') #TODO: can this be RICH TEXT? We can have blob type field to store rich text.
