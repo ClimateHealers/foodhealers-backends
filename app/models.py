@@ -47,7 +47,6 @@ class Category(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
 
-
 class Document(models.Model):
     doctype =  models.CharField(max_length=50, null=True, blank=True, choices=DOCUMENT_TYPE, default='profile_photo') # To be modified
     document = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
@@ -74,9 +73,9 @@ class Vehicle(models.Model):
     model = models.CharField(max_length=100, null=True, blank=True)
     plateNumber = models.CharField(max_length=100, null=True, blank=True, default='')
     vehicleColour = models.CharField(max_length=100, null=True, blank=True, default='')
-    isDeleted = models.BooleanField(default=False, null=True, blank=True)
+    active = models.BooleanField(default=False, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    isVerified = models.BooleanField(default=False, null=True, blank=True)
+    verified = models.BooleanField(default=False, null=True, blank=True)
 
     def __str__(self):
         return str(self.make) + '-' + str(self.model) + '-' +  str(self.plateNumber)
@@ -86,10 +85,10 @@ class Volunteer(User):
     name = models.CharField(max_length=300, default='')
     phoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
     address =  models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
-    vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='driver_vehicle')
-    volunteerType = models.CharField(max_length=50, choices=VOLUNTEER_TYPE, null=True, blank=True, default='food_donar')
-    profilePhoto = models.ForeignKey(Document, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_photo')
-    isVerified = models.BooleanField(default=False, null=True, blank=True)
+    # vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='driver_vehicle')
+    volunteerType = models.CharField(max_length=50, choices=VOLUNTEER_TYPE, null=True, blank=True, default='donor')
+    profilePhoto = models.ForeignKey(Document, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_profile_img')
+    verified = models.BooleanField(default=False, null=True, blank=True)
     isDriver = models.BooleanField(default=False, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -98,6 +97,13 @@ class Volunteer(User):
 
     class Meta:
         verbose_name = "Volunteer"
+
+class VolunteerVehicle (models.Model):
+    vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_vehicle')
+    volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_profile')
+    active = models.BooleanField(default=False, null=True, blank=True)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
 
 # model to store information about food Items
 class FoodItem(models.Model):

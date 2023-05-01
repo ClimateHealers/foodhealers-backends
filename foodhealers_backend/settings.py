@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'app',
     'corsheaders',
     'taggit',
+    'rest_framework.authtoken'
 ]
 
 MIDDLEWARE = [
@@ -145,3 +146,15 @@ firebase_admin.initialize_app(cred)
 # Managing  image
 MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media/')
 MEDIA_URL = '/media/'
+
+# REST FRAMEWORK SETTINGS
+REST_FRAMEWORK = {
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
