@@ -5,6 +5,8 @@ services:
 
 variables:
   DOCKER_DRIVER: overlay2
+  PATH: "/usr/local/bin:$PATH"
+
   # Set the following environment variables with your values
   CONTAINER_REGISTRY: registry.gitlab.com/your-registry
   IMAGE_NAME: climatehealers-django
