@@ -9,7 +9,7 @@ WORKDIR /app/
 COPY . /app/
 
 # Install the requirements using pip
-RUN pip install -r requirements.txt
+RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 
 # Set environment variables for remote database connection
 # ENV DB_HOST=<remote_db_host>
