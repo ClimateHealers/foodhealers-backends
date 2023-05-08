@@ -1,10 +1,10 @@
 build image:
     image: docker:20.10.10
     services:
-        - docker:20.10.10-dind
-    rules:
-        - if: $CI_PIPELINE_SOURCE == "schedule"        
+        - docker:20.10.10-dind       
     script:
         - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
         - docker build -t $CI_REGISTRY_IMAGE .
         - docker push $CI_REGISTRY_IMAGE
+    only:
+       - develop
