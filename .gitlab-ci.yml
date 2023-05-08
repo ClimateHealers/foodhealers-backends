@@ -1,39 +1,10 @@
-image: docker:stable
-
-services:
-  - docker:dind
-
-variables:
-  DOCKER_DRIVER: overlay2
-  PATH: "/usr/local/bin:$PATH"
-
-  # Set the following environment variables with your values
-  CONTAINER_REGISTRY: registry.gitlab.com/your-registry
-  IMAGE_NAME: climatehealers-django
-  IMAGE_TAG: latest
-  DOCKER_BUILDKIT: 1
-
-before_script:
-  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CONTAINER_REGISTRY
-
-build:
-  image: python:3.10-alpine
-  stage: build
-  script:
-    - apk add --no-cache build-base
-    - pip install --upgrade pip
-    - pip install --no-cache-dir -r requirements.txt
-    - docker build --tag "$CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG" .
-
-deploy:
-  image: docker:stable
-  stage: deploy
-  script:
-    - docker run -d --name "$IMAGE_NAME" -p 8000:8000 "$CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-    - docker ps
-    - docker tag "$CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG" "$CONTAINER_REGISTRY/$IMAGE_NAME:latest"
-    - docker push "$CONTAINER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG"
-    - docker push "$CONTAINER_REGISTRY/$IMAGE_NAME:latest"
-  when: manual
-  only:
-    - develop
+build image:
+    image: docker:20.10.10
+    services:
+        - docker:20.10.10-dind
+    rules:
+        - if: $CI_PIPELINE_SOURCE == "schedule"        
+    script:
+        - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+        - docker build -t $CI_REGISTRY_IMAGE .
+        - docker push $CI_REGISTRY_IMAGE
