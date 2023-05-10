@@ -9,7 +9,8 @@ VOLUNTEER_TYPE = (
     ('driver','Driver'),
     ('food_donor','Food Donor'),
     ('event_organizer','Event Organizer'),
-    ('event_volunteer','Event Volunteer') 
+    ('event_volunteer','Event Volunteer'),
+    ('food_seeker','Food Seeker')
 )
 
 # can be modified Accordingly
@@ -53,8 +54,9 @@ class Volunteer(User):
     name = models.CharField(max_length=300, default='')
     phoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
     address =  models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
-    volunteerType = models.CharField(max_length=50, choices=VOLUNTEER_TYPE, null=True, blank=True, default='donor')
+    volunteerType = models.CharField(max_length=50, choices=VOLUNTEER_TYPE, null=True, blank=True, default='food_seeker')
     verified = models.BooleanField(default=False, null=True, blank=True)
+    isVolunteer = models.BooleanField(default=False, null=True, blank=True)
     isDriver = models.BooleanField(default=False, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     lastLogin = models.DateTimeField(auto_now=True, null=True, blank=True)
@@ -83,8 +85,8 @@ class Vehicle(models.Model):
 class FoodEvent(models.Model):
     address = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
     organizerPhoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
-    eventDate = models.DateTimeField(null=True, blank=True)
-    eventExpiryDate = models.DateTimeField(null=True, blank=True)
+    eventStartDate = models.DateTimeField(null=True, blank=True)
+    eventEndDate = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
     createdBy = models.ForeignKey(Volunteer, null=True, blank=True, related_name='food_event_organiser', on_delete=models.PROTECT)
@@ -170,4 +172,15 @@ class EventVolunteer(models.Model):
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers') 
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+class CustomToken(models.Model):
+    accessToken = models.CharField(max_length=255, default='')
+    refreshToken = models.CharField(max_length=255, default='')
+    user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+class EventBookmark(models.Model):
+    user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
+    event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)

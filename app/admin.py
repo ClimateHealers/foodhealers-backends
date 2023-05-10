@@ -23,7 +23,7 @@ class VehicleAdmin(admin.ModelAdmin):
     filter_fields = ['isDeleted', 'model', 'vehicleColour', 'verified']
 
 class FoodEventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdBy', 'eventDate', 'category', 'active')
+    list_display = ('id', 'createdBy', 'eventStartDate', 'category', 'active')
     search_fields = ['organizerPhoneNumber', 'foodType', 'category', 'createdBy']
     filter_fields = ['address', 'pickupDate', 'foodType', 'category', 'createdBy']
 
@@ -61,6 +61,11 @@ class DonationAdmin(admin.ModelAdmin):
 class EventVolunteerAdmin(admin.ModelAdmin):
     list_display = ('id', 'event', 'createdAt')
 
+class CustomeTokenAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'createdAt')
+
+class EventBookmarkAdmin(admin.ModelAdmin):
+    list_display = ('id', 'event', 'user', 'createdAt')
 
 admin.site.register(ItemType, ItemTypeAdmin)
 admin.site.register(Category, CategoryAdmin)
@@ -76,3 +81,5 @@ admin.site.register(RequestType, RequestTypeAdmin)
 admin.site.register(Request, RequestAdmin)
 admin.site.register(Donation, DonationAdmin)
 admin.site.register(EventVolunteer, EventVolunteerAdmin)
+admin.site.register(CustomToken, CustomeTokenAdmin)
+admin.site.register(EventBookmark, EventBookmarkAdmin)
