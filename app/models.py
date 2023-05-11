@@ -108,9 +108,10 @@ class FoodEvent(models.Model):
     eventStartDate = models.DateTimeField(null=True, blank=True)
     eventEndDate = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
-    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
+    # category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
     createdBy = models.ForeignKey(Volunteer, null=True, blank=True, related_name='food_event_organiser', on_delete=models.PROTECT)
     createdAt = models.DateTimeField(null=True, blank=True) 
+    additionalInfo = models.TextField(blank=True, null=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
@@ -123,7 +124,6 @@ class Document(models.Model):
     vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='vehicle_photo')
     volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_profile_img')
     isActive = models.BooleanField(default=True, null=True, blank=True)
-    additionalInfo = models.TextField(blank=True, null=True)
 
 # 8. model to store information about food Items
 class FoodItem(models.Model):

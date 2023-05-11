@@ -195,7 +195,7 @@ class SignIn(APIView):
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
         
-# get All Food Events for food Seekers         
+# fetch All Food Events for food Seekers (POST METHOD)     
 class FindFood(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -270,14 +270,14 @@ class FindFood(APIView):
             # Write a function/code to get the food events occuring within the radius of (Eg:50km) of given location
             if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate,).exists():
                 foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate,)
-                foodEventsDetails = foodEventSerializer(foodEvents, many=True).data
+                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
-#   Post Food Event API
+#  GET and Post Food Event API
 class Event(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -352,6 +352,11 @@ class Event(APIView):
             else:
                 return Response({'success': False, 'message': 'please enter valid Event End Date'})
             
+            if request.data.get('additionalInfo') is not None:
+                additionalInfo = request.data.get('additionalInfo')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Description'})
+            
             if request.FILES.getlist('files') is not None:
                 files = request.FILES.getlist('files')
             else:
@@ -365,7 +370,7 @@ class Event(APIView):
 
             if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate).exists():
                 foodEvent = FoodEvent.objects.get(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate)
-                foodEventDetaills = foodEventSerializer(foodEvent).data
+                foodEventDetaills = FoodEventSerializer(foodEvent).data
                 return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
             else:
                 organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True, volunteerType=VOLUNTEER_TYPE[2][0])
@@ -378,6 +383,7 @@ class Event(APIView):
                     createdBy=organizer, 
                     organizerPhoneNumber=organizer.phoneNumber, 
                     createdAt=createdAt, 
+                    additionalInfo=additionalInfo,
                     active=True 
                 ) # to be modified if active True or False
                 for file in files:
@@ -426,14 +432,14 @@ class Event(APIView):
             
             if FoodEvent.objects.filter(createdBy=user).exists():
                 foodEvents = FoodEvent.objects.filter(createdBy=user)
-                foodEventsDetails = foodEventSerializer(foodEvents, many=True).data
+                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
-# Bookmark Food Event API
+# GET and POST Bookmark Food Event API
 class BookmarkEvent(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -538,6 +544,217 @@ class BookmarkEvent(APIView):
                 bookmarkedEvents = EventBookmark.objects.filter(user=user, isDeleted=False)
                 bookmarkedEventDetails = BookmarkedEventSerializer(bookmarkedEvents, many=True).data
                 return Response({'success':True, 'bookmarkedEventDetails': bookmarkedEventDetails})
+            else:
+                return Response({'success': True, 'bookmarkedEventDetails': []})
+            
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+# GET API (fetch categories of Recipe)
+class Categories(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'categoriesList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+        
+        operation_description="Get Food Events Posted by volunteer API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+    
+    def get(self, request, format=None):
+        try:
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+            category = Category.objects.all()
+            categoryList = CategorySerializer(category, many=True).data
+            return Response({'success': True, 'categoriesList': categoryList})
+
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+# GET and POST Food Recipe API
+class FindFoodRecipe(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['categoryId','foodName','ingredients','cookingInstructions','foodImage'], 
+            properties={
+                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
+                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
+                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
+                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
+                },
+            ),
+        },
+    
+        operation_description="Add to Calender API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, format=None):
+        try:
+
+            if request.data.get('categoryId') is not None:
+                categoryId = request.data.get('categoryId')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Category'})
+            
+            if request.data.get('foodName') is not None:
+                foodName = request.data.get('foodName')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Food Name'})
+            
+            if request.data.get('ingredients') is not None:
+                ingredients = request.data.get('ingredients')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Ingredients'})
+            
+            if request.data.get('cookingInstructions') is not None:
+                cookingInstructions = request.data.get('cookingInstructions')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Cooking Instructions'})
+            
+            if request.FILES.getlist('foodImage') is not None:
+                files = request.FILES.getlist('foodImage')
+            else:
+                files=[]
+                return  files
+            
+            # Slugs and tags to  be modified later
+
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+            if Category.objects.filter(id=categoryId).exists():
+                category = Category.objects.get(id=categoryId)
+            else:
+                return Response({'success': False, 'message': 'Category with id does not exist'})
+            
+            if FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category).exists():
+                recipe = FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category)
+                return Response({'success': True, 'message': 'Food Recipe already exists','recipe':recipe.id})
+            else:
+                recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, category=category, cookingInstructions=cookingInstructions)
+                createdAt = datetime.now()
+                for file in files:
+                    doc = Document.objects.create(
+                        docType=DOCUMENT_TYPE[2][0], 
+                        document=file, 
+                        createdAt=createdAt, 
+                    )
+                    recipe.foodImage.add(doc)
+                recipe.save()
+                return Response({'success': True, 'message': 'Food Recipe successfully created'})
+            
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        # request_body=openapi.Schema(
+        #     type=openapi.TYPE_OBJECT,
+        #     required=['categoryId'], 
+        #     properties={
+        #         'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+        #     },
+        # ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodRecipes': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Food Recipe API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, categoryId, format=None):
+        try:
+
+            # if request.data.get('categoryId') is not None:
+            #     categoryId = request.data.get('categoryId')
+            # else:
+            #     return Response({'success': False, 'message': 'please enter valid Category'})
+            
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+            if Category.objects.filter(id=categoryId).exists():
+                category = Category.objects.get(id=categoryId)
+            else:
+                return Response({'success': False, 'message': 'Category with id does not exist'})
+
+            if FoodRecipe.objects.filter(category=category).exists():
+                recipes = FoodRecipe.objects.filter(category=category)
+                recipeList = FoodRecipeSerializer(recipes, many=True).data
+                return Response({'success':True, 'recipeList': recipeList})
             else:
                 return Response({'success': True, 'bookmarkedEventDetails': []})
             

@@ -2,7 +2,66 @@
 from .models import *
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
+from django.core.files.storage import get_storage_class
 
+
+
+class DocumentSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    docType =  serializers.SerializerMethodField()
+    document = serializers.SerializerMethodField()
+    verified = serializers.BooleanField(default=False)
+    event = serializers.SerializerMethodField()
+    vehicle = serializers.SerializerMethodField()
+    volunteer = serializers.SerializerMethodField()
+    isActive = serializers.BooleanField(default=True)
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_docType(self, obj):
+        if obj.docType is not None:
+            return obj.docType
+        else:
+            return 'Document Type Not Available'
+        
+    def get_document(self, obj): # to be modified
+        if obj.document is not None:
+            mediaStorage = get_storage_class()()
+            documentUrl = mediaStorage.url(name=obj.document.name)
+            return documentUrl
+        else:
+            return 'Document Not Available'
+
+    def get_verified(self, obj):
+        if obj.verified is not None:
+            return obj.verified
+        else:
+            return False
+        
+    def get_event(self, obj):
+        if obj.event is not None:
+            return obj.event
+        else:
+            return "Event not Available"   
+        
+    def get_volunteer(self, obj):
+        if obj.volunteer is not None:
+            return obj.volunteer.name
+        else: 
+            return "Volunteer not Available"
+        
+    def get_vehicle(self, obj):
+        if obj.vehicle is not None:
+            return obj.vehicle
+        else:
+            return "Vehicle not Available"   
+
+    def get_isActive(self, obj):
+        if obj.isActive is not None:
+            return obj.isActive
+        else:
+            return False
 
 class UserProfileSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -43,13 +102,14 @@ class UserProfileSerializer(Serializer):
         else:
             return None
 
-class foodEventSerializer(Serializer):
+class FoodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
     name = serializers.CharField(max_length=100)
     address = serializers.SerializerMethodField()
     eventStartDate = serializers.SerializerMethodField()
     eventEndDate = serializers.SerializerMethodField()
     category = serializers.CharField(max_length=100)
+    additionalInfo =serializers.CharField()
 
     def get_id(self, obj):
         return obj.id
@@ -83,6 +143,12 @@ class foodEventSerializer(Serializer):
             return obj.category
         else:
             return None  
+    
+    def get_additionalInfo(self, obj):
+        if obj.additionalInfo is not None:
+            return obj.additionalInfo
+        else:
+            return "No Information"
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -103,3 +169,71 @@ class BookmarkedEventSerializer(Serializer):
             return foodEventSerializer(obj.event).data
         else:
             return 'Food Event not Available'
+        
+class CategorySerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    name =  serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+    active = serializers.BooleanField(default=True)
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_name(self, obj):
+        if obj.name is not None:
+            return obj.name
+        else:
+            return 'Name not Available'
+        
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt.strftime('%Y-%m-%d')
+        else:
+            return '0000-00-00'
+    
+    def get_active(self, obj):
+        if obj.active is not None:
+            return obj.active
+        else:
+            return False
+        
+class FoodRecipeSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    foodName =  serializers.SerializerMethodField()
+    ingredients =  serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField() 
+    foodImage = serializers.SerializerMethodField() 
+    cookingInstructions = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_foodName(self, obj):
+        if obj.foodName is not None:
+            return obj.foodName
+        else:
+            return 'Name not Available'
+        
+    def get_ingredients(self, obj):
+        if obj.ingredients is not None:
+            return obj.ingredients
+        else:
+            return 'Ingredient not Available'
+    
+    def get_cookingInstructions(self, obj):
+        if obj.cookingInstructions is not None:
+            return obj.cookingInstructions
+        else:
+            return 'Cooking Instructions not Available'
+        
+    def get_category(self, obj):
+        if obj.category is not None:
+            return obj.category.name
+        else:
+            return 'Name not Available'
+        
+    def get_foodImage(self, obj):
+        if obj.foodImage is not None:
+            return DocumentSerializer(obj.foodImage.all(), many=True).data
+        else:
+            return 'Not Available'

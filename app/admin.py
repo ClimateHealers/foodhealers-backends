@@ -23,9 +23,9 @@ class VehicleAdmin(admin.ModelAdmin):
     filter_fields = ['isDeleted', 'model', 'vehicleColour', 'verified']
 
 class FoodEventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdBy', 'eventStartDate', 'category', 'active')
-    search_fields = ['organizerPhoneNumber', 'foodType', 'category', 'createdBy']
-    filter_fields = ['address', 'pickupDate', 'foodType', 'category', 'createdBy']
+    list_display = ('id', 'createdBy', 'eventStartDate', 'active')
+    search_fields = ['organizerPhoneNumber', 'foodType', 'createdBy']
+    filter_fields = ['address', 'pickupDate', 'foodType', 'createdBy']
 
 class DocumentAdmin(admin.ModelAdmin):
     list_display = ('id', 'createdAt', 'docType', 'verified')
