@@ -24,6 +24,6 @@ urlpatterns = [
     re_path(r'categories/', views.Categories.as_view(),),
     # GET (to View recipes) and POST (to Add recipes)
     # re_path(r'recipe/', views.FindFoodRecipe.as_view(),),
-    re_path(r'recipe/(?P<categoryId>\w+)', views.FindFoodRecipe.as_view(),),
+    re_path(r'recipe/(?P<categoryId>[-\w]*)', views.FindFoodRecipe.as_view(),),
     
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
