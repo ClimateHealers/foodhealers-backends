@@ -10,45 +10,66 @@ from drf_yasg import openapi
 import uuid
 import firebase_admin.auth as auth
 from .local_dev_utils import getAccessTokenForDriver
+from datetime import datetime
 
 # get Django Access token for development testing. 
-getAccessTokenForDriver(id=14)
+getAccessTokenForDriver(14)
 
 # Sign Up API  
 class SignUp(APIView):
-
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['token', 'name', 'email', 'isVolunteer'],
+            required=['tokenId', 'name', 'email', 'isVolunteer'],
             properties={
-                'token_id': openapi.Schema(type=openapi.TYPE_STRING),
-                'name': openapi.Schema(type=openapi.TYPE_STRING),
-                'email': openapi.Schema(type=openapi.TYPE_STRING),
-                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN)
+                'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
+                'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
+                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
             },
         ),
-        responses={200: "Successful operation"},
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='successfully created user'),
+                    'userDetails': openapi.Schema(type=openapi.TYPE_OBJECT),
+                },
+            ),
+        },
         operation_description="User Onboarding API",
     )
 
     # user onboarding API required firebase token and name
     def post(self, request,  format=None):
-        token_id = request.data.get('token_id')
+
+        if request.data.get('tokenId') is not None:
+            tokenId = request.data.get('tokenId')
+        else:
+            return Response({'success':False, 'message':'please enter valid token'})
+        
+        if request.data.get('name') is not None:
+            name = request.data.get('name')
+        else:
+            return Response({'success':False, 'message':'please enter valid name'})
+        
+        if request.data.get('isVolunteer') is not None:
+            isVolunteer = request.data.get('isVolunteer')
+        else:
+            return Response({'success':False, 'message':'please enter if Volunteer or not'})
+        
         password = 'Admin123'
-        name = request.data.get('name')
-        isVolunteer = request.data.get('isVolunteer')
-        email = None
+
         try:
+
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
-
             else:
-                if token_id is not None:
+                if tokenId is not None:
                     try:
-                        decoded_token = auth.verify_id_token(token_id)
-
+                        decoded_token = auth.verify_id_token(tokenId)
                         if decoded_token is not None:
                             if 'email' in decoded_token:
                                 email = decoded_token['email']
@@ -56,7 +77,6 @@ class SignUp(APIView):
                                 email = None
                         else:
                             return Response({'success': False, 'message': 'unable to verify user'})
-                        
                     except Exception as e:
                         return Response({'success': False, 'error': str(e)})
                 else:
@@ -69,24 +89,18 @@ class SignUp(APIView):
                 user = Volunteer.objects.get(email=email)
                 userDetails = UserProfileSerializer(user).data
                 return Response({'success': True, 'message':'user already exists', 'userDetails': userDetails})
-
             else:
-               
                 user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
                 userDetails = UserProfileSerializer(user).data
-
                 accessToken = create_access_token(user.id)
                 refreshToken = create_refresh_token(user.id)
-
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
                     token.refreshToken = refreshToken
                     token.accessToken = accessToken
                     token.save()
-                
                 else:
                     token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
-
                 return Response({'success':True, 'message':'successfully created user', 'userDetails':userDetails})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -98,21 +112,20 @@ class SignIn(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['token_id'],
+            required=['tokenId'],
             properties={
-                'token_id': openapi.Schema(type=openapi.TYPE_STRING),
+                'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
             },            
         ),
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
-                required=['token_id'],
                 properties={
                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully signed in'),
-                    'is_authenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'isAuthenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
                     'accessToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9.3EyvZffo4g2R3Zy8sZw'),
-                    'expires_in': openapi.Schema(type=openapi.TYPE_STRING, example='2 minutes'),
+                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='2 minutes'),
                     'refreshToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIiwiZXhwIjoxNjgzNzk4MzU5LCJpYXQiOjE2ODM2Mrffo4g2R3Zy8sZw'),
                 },
             ),
@@ -122,20 +135,24 @@ class SignIn(APIView):
 
     # Login API requires Firebase token
     def post(self, request, format=None):
-        token_id = request.data.get('token_id')
+        if request.data.get('tokenId') is not None:
+            tokenId = request.data.get('tokenId')
+        else:
+            return Response({'success':False, 'message':'please enter valid token'})
+        
         password = 'Admin123'
         try:
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
             else:
-                if token_id is not None:
+                if tokenId is not None:
                     try:
-                        decoded_token = auth.verify_id_token(token_id)
+                        decoded_token = auth.verify_id_token(tokenId)
                         if decoded_token is not None:
                             if 'email' in decoded_token:
                                 email = decoded_token['email']
                             else:
-                                return Response({'success':False, 'message':'email Cannot be Empty'})
+                                return Response({'success':False, 'message':'email Cannot be Empty'})         
                         else:
                             return Response({'success': False, 'message': 'unable to verify user'})
                     except Exception as e:
@@ -156,6 +173,7 @@ class SignIn(APIView):
                 userDetails = UserProfileSerializer(user).data
                 accessToken = create_access_token(user.id)
                 refreshToken = create_refresh_token(user.id)
+
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
                     token.refreshToken = refreshToken
@@ -163,19 +181,21 @@ class SignIn(APIView):
                     token.save()
                 else:
                     token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+
                 return Response({
                     'success': True,
                     'message': 'successfully signed in',
-                    'is_authenticated': True,
+                    'isAuthenticated': True,
                     'token': accessToken,
-                    'expires_in': '2 minutes',
+                    'expiresIn': '2 minutes',
                     'refreshToken': refreshToken,
-                    # 'user': user.id,
+                    'user': userDetails,
                 })
+            
         except Exception as e:
-            return Response({'error': str(e), 'is_authenticated': False, 'success': False})
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
         
-        
+# get All Food Events for food Seekers         
 class FindFood(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -186,22 +206,24 @@ class FindFood(APIView):
             type=openapi.TYPE_OBJECT,
             required=['lat', 'lng', 'alt', 'eventStartDate', 'eventEndDate'],
             properties={
-                'lat': openapi.Schema(type=openapi.TYPE_NUMBER,),
-                'lng': openapi.Schema(type=openapi.TYPE_NUMBER,),
-                'alt': openapi.Schema(type=openapi.TYPE_NUMBER,),
-                'eventStartDate': openapi.Schema(type=openapi.FORMAT_DATE,),
-                'eventEndDate': openapi.Schema(type=openapi.FORMAT_DATE,),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'eventStartDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
+                'eventEndDate': openapi.Schema(type=openapi.FORMAT_DATE, example='2023-05-05'),
             },
         ),
-        responses={200: openapi.Schema(
+        responses={
+            200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
-                required=['token_id'],
                 properties={
                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'foodEvents': openapi.Schema(type=openapi.TYPE_OBJECT),
+                    'foodEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
                 },
-            ),},
-        operation_description="Find food Events API",
+            ),
+        },
+
+        operation_description="Find Food Events API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -245,11 +267,279 @@ class FindFood(APIView):
 
             # To be Modified According to Address
             # for now only Date time feature implemented
-            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__gte = fromDate, eventEndDate__lte=toDate).order_by('-eventStartDate')
-                foodEventsDetails = foodEventSerializer(foodEvents).data
+            # Write a function/code to get the food events occuring within the radius of (Eg:50km) of given location
+            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate,).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate,)
+                foodEventsDetails = foodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
                 return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+#   Post Food Event API
+class Event(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['eventName', 'lat', 'lng', 'alt', 'eventStartDate', 'eventEndDate', 'additionalInfo', 'files'], 
+            properties={
+                'eventName': openapi.Schema(type=openapi.TYPE_STRING, example="EVENT NAME"),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'eventStartDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
+                'eventEndDate': openapi.Schema(type=openapi.FORMAT_DATE, example='2023-05-05'),
+                'additionalInfo': openapi.Schema(type=openapi.TYPE_STRING, example='Free Vegan Meals'),
+                'files': openapi.Schema(type=openapi.TYPE_FILE,),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Posted Sucessfully'),
+                },
+            ),
+        },
+
+        operation_description="Post An Event API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, format=None):
+        try:
+            
+            if request.data.get('eventName') is not None:
+                eventName = request.data.get('eventName')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event Name'})
+            
+            if request.data.get('lat') is not None:
+                lat = request.data.get('lat')
+            else:
+                return Response({'success': False, 'message':'please enter valid latitude'})
+            
+            if request.data.get('lng') is not None:
+                lng = request.data.get('lng')
+            else:
+                return Response({'success': False, 'message': 'please enter valid longitude'})
+            
+            if request.data.get('alt') is not None:
+                alt = request.data.get('alt')
+            else:
+                return Response({'success': False, 'message': 'please enter valid altitude'})
+            
+            if request.data.get('eventStartDate') is not None:
+                eventStartDate = request.data.get('eventStartDate')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
+            
+            if request.data.get('eventEndDate') is not None:
+                eventEndDate = request.data.get('eventEndDate')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event End Date'})
+            
+            if request.FILES.getlist('files') is not None:
+                files = request.FILES.getlist('files')
+            else:
+                files=[]
+                return  files
+            
+            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
+                address = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            else:
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt)
+
+            if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate).exists():
+                foodEvent = FoodEvent.objects.get(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate)
+                foodEventDetaills = foodEventSerializer(foodEvent).data
+                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
+            else:
+                organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True, volunteerType=VOLUNTEER_TYPE[2][0])
+                createdAt = datetime.now()
+                foodEvent = FoodEvent.objects.create(
+                    name = eventName,
+                    address=address, 
+                    eventStartDate=eventStartDate, 
+                    eventEndDate=eventEndDate, 
+                    createdBy=organizer, 
+                    organizerPhoneNumber=organizer.phoneNumber, 
+                    createdAt=createdAt, 
+                    active=True 
+                ) # to be modified if active True or False
+                for file in files:
+                    Document.objects.create(
+                        docType=DOCUMENT_TYPE[1][0], 
+                        document=file, 
+                        createdAt=createdAt, 
+                        event=foodEvent
+                    )
+                return Response({'success': True, 'message': 'Event Posted Sucessfully', 'eventDetails':foodEvent})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Food Events Posted by volunteer API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+    def get(self, request, format=None):
+        try:
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+            if FoodEvent.objects.filter(createdBy=user).exists():
+                foodEvents = FoodEvent.objects.filter(createdBy=user)
+                foodEventsDetails = foodEventSerializer(foodEvents, many=True).data
+                return Response({'success': True, 'foodEvents': foodEventsDetails})
+            else:
+                return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+# Bookmark Food Event API
+class BookmarkEvent(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['eventId'], 
+            properties={
+                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
+                },
+            ),
+        },
+
+        operation_description="Add to Calender API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, format=None):
+        try:
+            if request.data.get('eventId') is not None:
+                eventId = request.data.get('eventId')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event Id'})
+            
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+
+            if FoodEvent.objects.filter(id=eventId).exists():
+                foodEvent = FoodEvent.objects.get(id=eventId)
+                if EventBookmark.objects.filter(user=user, event=foodEvent).exists():
+                    return Response({'success':False, 'message': 'Bookmark already exists'})
+                else:
+                    createdAt = datetime.now()
+                    EventBookmark.objects.create(user=user, event=foodEvent, createdAt=createdAt)
+                    return Response({'success': False, 'message': 'Succesfully Added to Bookmarks'})
+                
+            else:
+                return Response({'success': False, 'message': 'Food Event with id does not exist'})
+            
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Food Events Posted by volunteer API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+            
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+
+            if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
+                bookmarkedEvents = EventBookmark.objects.filter(user=user, isDeleted=False)
+                bookmarkedEventDetails = BookmarkedEventSerializer(bookmarkedEvents, many=True).data
+                return Response({'success':True, 'bookmarkedEventDetails': bookmarkedEventDetails})
+            else:
+                return Response({'success': True, 'bookmarkedEventDetails': []})
+            
         except Exception as e:
             return Response({'success': False, 'message': str(e)})

@@ -14,4 +14,5 @@ urlpatterns = [
     re_path(r'login/', views.SignIn.as_view()),
     re_path(r'find-food/', views.FindFood.as_view()),
     re_path(r'event/', views.Event.as_view()),
+    re_path(r'bookmark/', views.BookmarkEvent.as_view()),
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)

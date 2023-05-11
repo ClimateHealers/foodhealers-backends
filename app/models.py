@@ -1,6 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
+from django.dispatch import receiver
+from .geoutils import getFormattedAddressFromCoords
+from django.db.models.signals import post_save
+
+
 
 # <<<<<<<<<<<<---------------------------------- Choices to add in Models are here ---------------------------------->>>>>>>>>>>>
 
@@ -47,7 +52,21 @@ class Address(models.Model):
     fullAddress = models.CharField(max_length=320, default='', null=True, blank=True)
 
     def __str__(self):
-        return self.formattedAddress if self.formattedAddress else "Address Not Available"
+        return self.streetAddress if self.streetAddress else "Address Not Available"
+    
+
+@receiver(post_save, sender=Address)
+def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
+    # convert coordinates to formatted-human-readable address
+    if created is True:
+        response = getFormattedAddressFromCoords(instance.lat, instance.lng)
+        instance.streetAddress = response['formatted_address']
+        instance.fullAddress = response['formatted_address']
+        instance.city = response['city'] 
+        instance.state = response['state']
+        instance.postalCode = response['postal_code']
+        instance.save()
+    return True
 
 # 4. model to store Volunteer information
 class Volunteer(User):
@@ -83,6 +102,7 @@ class Vehicle(models.Model):
 
 # 6. model to store information about Food Events Occuring
 class FoodEvent(models.Model):
+    name = models.CharField(max_length=100, blank=True, null=True)
     address = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT)
     organizerPhoneNumber = models.CharField(max_length=20, default='', null=True, blank=True)
     eventStartDate = models.DateTimeField(null=True, blank=True)
@@ -103,6 +123,7 @@ class Document(models.Model):
     vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='vehicle_photo')
     volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_profile_img')
     isActive = models.BooleanField(default=True, null=True, blank=True)
+    additionalInfo = models.TextField(blank=True, null=True)
 
 # 8. model to store information about food Items
 class FoodItem(models.Model):
@@ -174,13 +195,16 @@ class EventVolunteer(models.Model):
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+# 15. model to store information about django token 
 class CustomToken(models.Model):
     accessToken = models.CharField(max_length=255, default='')
     refreshToken = models.CharField(max_length=255, default='')
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+# 16. model to store information about Bookmarks 
 class EventBookmark(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    isDeleted = models.BooleanField(default=False, null=True, blank=True)

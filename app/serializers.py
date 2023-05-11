@@ -6,12 +6,12 @@ from rest_framework.serializers import Serializer
 
 class UserProfileSerializer(Serializer):
     id = serializers.SerializerMethodField()
-    name = serializers.CharField()
-    email = serializers.CharField()
-    phoneNumber = serializers.CharField()
+    name = serializers.CharField(max_length=100)
+    email = serializers.CharField(max_length=100)
+    phoneNumber = serializers.CharField(max_length=100)
     isDriver = serializers.BooleanField()
     isVolunteer = serializers.BooleanField()
-    volunteerType = serializers.CharField()
+    volunteerType = serializers.CharField(max_length=100)
 
     def get_id(self, obj):
         return obj.id
@@ -45,29 +45,36 @@ class UserProfileSerializer(Serializer):
 
 class foodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
-    address = serializers.CharField()
-    eventStartDate = serializers.CharField()
-    eventEndDate = serializers.BooleanField()
-    category = serializers.CharField()
+    name = serializers.CharField(max_length=100)
+    address = serializers.SerializerMethodField()
+    eventStartDate = serializers.SerializerMethodField()
+    eventEndDate = serializers.SerializerMethodField()
+    category = serializers.CharField(max_length=100)
 
     def get_id(self, obj):
         return obj.id
     
+    def get_name(self, obj):
+        if obj.name is not None:
+            return obj.name
+        else:
+            return 'Name not Available'
+    
     def get_address(self, obj):
         if obj.address is not None:
-            return obj.address
+            return str(obj.address)
         else:
-            return None
-        
+            return '0000-00-00'
+
     def get_eventStartDate(self, obj):
         if obj.eventStartDate is not None:
-            return obj.eventStartDate
+            return obj.eventStartDate.strftime('%Y-%m-%d')
         else:
             return None
         
     def get_eventEndDate(self, obj):
         if obj.eventEndDate is not None:
-            return obj.eventEndDate
+            return obj.eventEndDate.strftime('%Y-%m-%d')
         else:
             return None
         
@@ -75,4 +82,24 @@ class foodEventSerializer(Serializer):
         if obj.category is not None:
             return obj.category
         else:
-            return None    
+            return None  
+
+class BookmarkedEventSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
+    event = serializers.SerializerMethodField()    
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_user(self, obj):
+        if obj.user is not None:
+            return obj.user.name
+        else:
+            return 'user not Available'
+    
+    def get_event(self, obj):
+        if obj.event is not None:
+            return foodEventSerializer(obj.event).data
+        else:
+            return 'Food Event not Available'
