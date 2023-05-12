@@ -311,11 +311,11 @@ class UserOperations(APITestCase):
             url = reverse('app:food-event')
             data = {
                 'eventName':'Test event',
-                # 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
+                'additionalInfo':'Free vegan Meals',
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -337,10 +337,10 @@ class UserOperations(APITestCase):
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
-                # 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
+                'additionalInfo':'Free vegan Meals',
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -363,9 +363,9 @@ class UserOperations(APITestCase):
                 'eventName':'Test event',
                 'lat': '22.5777',
                 'lng': '52.5777',
-                # 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
+                'additionalInfo':'Free vegan Meals',
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -389,8 +389,8 @@ class UserOperations(APITestCase):
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
-                # 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
+                'additionalInfo':'Free vegan Meals',
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -415,11 +415,69 @@ class UserOperations(APITestCase):
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
-                # 'eventEndDate': '2023-06-06',
+                'additionalInfo':'Free vegan Meals',
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
             print('------ test case response for  : test_volunteer_postFoodEvents_with_missing_eventEndDate ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Food Events with missing parameters (additionalInfo)
+    '''
+
+    def test_volunteer_postFoodEvents_with_missing_additionalInfo(self):
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:food-event')
+            data = {
+                'eventName':'Test event',
+                'lat': '22.5777',
+                'lng': '52.5777',
+                'alt': '54777',
+                'eventStartDate': '2023-06-06',
+                'eventEndDate': '2023-06-06',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodEvents_with_missing_additionalInfo ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test get Food Events posted by volunteer (Existing Events)
+    '''
+    def test_volunteer_getFoodEvents(self):
+        self.test_volunteer_postFoodEvents_valid_data()
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:food-event')
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getFoodEvents ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test get Food Events posted by volunteer (No Events)
+    '''
+    def test_volunteer_getFoodEvents_with_noEvents(self):
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:food-event')
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getFoodEvents_with_noEvents ------',result)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             return result
@@ -486,7 +544,6 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
-                # 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
@@ -511,7 +568,6 @@ class UserOperations(APITestCase):
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
-                # 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
@@ -536,7 +592,6 @@ class UserOperations(APITestCase):
             data = {
                 'lat': '22.5777',
                 'lng': '52.5777',
-                # 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
             }
@@ -561,7 +616,6 @@ class UserOperations(APITestCase):
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
-                # 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
             }
             response = self.client.post(url, data, format='json')
