@@ -108,7 +108,6 @@ class FoodEventSerializer(Serializer):
     address = serializers.SerializerMethodField()
     eventStartDate = serializers.SerializerMethodField()
     eventEndDate = serializers.SerializerMethodField()
-    category = serializers.CharField(max_length=100)
     additionalInfo =serializers.CharField()
 
     def get_id(self, obj):
@@ -124,7 +123,7 @@ class FoodEventSerializer(Serializer):
         if obj.address is not None:
             return str(obj.address)
         else:
-            return '0000-00-00'
+            return 'Address not Available'
 
     def get_eventStartDate(self, obj):
         if obj.eventStartDate is not None:
@@ -136,13 +135,7 @@ class FoodEventSerializer(Serializer):
         if obj.eventEndDate is not None:
             return obj.eventEndDate.strftime('%Y-%m-%d')
         else:
-            return None
-        
-    def get_category(self, obj):
-        if obj.category is not None:
-            return obj.category
-        else:
-            return None  
+            return None 
     
     def get_additionalInfo(self, obj):
         if obj.additionalInfo is not None:
@@ -166,7 +159,7 @@ class BookmarkedEventSerializer(Serializer):
     
     def get_event(self, obj):
         if obj.event is not None:
-            return foodEventSerializer(obj.event).data
+            return FoodEventSerializer(obj.event).data
         else:
             return 'Food Event not Available'
         

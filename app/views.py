@@ -13,7 +13,7 @@ from .local_dev_utils import getAccessTokenForDriver
 from datetime import datetime
 
 # get Django Access token for development testing. 
-getAccessTokenForDriver(14)
+# getAccessTokenForDriver(14)
 
 # Sign Up API  
 class SignUp(APIView):
@@ -393,7 +393,7 @@ class Event(APIView):
                         createdAt=createdAt, 
                         event=foodEvent
                     )
-                return Response({'success': True, 'message': 'Event Posted Sucessfully', 'eventDetails':foodEvent})
+                return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
@@ -635,13 +635,13 @@ class FindFoodRecipe(APIView):
         ],
     )
 
-    def post(self, request, format=None):
+    def post(self, request, categoryId, format=None):
         try:
 
-            if request.data.get('categoryId') is not None:
-                categoryId = request.data.get('categoryId')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Category'})
+            # if request.data.get('categoryId') is not None:
+            #     categoryId = request.data.get('categoryId')
+            # else:
+            #     return Response({'success': False, 'message': 'please enter valid Category'})
             
             if request.data.get('foodName') is not None:
                 foodName = request.data.get('foodName')
