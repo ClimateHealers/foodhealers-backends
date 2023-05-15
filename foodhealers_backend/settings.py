@@ -89,14 +89,14 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 # Database
 # Load environment variables from .local.env
 # env_file_path = '/home/ubuntu/.local.env' # your local env path
-env_file_path = 'C:/Users/rfiraz/Desktop/FoodHealers/foodhealers-backends/envs/.local.env'
+# env_file_path = 'C:/Users/rfiraz/Desktop/FoodHealers/foodhealers-backends/envs/.local.env'
 
-with open(env_file_path) as f:
-    for line in f:
-        line = line.strip() 
-        if line and not line.startswith("#"): 
-            key, value = line.split("=", 1) 
-            os.environ[key] = value
+# with open(env_file_path) as f:
+#     for line in f:
+#         line = line.strip() 
+#         if line and not line.startswith("#"): 
+#             key, value = line.split("=", 1) 
+#             os.environ[key] = value
 
 # Access the environment variables
 db_engine = os.getenv('DB_ENGINE')
@@ -164,7 +164,8 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # firebase admin initialization
-cred = credentials.Certificate(firebase_admin_sdk_file)
+# cred = credentials.Certificate(firebase_admin_sdk_file)
+cred = credentials.Certificate('/app/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json')
 firebase_admin.initialize_app(cred)
 
 # Managing  image
