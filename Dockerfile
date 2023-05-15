@@ -12,6 +12,7 @@ COPY . /app/
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 
 # Set environment variables for remote database connection
+ENV DB_ENGINE=django.db.backends.postgresql
 ENV DB_HOST=localhost
 ENV DB_PORT=5432
 ENV DB_NAME=foodhealersstagging
