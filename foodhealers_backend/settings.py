@@ -88,7 +88,8 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 
 # Database
 # Load environment variables from .local.env
-env_file_path = '/home/ubuntu/.local.env' # your local env path
+# env_file_path = '/home/ubuntu/.local.env' # your local env path
+env_file_path = 'C:/Users/rfiraz/Desktop/FoodHealers/foodhealers-backends/envs/.local.env'
 
 with open(env_file_path) as f:
     for line in f:
