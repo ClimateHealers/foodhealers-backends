@@ -1,0 +1,19 @@
+services:
+  - docker:20.10.10-dind
+variables:
+  COMMIT_SHA: $CI_COMMIT_SHA
+  DEPLOYMENT_FILE: deploy.yaml
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:20.10.10
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  only:
+    - develop

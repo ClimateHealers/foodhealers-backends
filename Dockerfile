@@ -12,11 +12,11 @@ COPY . /app/
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 
 # Set environment variables for remote database connection
-# ENV DB_HOST=<remote_db_host>
-# ENV DB_PORT=<remote_db_port>
-# ENV DB_NAME=<remote_db_name>
-# ENV DB_USER=<remote_db_user>
-# ENV DB_PASSWORD=<remote_db_password>
+ENV DB_HOST=localhost
+ENV DB_PORT=5432
+ENV DB_NAME=foodhealersstagging
+ENV DB_USER=postgres
+ENV DB_PASSWORD=root
 
 # Run the Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
