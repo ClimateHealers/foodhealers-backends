@@ -1,11 +1,8 @@
 import requests
-from dotenv import dotenv_values
-
-# TODO: Aravind to verify this in Linux Env
-config = dotenv_values("envs//.local.env")
+from django.conf import settings
 
 def getFormattedAddressFromCoords(latitude, longitude):
-  apiKey=config['API_KEY']
+  apiKey = settings.google_maps_api_key
   url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&{apiKey}"
   response = requests.get(url)
   data = response.json()

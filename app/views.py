@@ -9,11 +9,11 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import uuid
 import firebase_admin.auth as auth
-from .local_dev_utils import getAccessTokenForDriver
+# from .local_dev_utils import getAccessToken
 from datetime import datetime
 
 # get Django Access token for development testing. 
-# getAccessTokenForDriver(14)
+# getAccessToken(14)
 
 # Sign Up API  
 class SignUp(APIView):
@@ -637,12 +637,6 @@ class FindFoodRecipe(APIView):
 
     def post(self, request, categoryId, format=None):
         try:
-
-            # if request.data.get('categoryId') is not None:
-            #     categoryId = request.data.get('categoryId')
-            # else:
-            #     return Response({'success': False, 'message': 'please enter valid Category'})
-            
             if request.data.get('foodName') is not None:
                 foodName = request.data.get('foodName')
             else:
@@ -701,13 +695,6 @@ class FindFoodRecipe(APIView):
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
-        # request_body=openapi.Schema(
-        #     type=openapi.TYPE_OBJECT,
-        #     required=['categoryId'], 
-        #     properties={
-        #         'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-        #     },
-        # ),
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -731,12 +718,6 @@ class FindFoodRecipe(APIView):
 
     def get(self, request, categoryId, format=None):
         try:
-
-            # if request.data.get('categoryId') is not None:
-            #     categoryId = request.data.get('categoryId')
-            # else:
-            #     return Response({'success': False, 'message': 'please enter valid Category'})
-            
             if request.user.id is not None:
                 userId= request.user.id
                 if Volunteer.objects.filter(id=userId).exists():

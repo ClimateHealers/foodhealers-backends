@@ -14,10 +14,7 @@ from pathlib import Path
 import os
 import firebase_admin
 from firebase_admin import credentials
-from dotenv import load_dotenv, dotenv_values
 
-# TODO: Aravind to verify this in Linux Env
-config = dotenv_values("envs//.local.env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,14 +86,36 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Database
+# Load environment variables from .local.env
+env_file_path = '/home/ubuntu/.local.env' # your local env path
+
+with open(env_file_path) as f:
+    for line in f:
+        line = line.strip() 
+        if line and not line.startswith("#"): 
+            key, value = line.split("=", 1) 
+            os.environ[key] = value
+
+# Access the environment variables
+db_engine = os.getenv('DB_ENGINE')
+db_name = os.getenv('DB_NAME')
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+google_maps_api_key = os.getenv('API_KEY')
+firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
+
+# Use the environment variables in your Django settings
 DATABASES = {
     'default': {
-        'ENGINE': config['DB_ENGINE'],
-        'NAME': config['DB_NAME'],
-        'USER': config['DB_USER'],
-        'PASSWORD': config['DB_PASSWORD'],
-        'HOST': config['DB_HOST'],
-        'PORT': config['DB_PORT']
+        'ENGINE': db_engine,
+        'NAME': db_name,
+        'USER': db_user,
+        'PASSWORD': db_password,
+        'HOST': db_host,
+        'PORT': db_port,
     }
 }
 
@@ -135,6 +154,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = 'static/'
 
 # Default primary key field type
@@ -143,7 +163,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # firebase admin initialization
-cred = credentials.Certificate('pelagic-core-297908-firebase-adminsdk-9v4jk-8a760b5f82.json')
+cred = credentials.Certificate(firebase_admin_sdk_file)
 firebase_admin.initialize_app(cred)
 
 # Managing  image
