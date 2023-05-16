@@ -15,8 +15,34 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from rest_framework import permissions
+from django.conf import settings
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="API",
+        default_version='v1',
+        description="Food Healers API Documentation",
+        terms_of_service="https://climatehealers.org/transform/foodhealers/",
+        contact=openapi.Contact(email='apps@alamanceinc.com',),
+        license=openapi.License(name="Alamance IT Solutions"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
+         name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0),
+         name='schema-redoc'),
+    path('__debug__/', include('debug_toolbar.urls')),
+
+    re_path(r'^v1/api/', include('app.urls', namespace='v1')),
+    re_path(r'^v2/api/', include('app.urls', namespace='v2')),
+
 ]

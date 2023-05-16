@@ -11,10 +11,14 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import firebase_admin
+from firebase_admin import credentials
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+PROJECT_DIR = BASE_DIR / "app"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -25,8 +29,9 @@ SECRET_KEY = 'django-insecure-m+rp2up2513j@sq+^qdu&*y%9v1-sk*x2mwm-pq%_7s)c=pzv%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', 'climatehealers.alamanceinc.com', '127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = ['https://climatehealers.alamanceinc.com','https://*.127.0.0.1']
 
 # Application definition
 
@@ -37,6 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_swagger',
+    'drf_yasg',
+    'app',
+    'corsheaders',
+    'taggit',
+    'rest_framework.authtoken',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = 'foodhealers_backend.urls'
@@ -73,10 +86,36 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Database
+# Load environment variables from .local.env
+env_file_path = '/home/ubuntu/.local.env' # your local env path
+
+with open(env_file_path) as f:
+    for line in f:
+        line = line.strip() 
+        if line and not line.startswith("#"): 
+            key, value = line.split("=", 1) 
+            os.environ[key] = value
+
+# Access the environment variables
+db_engine = os.getenv('DB_ENGINE')
+db_name = os.getenv('DB_NAME')
+db_user = os.getenv('DB_USER')
+db_password = os.getenv('DB_PASSWORD')
+db_host = os.getenv('DB_HOST')
+db_port = os.getenv('DB_PORT')
+google_maps_api_key = os.getenv('API_KEY')
+firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
+
+# Use the environment variables in your Django settings
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': db_engine,
+        'NAME': db_name,
+        'USER': db_user,
+        'PASSWORD': db_password,
+        'HOST': db_host,
+        'PORT': db_port,
     }
 }
 
@@ -115,9 +154,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# firebase admin initialization
+cred = credentials.Certificate(firebase_admin_sdk_file)
+firebase_admin.initialize_app(cred)
+
+# Managing  image
+MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media/')
+MEDIA_URL = '/media/'
+
+# REST FRAMEWORK SETTINGS
+REST_FRAMEWORK = {
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
+]
