@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-m+rp2up2513j@sq+^qdu&*y%9v1-sk*x2mwm-pq%_7s)c=pzv%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', 'climatehealers.alamanceinc.com', '127.0.0.1']
 
 CSRF_TRUSTED_ORIGINS = ['https://climatehealers.alamanceinc.com','https://*.127.0.0.1']
 
