@@ -104,7 +104,7 @@ db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
-google_maps_api_key = os.getenv('API_KEY')
+GOOGLE_MAPS_API_KEY = os.getenv('API_KEY')
 firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
 
 # Use the environment variables in your Django settings

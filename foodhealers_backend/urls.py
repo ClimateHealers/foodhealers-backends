@@ -28,10 +28,11 @@ schema_view = get_schema_view(
         description="Food Healers API Documentation",
         terms_of_service="https://climatehealers.org/transform/foodhealers/",
         contact=openapi.Contact(email='apps@alamanceinc.com',),
-        license=openapi.License(name="Alamance IT Solutions"),
+        license=openapi.License(name="Alamance IT Solutions"),  
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    url='https://climatehealers.alamanceinc.com'
 )
 
 urlpatterns = [
