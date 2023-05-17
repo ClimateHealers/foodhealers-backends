@@ -878,3 +878,98 @@ class RequestFoodSupplies(APIView):
             
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+
+# GET and POST  (Request Volunteers) API
+class RequestVolunteers(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['eventId', 'lat', 'lng', 'alt', 'requiredDate', 'numberOfVolunteers'], 
+            properties={
+                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
+                'numberOfVolunteers': openapi.Schema(type=openapi.TYPE_NUMBER, example='15'),
+            }
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Volunteers Request successfully created'),
+                },
+            ),
+        },
+    
+        operation_description="Request Volunteers API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, requestTypeId, format=None):
+        try:
+            if request.data.get('eventId') is not None:
+                eventId = request.data.get('eventId')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event Id'})
+            
+            if request.data.get('requiredDate') is not None:
+                requiredDate = request.data.get('requiredDate')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
+            
+            if request.data.get('numberOfVolunteers') is not None:
+                numberOfVolunteers = request.data.get('numberOfVolunteers')
+            else:
+                return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
+            
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+
+            if FoodEvent.objects.filter(id=eventId, createdBy=user).exists():
+                foodEvent = FoodEvent.objects.get(id=eventId, createdBy=user)
+            else:
+                return Response({'success': False, 'message': 'Food event with id does not exist'})
+
+            if RequestType.objects.filter(id=requestTypeId, active=True).exists():
+                requestType = RequestType.objects.get(id=requestTypeId, active=True)
+            else:
+                return Response({'success':False, 'message':'Request Type with id does not exist'})
+            
+            
+            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers).exists():
+                request = Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers)
+                return Response({'success':False, 'message':'Request Already Exists for this particular Event'})
+            else:
+                Request.objects.create(
+                    type=requestType, 
+                    createdBy=user, 
+                    requiredDate=requiredDate,
+                    active=True,
+                    createdAt=datetime.now(),
+                    quantity=numberOfVolunteers,
+                    foodEvent=foodEvent
+                )
+                return Response({'success':False, 'message':'Volunteers Request successfully created'})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
