@@ -22,7 +22,11 @@ urlpatterns = [
     re_path(r'bookmark/', views.BookmarkEvent.as_view(),),  
     # GET (to fetch categories fo recipies)
     re_path(r'categories/', views.Categories.as_view(),),
-    # GET (to View recipes) and POST (to Add recipes) # re_path(r'recipe/', views.FindFoodRecipe.as_view(),),
-    re_path(r'recipe/(?P<categoryId>[-\w]*)', views.FindFoodRecipe.as_view(),),
+    # GET (to View recipes) and POST (to Add recipes)
+    re_path(r'recipe/(?P<categoryId>[-\w]*)/', views.FindFoodRecipe.as_view(),),
+    # GET (to fetch requestTypes for Request API)
+    re_path(r'request-types/', views.RequestTypes.as_view(),),
+    # GET (to View food/Supplies Request) and POST (to Add food/Supplies Request)
+    re_path(r'request-food/(?P<requestTypeId>[-\w]*)/', views.RequestFoodSupplies.as_view(),),   
     
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
