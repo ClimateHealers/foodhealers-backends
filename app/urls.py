@@ -27,6 +27,8 @@ urlpatterns = [
     # GET (to fetch requestTypes for Request API)
     re_path(r'request-types/', views.RequestTypes.as_view(),),
     # GET (to View food/Supplies Request) and POST (to Add food/Supplies Request)
-    re_path(r'request-food/(?P<requestTypeId>[-\w]*)/', views.RequestFoodSupplies.as_view(),),   
+    re_path(r'request-food/(?P<requestTypeId>[-\w]*)/', views.RequestFoodSupplies.as_view(),),  
+    # GET (to View volunteers Request) and POST (to Add volunteers Request)
+    re_path(r'request-volunteers/(?P<requestTypeId>[-\w]*)/', views.RequestVolunteers.as_view(),), 
     
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
