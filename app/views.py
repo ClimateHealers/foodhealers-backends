@@ -83,7 +83,7 @@ class SignUp(APIView):
                     return Response({'success': False, 'message': 'Please provide valid id token'})
                 
             randomNumber = str(uuid.uuid4())[:6]
-            username = randomNumber + '@' + decoded_token['name']
+            username = randomNumber + '@' + name
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
@@ -140,7 +140,6 @@ class SignIn(APIView):
         else:
             return Response({'success':False, 'message':'please enter valid token'})
         
-        password = 'Admin123'
         try:
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
@@ -159,20 +158,14 @@ class SignIn(APIView):
                         return Response({'success': False, 'error': str(e)})
                 else:
                     return Response({'success': False, 'message': 'Please provide valid id token'})
-                
-                user, created = Volunteer.objects.get_or_create(email=decoded_token['email'])
-                if created:
-                    randomNumber = str(uuid.uuid4())[:6]
-                    username = randomNumber + '@' + decoded_token['name']
-                    user.username = username
-                    user.password = password
-                    if 'name' in decoded_token:
-                        user.name = decoded_token['name']
-                    user.save()
 
-                userDetails = UserProfileSerializer(user).data
-                accessToken = create_access_token(user.id)
-                refreshToken = create_refresh_token(user.id)
+                if Volunteer.objects.filter(email=decoded_token['email']).exists():
+                    user = Volunteer.objects.get(email=decoded_token['email'])
+                    userDetails = UserProfileSerializer(user).data
+                    accessToken = create_access_token(user.id)
+                    refreshToken = create_refresh_token(user.id)
+                else:
+                    return Response({'success': False, 'message':'user with email does not exist'})
 
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
