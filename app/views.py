@@ -363,12 +363,15 @@ class Event(APIView):
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt)
 
-            if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate).exists():
-                foodEvent = FoodEvent.objects.get(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate)
+            
+            organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True, volunteerType=VOLUNTEER_TYPE[2][0])
+            
+            
+            if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
+                foodEvent = FoodEvent.objects.get(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer)
                 foodEventDetaills = FoodEventSerializer(foodEvent).data
                 return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
             else:
-                organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True, volunteerType=VOLUNTEER_TYPE[2][0])
                 createdAt = datetime.now()
                 foodEvent = FoodEvent.objects.create(
                     name = eventName,
@@ -492,7 +495,7 @@ class BookmarkEvent(APIView):
                 else:
                     createdAt = datetime.now()
                     EventBookmark.objects.create(user=user, event=foodEvent, createdAt=createdAt)
-                    return Response({'success': False, 'message': 'Succesfully Added to Bookmarks'})
+                    return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
             else:
                 return Response({'success': False, 'message': 'Food Event with id does not exist'})
@@ -600,7 +603,7 @@ class FindFoodRecipe(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['categoryId','foodName','ingredients','cookingInstructions','foodImage'], 
+            required=['categoryId','foodName','ingredients','cookingInstructions'], 
             properties={
                 'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
@@ -632,6 +635,10 @@ class FindFoodRecipe(APIView):
 
     def post(self, request, categoryId, format=None):
         try:
+
+            if categoryId is None:
+                return Response({'success': False, 'message':'Please provide category Id'})
+            
             if request.data.get('foodName') is not None:
                 foodName = request.data.get('foodName')
             else:
@@ -670,7 +677,7 @@ class FindFoodRecipe(APIView):
                 return Response({'success': False, 'message': 'Category with id does not exist'})
             
             if FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category).exists():
-                recipe = FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category)
+                recipe = FoodRecipe.objects.get(foodName=foodName, ingredients=ingredients, category=category)
                 return Response({'success': True, 'message': 'Food Recipe already exists','recipe':recipe.id})
             else:
                 recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, category=category, cookingInstructions=cookingInstructions)
@@ -732,7 +739,7 @@ class FindFoodRecipe(APIView):
                 recipeList = FoodRecipeSerializer(recipes, many=True).data
                 return Response({'success':True, 'recipeList': recipeList})
             else:
-                return Response({'success': True, 'bookmarkedEventDetails': []})
+                return Response({'success': True, 'recipeList': []})
             
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
