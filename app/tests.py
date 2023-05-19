@@ -24,12 +24,12 @@ class UserOperations(APITestCase):
             Category.objects.get_or_create(name='Lunch', createdAt=datetime.now(), active=True)
             Category.objects.get_or_create(name='Dinner', createdAt=datetime.now(), active=True)
             
-            RequestType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
+            foodRequestType, created = RequestType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
             RequestType.objects.get_or_create(name='Supplies', createdAt=datetime.now(), active=True)
-            RequestType.objects.get_or_create(name='Volunteer', createdAt=datetime.now(), active=True) 
-            RequestType.objects.get_or_create(name='Pickup', createdAt=datetime.now(), active=True)
+            volunteerRequestType, created = RequestType.objects.get_or_create(name='Volunteer', createdAt=datetime.now(), active=True) 
+            pickupRequestType, created = RequestType.objects.get_or_create(name='Pickup', createdAt=datetime.now(), active=True)
 
-            ItemType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
+            foodItemType, created = ItemType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
             ItemType.objects.get_or_create(name='Supplies', createdAt=datetime.now(), active=True)
 
             user, created = Volunteer.objects.get_or_create(
@@ -53,7 +53,10 @@ class UserOperations(APITestCase):
             self.accessToken = accessToken
             self.user = user
             self.category = category
-            # self.requestType = requestType
+            self.foodRequestType = foodRequestType
+            self.volunteerRequestType = volunteerRequestType
+            self.pickupRequestType = pickupRequestType 
+            self.foodItemType = foodItemType
             print('<<<---------------------------------------->>>')
 
     # user SignUp test cases
@@ -1154,6 +1157,229 @@ class UserOperations(APITestCase):
             response = self.client.get(url, format='json')
             result = json.loads(response.content)
             print('------ test case response for  : test_volunteer_getFoodRecipes_category_notExist ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+            
+    # Volunteer/Organizer Post Food/Supplies Request test cases
+    '''
+    Test case to test post food Supplies Request with valid data
+    '''
+
+    def test_volunteer_postFoodSupplies_valid_data(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+                'quantity': '54 Kg',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_valid_data ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+    
+    '''
+    Test case to test post food Supplies Request with ItemTypeId Does not exist
+    '''
+
+    def test_volunteer_postFoodSupplies_invalid_itemTypeId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            data = {
+                'itemTypeId':0,
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+                'quantity': '54 Kg',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_invalid_itemTypeId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post food Supplies Request with requestTypeId Does not exist
+    '''
+
+    def test_volunteer_postFoodSupplies_invalid_requestTypeId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': 0})
+            
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+                'quantity': '54 Kg',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_invalid_requestTypeId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Food Supplies Request with missing parameters (itemTypeId)
+    '''
+
+    def test_volunteer_postFoodSupplies_missing_itemTypeId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            data = {
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+                'quantity': '54 Kg',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_itemTypeId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Food Supplies Request with missing parameters (itemName)
+    '''
+
+    def test_volunteer_postFoodSupplies_missing_itemName(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'requiredDate': '2023-6-6',
+                'quantity': '54 Kg',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_itemName ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)    
+        
+    '''
+    Test case to test post Food Supplies Request with missing parameters (requiredDate)
+    '''
+
+    def test_volunteer_postFoodSupplies_missing_requiredDate(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'itemName': 'Food item name',
+                'quantity': '54 Kg',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_requiredDate ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)     
+
+    '''
+    Test case to test post Food Supplies Request with missing parameters (quantity)
+    '''
+
+    def test_volunteer_postFoodSupplies_missing_quantity(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_quantity ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+                
+    '''
+    Test case to test post Food Supplies Request (Existing Request)
+    '''
+
+    def test_volunteer_postFoodSupplies_with_existing_request(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+
+            foodItem = FoodItem.objects.create(
+                itemName='Food item name', 
+                itemType=self.foodItemType, 
+                addedBy=self.user, 
+                createdAt=datetime.now()
+            )
+
+            Request.objects.create(
+                type=self.foodRequestType, 
+                createdBy=self.user,
+                requiredDate='2023-6-6',
+                active=True, 
+                quantity='5 kg', 
+                foodItem=foodItem, 
+                createdAt=datetime.now()
+            )
+
+            data = {
+                'itemTypeId':self.foodItemType.id,
+                'itemName': 'Food item name',
+                'requiredDate': '2023-6-6',
+                'quantity': '5 kg'
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_postFoodSupplies_with_existing_request ------',result)
+
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
             return result
