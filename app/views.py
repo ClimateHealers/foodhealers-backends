@@ -933,10 +933,25 @@ class RequestVolunteers(APIView):
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
+            if request.data.get('lat') is not None:
+                lat = request.data.get('lat')
+            else:
+                return Response({'success': False, 'message': 'please enter valid latitude'})
+            
+            if request.data.get('lng') is not None:
+                lng = request.data.get('lng')
+            else:
+                return Response({'success': False, 'message': 'please enter valid longitude'})
+            
+            if request.data.get('alt') is not None:
+                alt = request.data.get('alt')
+            else:
+                return Response({'success': False, 'message': 'please enter valid altitude'})
+            
             if request.data.get('requiredDate') is not None:
                 requiredDate = request.data.get('requiredDate')
             else:
-                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
+                return Response({'success': False, 'message': 'please enter valid Required Date'})
             
             if request.data.get('numberOfVolunteers') is not None:
                 numberOfVolunteers = request.data.get('numberOfVolunteers')
@@ -964,8 +979,8 @@ class RequestVolunteers(APIView):
                 return Response({'success':False, 'message':'Request Type with id does not exist'})
             
             
-            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers).exists():
-                request = Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers)
+            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers,foodEvent=foodEvent).exists():
+                request = Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers, foodEvent=foodEvent)
                 return Response({'success':False, 'message':'Request Already Exists for this particular Event'})
             else:
                 Request.objects.create(
@@ -977,6 +992,6 @@ class RequestVolunteers(APIView):
                     quantity=numberOfVolunteers,
                     foodEvent=foodEvent
                 )
-                return Response({'success':False, 'message':'Volunteers Request successfully created'})
+                return Response({'success':True, 'message':'Volunteers Request successfully created'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})

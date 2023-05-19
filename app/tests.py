@@ -1168,7 +1168,7 @@ class UserOperations(APITestCase):
     Test case to test post food Supplies Request with valid data
     '''
 
-    def test_volunteer_postFoodSupplies_valid_data(self):
+    def test_volunteer_requestFoodSupplies_valid_data(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1182,7 +1182,7 @@ class UserOperations(APITestCase):
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_valid_data ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_valid_data ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1194,7 +1194,7 @@ class UserOperations(APITestCase):
     Test case to test post food Supplies Request with ItemTypeId Does not exist
     '''
 
-    def test_volunteer_postFoodSupplies_invalid_itemTypeId(self):
+    def test_volunteer_requestFoodSupplies_invalid_itemTypeId(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1208,7 +1208,7 @@ class UserOperations(APITestCase):
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_invalid_itemTypeId ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_invalid_itemTypeId ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1220,7 +1220,7 @@ class UserOperations(APITestCase):
     Test case to test post food Supplies Request with requestTypeId Does not exist
     '''
 
-    def test_volunteer_postFoodSupplies_invalid_requestTypeId(self):
+    def test_volunteer_requestFoodSupplies_invalid_requestTypeId(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1234,7 +1234,7 @@ class UserOperations(APITestCase):
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_invalid_requestTypeId ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_invalid_requestTypeId ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1246,7 +1246,7 @@ class UserOperations(APITestCase):
     Test case to test post Food Supplies Request with missing parameters (itemTypeId)
     '''
 
-    def test_volunteer_postFoodSupplies_missing_itemTypeId(self):
+    def test_volunteer_requestFoodSupplies_missing_itemTypeId(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1259,7 +1259,7 @@ class UserOperations(APITestCase):
 
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_itemTypeId ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_missing_itemTypeId ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1271,7 +1271,7 @@ class UserOperations(APITestCase):
     Test case to test post Food Supplies Request with missing parameters (itemName)
     '''
 
-    def test_volunteer_postFoodSupplies_missing_itemName(self):
+    def test_volunteer_requestFoodSupplies_missing_itemName(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1284,7 +1284,7 @@ class UserOperations(APITestCase):
 
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_itemName ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_missing_itemName ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1296,7 +1296,7 @@ class UserOperations(APITestCase):
     Test case to test post Food Supplies Request with missing parameters (requiredDate)
     '''
 
-    def test_volunteer_postFoodSupplies_missing_requiredDate(self):
+    def test_volunteer_requestFoodSupplies_missing_requiredDate(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1309,7 +1309,7 @@ class UserOperations(APITestCase):
 
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_requiredDate ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_missing_requiredDate ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1321,7 +1321,7 @@ class UserOperations(APITestCase):
     Test case to test post Food Supplies Request with missing parameters (quantity)
     '''
 
-    def test_volunteer_postFoodSupplies_missing_quantity(self):
+    def test_volunteer_requestFoodSupplies_missing_quantity(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1334,7 +1334,7 @@ class UserOperations(APITestCase):
 
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_missing_quantity ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_missing_quantity ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1346,7 +1346,7 @@ class UserOperations(APITestCase):
     Test case to test post Food Supplies Request (Existing Request)
     '''
 
-    def test_volunteer_postFoodSupplies_with_existing_request(self):
+    def test_volunteer_requestFoodSupplies_with_existing_request(self):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -1378,7 +1378,388 @@ class UserOperations(APITestCase):
 
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
-            print('------ test case response for  : test_volunteer_postFoodSupplies_with_existing_request ------',result)
+            print('------ test case response for  : test_volunteer_requestFoodSupplies_with_existing_request ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+
+    # Volunteer/Organizer Post Volunteer Request test cases
+    '''
+    Test case to test post Volunteer Request with valid data
+    '''
+
+    def test_volunteer_requestVolunteer_valid_data(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteer_valid_data ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+    
+    '''
+    Test case to test post Volunteer Request with eventId Does not exist
+    '''
+
+    def test_volunteer_requestVolunteers_invalid_eventId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            data = {
+                'eventId': 0,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_invalid_eventId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Volunteer Request with requestTypeId Does not exist
+    '''
+
+    def test_volunteer_requestVolunteer_invalid_requestTypeId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': 0})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteer_invalid_requestTypeId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Volunteers Request with missing parameters (eventId)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_eventId(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            data = {
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_eventId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test post Volunteers Request with missing parameters (lat)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_lat(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_lat ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)    
+
+    '''
+    Test case to test post Volunteers Request with missing parameters (lng)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_lng(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_lng ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)  
+        
+    '''
+    Test case to test post Volunteers Request with missing parameters (alt)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_alt(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_alt ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)  
+        
+    '''
+    Test case to test post Volunteers Request with missing parameters (requiredDate)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_requiredDate(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_requiredDate ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)     
+
+    '''
+    Test case to test post Volunteers Request with missing parameters (numberOfVolunteers)
+    '''
+
+    def test_volunteer_requestVolunteers_missing_numberOfVolunteers(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_missing_numberOfVolunteers ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+                
+    '''
+    Test case to test post Volunteers Request (Existing Request)
+    '''
+
+    def test_volunteer_requestVolunteers_with_existing_request(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+
+            foodEvent = FoodEvent.objects.create(
+                name='Test Event',
+                organizerPhoneNumber=997263, 
+                eventStartDate='2023-05-05',
+                eventEndDate='2023-05-05', 
+                createdAt=datetime.now(),
+                additionalInfo='vegan food',
+                active=True,
+                createdBy=self.user,
+            )
+
+            Request.objects.create(
+                type=self.foodRequestType, 
+                createdBy=self.user,
+                requiredDate='2023-05-05',
+                active=True, 
+                quantity='15', 
+                foodEvent=foodEvent, 
+                createdAt=datetime.now()
+            )
+
+            data = {
+                'eventId':foodEvent.id,
+                'lat': '12.916540',
+                'lng': '77.651950',
+                'alt': '4500',
+                'requiredDate': '2023-05-05',
+                'numberOfVolunteers': '15',
+            }
+
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_requestVolunteers_with_existing_request ------',result)
 
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
