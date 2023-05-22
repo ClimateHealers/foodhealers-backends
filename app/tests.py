@@ -509,7 +509,6 @@ class UserOperations(APITestCase):
     '''
     Test case to test get Food Events posted by volunteer (No Events)
     '''
-
     def test_volunteer_getFoodEvents_with_noEvents(self):
         try:
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
@@ -565,7 +564,6 @@ class UserOperations(APITestCase):
     '''
         Test case to test findFood with valid data But no Events present
     '''
-
     def test_user_findfood_valid_data_with_noEvents(self):
         
         try:
