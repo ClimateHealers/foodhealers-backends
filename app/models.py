@@ -175,6 +175,7 @@ class Request(models.Model):
     quantity = models.CharField(max_length=100, default='', null=True, blank=True)
     foodItem = models.ForeignKey(FoodItem, null=True, blank=True, on_delete=models.PROTECT)
     deliver = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
+    foodEvent = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -185,7 +186,7 @@ class Donation(models.Model):
     needsPickup = models.BooleanField(default=False)
     fullfilled = models.BooleanField(default=False, null=True, blank=True)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
-    Delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
+    delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
 
 # 14. model to store information about Event Volunteers
