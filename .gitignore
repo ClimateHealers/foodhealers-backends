@@ -1,0 +1,8 @@
+climatehealersenv
+*.pyc
+
+# firbase config file
+pelagic-core-297908-firebase-adminsdk-9v4jk-8a760b5f82.json
+
+# local env config file
+envs

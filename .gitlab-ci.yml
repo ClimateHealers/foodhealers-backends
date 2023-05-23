@@ -1,0 +1,33 @@
+services:
+  - docker:20.10.10-dind
+variables:
+  COMMIT_SHA: $CI_COMMIT_SHA
+  DEPLOYMENT_FILE: deploy.yaml
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:20.10.10
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  only:
+    - develop
+deploy_stage:
+  stage: deploy
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y && apt-get --yes install git ssh )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)
+  script:
+    - ssh ubuntu@$EC2_PUBLIC_IP_ADDRESS "cd /home/ubuntu/foodhealers_backend/ && git stash && git checkout develop && git pull origin develop && cd /home/ubuntu/ && source food-env/bin/activate && cd /home/ubuntu/foodhealers_backend/ && pip install -r requirements.txt && python manage.py makemigrations  && python manage.py migrate && sudo systemctl restart foodhealers-gunicorn.service && sudo systemctl restart foodhealers-celery.service && exit"
+
+  when: manual
+  only:
+    - develop
