@@ -1128,3 +1128,49 @@ class DonateFood(APIView):
     
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'donationList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+    
+        operation_description="Donation History API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+         
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+            
+            if Donation.objects.filter(donatedBy=user).exists(): 
+                donation = Donation.objects.filter(donatedBy=user)
+                donationDetails = DonationSerializer(donation, many=True).data
+                return Response({'success': True, 'donationList':donationDetails})    
+             
+            else:
+                return Response({'success': True,'donationList':[]})     
+    
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})

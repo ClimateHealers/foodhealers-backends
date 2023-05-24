@@ -319,10 +319,10 @@ class DeliveryDetailSerializer(Serializer):
     id = serializers.SerializerMethodField()
     pickupAddress =  serializers.SerializerMethodField()
     pickupDate = serializers.SerializerMethodField()
-    pickedup =  serializers.SerializerMethodField()
+    pickedup =  serializers.BooleanField()
     dropAddress =  serializers.SerializerMethodField()
-    dropDate = serializers.BooleanField()
-    delivered = serializers.SerializerMethodField()
+    dropDate = serializers.SerializerMethodField()
+    delivered = serializers.BooleanField()
     driver = serializers.SerializerMethodField()
     
     def get_id(self, obj):
@@ -338,7 +338,7 @@ class DeliveryDetailSerializer(Serializer):
         if obj.pickupDate is not None:
             return obj.pickupDate.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'Pickup Date not Available'
     
     def get_pickedup(self, obj):
         if obj.pickedup is not None:
@@ -356,7 +356,7 @@ class DeliveryDetailSerializer(Serializer):
         if obj.dropDate is not None:
             return obj.dropDate.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'drop Date not Available'
         
     def get_delivered(self, obj):
         if obj.delivered is not None:
