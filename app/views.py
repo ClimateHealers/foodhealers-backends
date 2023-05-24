@@ -15,6 +15,40 @@ from datetime import datetime
 # get Django Access token for development testing. 
 # getAccessToken(2)
 
+class ChoicesView(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'VOLUNTEER_TYPE': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                    'DOCUMENT_TYPE': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Choices API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+            return Response({'success': True, 'VOLUNTEER_TYPE': VOLUNTEER_TYPE, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
+        except:
+            return Response({'success': False})
+        
 # Sign Up API  
 class SignUp(APIView):
     # OpenApi specification and Swagger Documentation
@@ -1093,5 +1127,139 @@ class DonateFood(APIView):
             else:
                 return Response({'success': True,'donationList':[]})     
     
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+ 
+# Update Volunteer Profile API  
+class VolunteerProfile(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'userDetails': openapi.Schema(type=openapi.TYPE_OBJECT),
+                },
+            ),
+        },
+        operation_description="Fetch Profile User API",
+    )
+
+    # fetch volunteer Profile API
+    def get(self, request,  format=None):
+        try:
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+                    userDetails = UserProfileSerializer(user).data
+                    return Response({'success':True, 'userDetails':userDetails})
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name','email','lat','longitude','altitude','phoneNumber'],
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
+                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example=4500),
+                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example=99723732),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Profile updated successfully'),
+                },
+            ),
+        },
+        operation_description="Update Volunteer Profile API",
+    )
+
+    # user onboarding API required firebase token and name
+    def put(self, request,  format=None):
+
+        if request.data.get('name') is not None:
+            name = request.data.get('name')
+        else:
+            return Response({'success':False, 'message':'Please enter valid name'})
+        
+        if request.data.get('email') is not None:
+            email = request.data.get('email')
+        else:
+            return Response({'success':False, 'message':'Please enter valid email'})
+        
+        if request.data.get('lat') is not None:
+            lat = request.data.get('lat')
+        else:
+            return Response({'success':False, 'message':'Please enter valid latitude'})
+        
+        if request.data.get('lng') is not None:
+            lng = request.data.get('lng')
+        else:
+            return Response({'success':False, 'message':'Please enter valid longitude'})
+        
+        if request.data.get('alt') is not None:
+            alt = request.data.get('alt')
+        else:
+            return Response({'success':False, 'message':'Please enter valid altitude'})
+
+        if request.data.get('phoneNumber') is not None:
+            phoneNumber = request.data.get('phoneNumber')
+        else:
+            return Response({'success':False, 'message':'Please enter valid phoneNumber'})
+        
+        if request.data.get('volunteerType') is not None:
+            volunteerType = request.data.get('volunteerType')
+        else:
+            return Response({'success':False, 'message':'Please enter valid volunteer Type'})
+        
+        try:
+
+            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
+                address = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            else:
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt)            
+
+            if Volunteer.objects.filter(email=email).exists():
+                user = Volunteer.objects.get(email=email)
+                user.name = name
+                user.phoneNumber = phoneNumber
+                user.address = address
+
+                if volunteerType == VOLUNTEER_TYPE[0][0]:
+                    user.volunteerType = VOLUNTEER_TYPE[0][0]
+                elif volunteerType == VOLUNTEER_TYPE[1][0]:
+                    user.volunteerType = VOLUNTEER_TYPE[1][0]
+                elif volunteerType == VOLUNTEER_TYPE[2][0]:
+                    user.volunteerType = VOLUNTEER_TYPE[2][0]
+                elif volunteerType == VOLUNTEER_TYPE[3][0]:
+                    user.volunteerType = VOLUNTEER_TYPE[3][0]
+                else:
+                    return Response({'success': False, 'message': 'Volunteer type does not exist'})
+                
+                user.save()
+                userDetails = UserProfileSerializer(user).data
+                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':userDetails})
+            else:
+                return Response({'success':False, 'message':'Volunteer with email does not exist'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
