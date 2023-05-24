@@ -19,49 +19,49 @@ class AddressSerializer(Serializer):
         if obj.lat is not None:
             return obj.lat
         else:
-            return 'Latitude Not Available'
+            return 'Latitude not specified'
         
     def get_lng(self, obj):
         if obj.lng is not None:
             return obj.lng
         else:
-            return 'Longitude Not Available'
+            return 'Longitude not specified'
         
     def get_alt(self, obj):
         if obj.alt is not None:
             return obj.alt
         else:
-            return 'Altitude Not Available'
+            return 'Altitude not specified'
         
     def get_streetAddress(self, obj):
         if obj.streetAddress is not None:
             return obj.streetAddress
         else:
-            return 'street Address Not Available'
+            return 'Street address not specified'
         
     def get_city(self, obj):
         if obj.city is not None:
             return obj.city
         else:
-            return 'city Not Available'
+            return 'City not specified'
         
     def get_state(self, obj):
         if obj.state is not None:
             return obj.state
         else:
-            return 'state Not Available'
+            return 'State not specified'
         
     def get_postalCode(self, obj):
         if obj.postalCode is not None:
             return obj.postalCode
         else:
-            return 'postal Code Not Available'
+            return 'Postal code not specified'
         
     def get_fullAddress(self, obj):
         if obj.fullAddress is not None:
             return obj.fullAddress
         else:
-            return 'full Address Not Available' 
+            return 'Full address not specified' 
 
 class DocumentSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -80,7 +80,7 @@ class DocumentSerializer(Serializer):
         if obj.docType is not None:
             return obj.docType
         else:
-            return 'Document Type Not Available'
+            return 'Document type not specified'
         
     def get_document(self, obj): # to be modified
         if obj.document is not None:
@@ -88,7 +88,7 @@ class DocumentSerializer(Serializer):
             documentUrl = mediaStorage.url(name=obj.document.name)
             return documentUrl
         else:
-            return 'Document Not Available'
+            return 'Document not specified'
 
     def get_verified(self, obj):
         if obj.verified is not None:
@@ -100,19 +100,19 @@ class DocumentSerializer(Serializer):
         if obj.event is not None:
             return obj.event
         else:
-            return "Event not Available"   
+            return "Event not specified"   
         
     def get_volunteer(self, obj):
         if obj.volunteer is not None:
             return obj.volunteer.name
         else: 
-            return "Volunteer not Available"
+            return "Volunteer not specified"
         
     def get_vehicle(self, obj):
         if obj.vehicle is not None:
             return obj.vehicle
         else:
-            return "Vehicle not Available"   
+            return "Vehicle not specified"   
 
     def get_isActive(self, obj):
         if obj.isActive is not None:
@@ -139,13 +139,13 @@ class UserProfileSerializer(Serializer):
         if obj.phoneNumber is not None:
             return obj.phoneNumber
         else:
-            return None
+            return 'Phone number not specified'
 
     def get_isVolunteer(self, obj):
         if obj.isVolunteer is not None:
             return obj.isVolunteer
         else:
-            return False
+            return 'Volunteer not specified'
         
     def get_isDriver(self, obj):
         if obj.isDriver is not None:
@@ -157,7 +157,7 @@ class UserProfileSerializer(Serializer):
         if obj.volunteerType is not None:
             return obj.volunteerType
         else:
-            return None
+            return 'Volunteer Type not specified'
 
 class FoodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -174,31 +174,31 @@ class FoodEventSerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not Available'
+            return 'Name not specified'
     
     def get_address(self, obj):
         if obj.address is not None:
             return str(obj.address)
         else:
-            return 'Address not Available'
+            return 'address not specified'
 
     def get_eventStartDate(self, obj):
         if obj.eventStartDate is not None:
             return obj.eventStartDate.strftime('%Y-%m-%d')
         else:
-            return None
+            return 'Event start date not specified'
         
     def get_eventEndDate(self, obj):
         if obj.eventEndDate is not None:
             return obj.eventEndDate.strftime('%Y-%m-%d')
         else:
-            return None 
+            return 'Event end date not specified' 
     
     def get_additionalInfo(self, obj):
         if obj.additionalInfo is not None:
             return obj.additionalInfo
         else:
-            return "No Information"
+            return "Additional information not specified"
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -212,13 +212,13 @@ class BookmarkedEventSerializer(Serializer):
         if obj.user is not None:
             return obj.user.name
         else:
-            return 'user not Available'
+            return 'User not specified'
     
     def get_event(self, obj):
         if obj.event is not None:
             return FoodEventSerializer(obj.event).data
         else:
-            return 'Food Event not Available'
+            return 'Food event not specified'
         
 class CategorySerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -233,13 +233,13 @@ class CategorySerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not Available'
+            return 'Name not specified'
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
             return obj.createdAt.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'CreatedAt not specified'
     
     def get_active(self, obj):
         if obj.active is not None:
@@ -262,31 +262,31 @@ class FoodRecipeSerializer(Serializer):
         if obj.foodName is not None:
             return obj.foodName
         else:
-            return 'Name not Available'
+            return 'Name not specified'
         
     def get_ingredients(self, obj):
         if obj.ingredients is not None:
             return obj.ingredients
         else:
-            return 'Ingredient not Available'
+            return 'Ingredient not specified'
     
     def get_cookingInstructions(self, obj):
         if obj.cookingInstructions is not None:
             return obj.cookingInstructions
         else:
-            return 'Cooking Instructions not Available'
+            return 'Cooking instructions not specified'
         
     def get_category(self, obj):
         if obj.category is not None:
             return obj.category.name
         else:
-            return 'Name not Available'
+            return 'Name not specified'
         
     def get_foodImage(self, obj):
         if obj.foodImage is not None:
             return DocumentSerializer(obj.foodImage.all(), many=True).data
         else:
-            return 'Not Available'
+            return 'Food image not specified'
         
 class RequestTypeSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -301,13 +301,13 @@ class RequestTypeSerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not Available'
+            return 'Name not specified'
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
             return obj.createdAt.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'CreatedAt not specified'
     
     def get_active(self, obj):
         if obj.active is not None:
@@ -319,10 +319,10 @@ class DeliveryDetailSerializer(Serializer):
     id = serializers.SerializerMethodField()
     pickupAddress =  serializers.SerializerMethodField()
     pickupDate = serializers.SerializerMethodField()
-    pickedup =  serializers.SerializerMethodField()
+    pickedup =  serializers.BooleanField()
     dropAddress =  serializers.SerializerMethodField()
-    dropDate = serializers.BooleanField()
-    delivered = serializers.SerializerMethodField()
+    dropDate = serializers.SerializerMethodField()
+    delivered = serializers.BooleanField()
     driver = serializers.SerializerMethodField()
     
     def get_id(self, obj):
@@ -332,13 +332,13 @@ class DeliveryDetailSerializer(Serializer):
         if obj.pickupAddress is not None:
             return AddressSerializer(obj.pickupAddress).data
         else:
-            return 'pickup Address not Available'
+            return 'Pickup address not specified'
         
     def get_pickupDate(self, obj):
         if obj.pickupDate is not None:
             return obj.pickupDate.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'Pickup date not specified'
     
     def get_pickedup(self, obj):
         if obj.pickedup is not None:
@@ -350,13 +350,13 @@ class DeliveryDetailSerializer(Serializer):
         if obj.dropAddress is not None:
             return AddressSerializer(obj.dropAddress).data
         else:
-            return 'drop Address not Available'
+            return 'Drop address not specified'
         
     def get_dropDate(self, obj):
         if obj.dropDate is not None:
             return obj.dropDate.strftime('%Y-%m-%d')
         else:
-            return '0000-00-00'
+            return 'Drop date not specified'
         
     def get_delivered(self, obj):
         if obj.delivered is not None:
@@ -368,7 +368,7 @@ class DeliveryDetailSerializer(Serializer):
         if obj.driver is not None:
             return obj.driver.name
         else:
-            return 'Driver Not Available'    
+            return 'Driver not specified'    
 
         
 class DonationSerializer(Serializer):
@@ -387,25 +387,25 @@ class DonationSerializer(Serializer):
         if obj.donationType is not None:
             return obj.donationType.name
         else:
-            return 'Donation Type Not Available'
+            return 'Donation type not specified'
     
     def get_foodItem(self, obj):
         if obj.foodItem is not None:
             return obj.foodItem.itemName
         else:
-            return 'food Item Not Available'
+            return 'Food item not specified'
     
     def get_quantity(self, obj):
         if obj.quantity is not None:
             return obj.quantity
         else:
-            return 'Quantity Not Available'
+            return 'Quantity not specified'
         
     def get_donatedBy(self, obj):
         if obj.donatedBy is not None:
             return obj.donatedBy.name
         else:
-            return 'Donated By Not Available'    
+            return 'DonatedBy details not specified'    
 
     def get_fullfilled(self, obj):
         if obj.fullfilled is not None:
@@ -417,4 +417,4 @@ class DonationSerializer(Serializer):
         if obj.delivery is not None:
             return DeliveryDetailSerializer(obj.delivery).data
         else:
-            return 'Delivery Details Not Available'
+            return 'Delivery details not specified'

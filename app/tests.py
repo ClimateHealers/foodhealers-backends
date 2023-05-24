@@ -2089,3 +2089,65 @@ class UserOperations(APITestCase):
             return result
         except Exception as e:
             return str(e)
+        
+    '''
+    Test case to test GET Donate Food History with donation Present
+    '''
+    def test_volunteer_getDonateFoodHistory_with_donationPresent(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:donate-food')
+
+            foodItem = FoodItem.objects.create(
+                itemName='foodName', 
+                addedBy=self.user, 
+                itemType=self.foodItemType, 
+                createdAt=datetime.now()
+            )
+
+            pickupAddress = Address.objects.create(
+                lat=12.916540, lng=77.651950, alt=4500
+            )
+
+            deliveryDetails = DeliveryDetail.objects.create(
+                pickupAddress=pickupAddress, pickupDate='2023-05-05'
+            )
+
+            donation = Donation.objects.create(
+                donationType=self.foodItemType,
+                foodItem=foodItem,
+                quantity='50 kg',
+                donatedBy=self.user,
+                needsPickup=True,
+                delivery=deliveryDetails,
+            )  
+
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getDonateFoodHistory_donationPresent ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test GET Donate Food History with no donation Present
+    '''
+    def test_volunteer_getDonateFoodHistory_with_noDonationPresent(self):
+        
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:donate-food')
+
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getDonateFoodHistory_with_noDonationPresent ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
