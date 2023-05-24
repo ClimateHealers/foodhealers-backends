@@ -13,7 +13,7 @@ import firebase_admin.auth as auth
 from datetime import datetime
 
 # get Django Access token for development testing. 
-# getAccessToken(14)
+# getAccessToken(2)
 
 # Sign Up API  
 class SignUp(APIView):
@@ -190,8 +190,9 @@ class SignIn(APIView):
         
 # fetch All Food Events for food Seekers (POST METHOD)     
 class FindFood(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+    ## removed authentication for find food as food seekers do not have access Token
+    # authentication_classes = [VolunteerTokenAuthentication]
+    # permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -217,14 +218,14 @@ class FindFood(APIView):
         },
 
         operation_description="Find Food Events API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
+        # manual_parameters=[
+        #     openapi.Parameter(
+        #         name='Authorization',
+        #         in_=openapi.IN_HEADER,
+        #         type=openapi.TYPE_STRING,
+        #         description='Token',
+        #     ),
+        # ],
     )
 
     def post(self, request, format=None):
@@ -419,15 +420,8 @@ class Event(APIView):
     )
     def get(self, request, format=None):
         try:
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
-            
+            user = request.user
+
             if FoodEvent.objects.filter(createdBy=user).exists():
                 foodEvents = FoodEvent.objects.filter(createdBy=user)
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
@@ -479,14 +473,7 @@ class BookmarkEvent(APIView):
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
 
             if FoodEvent.objects.filter(id=eventId).exists():
                 foodEvent = FoodEvent.objects.get(id=eventId)
@@ -528,15 +515,7 @@ class BookmarkEvent(APIView):
 
     def get(self, request, format=None):
         try:
-            
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
 
             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
                 bookmarkedEvents = EventBookmark.objects.filter(user=user, isDeleted=False)
@@ -578,14 +557,7 @@ class Categories(APIView):
     
     def get(self, request, format=None):
         try:
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
             
             category = Category.objects.all()
             categoryList = CategorySerializer(category, many=True).data
@@ -662,14 +634,7 @@ class FindFoodRecipe(APIView):
             
             # Slugs and tags to  be modified later
 
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
             
             if Category.objects.filter(id=categoryId).exists():
                 category = Category.objects.get(id=categoryId)
@@ -720,14 +685,7 @@ class FindFoodRecipe(APIView):
 
     def get(self, request, categoryId, format=None):
         try:
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
             
             if Category.objects.filter(id=categoryId).exists():
                 category = Category.objects.get(id=categoryId)
@@ -774,14 +732,7 @@ class RequestTypes(APIView):
     
     def get(self, request, format=None):
         try:
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+            user = request.user
             
             requestType = RequestType.objects.all()
             requestTypeList = RequestTypeSerializer(requestType, many=True).data
@@ -851,15 +802,8 @@ class RequestFoodSupplies(APIView):
             else:
                 return  Response({'success': False, 'message': 'please enter valid quantity'})
             
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
-            
+            user = request.user
+
             if ItemType.objects.filter(id=itemTypeId).exists():
                 itemType = ItemType.objects.get(id=itemTypeId)
             else:
@@ -957,16 +901,8 @@ class RequestVolunteers(APIView):
                 numberOfVolunteers = request.data.get('numberOfVolunteers')
             else:
                 return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
-            
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
-            
+
+            user = request.user            
 
             if FoodEvent.objects.filter(id=eventId, createdBy=user).exists():
                 foodEvent = FoodEvent.objects.get(id=eventId, createdBy=user)
@@ -1080,15 +1016,8 @@ class DonateFood(APIView):
                 phoneNumber = request.data.get('phoneNumber')
             else:
                 return Response({'success': False, 'message': 'please enter valid phone Number'})
-         
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+
+            user = request.user
             
             if ItemType.objects.filter(id=itemTypeId).exists():
                 itemType = ItemType.objects.get(id=itemTypeId)
@@ -1153,17 +1082,9 @@ class DonateFood(APIView):
     )
 
     def get(self, request, format=None):
-        try:
-         
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                else:
-                    return Response({'success': False, 'message': 'user not found'})
-            else :
-                return Response({'success': False, 'message': 'unable to get user id'})
-            
+        try:  
+            user = request.user
+
             if Donation.objects.filter(donatedBy=user).exists(): 
                 donation = Donation.objects.filter(donatedBy=user)
                 donationDetails = DonationSerializer(donation, many=True).data
