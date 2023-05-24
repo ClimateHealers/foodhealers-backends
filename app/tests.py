@@ -2151,3 +2151,278 @@ class UserOperations(APITestCase):
             return result
         except Exception as e:
             return str(e)
+        
+    # Volunteer View Profile test cases
+    '''
+    Test case to test Get Volunteer Profile with valid data
+    '''
+    def test_volunteer_getVolunteerProfile_valid_data(self):
+        
+        try:
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getVolunteerProfile_valid_data ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+
+    '''
+    Test case to test Update Volunteer Profile with valid data
+    '''
+    def test_volunteer_updateVolunteerProfile_validData(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_validData ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile for volunteer with email does not exist
+    '''
+    def test_volunteer_updateVolunteerProfile_email_notExist(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'noemail@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_email_notExist ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (name)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_name(self):
+        
+        try:
+            data = {
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_name ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (email)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_email(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_email ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (lat)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_lat(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_lat ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (lng)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_lng(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_lng ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (alt)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_alt(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'phoneNumber':9178626772,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_alt ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (phoneNumber)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_phoneNumber(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'volunteerType':VOLUNTEER_TYPE[3][0],
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_phoneNumber ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Volunteer Profile with missing parameter (volunteerType)
+    '''
+    def test_volunteer_updateVolunteerProfile_missing_volunteerType(self):
+        
+        try:
+            data = {
+                'name':'update User',
+                'email':'testuser@example.com',
+                'lat':22.5777,
+                'lng':52.5777,
+                'alt':54777,
+                'phoneNumber':9178626772,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-profile')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVolunteerProfile_missing_volunteerType ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   

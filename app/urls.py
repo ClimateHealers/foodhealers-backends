@@ -10,6 +10,8 @@ from app import views
 app_name = "app"
 
 urlpatterns = [
+    # GET (CHOICES)
+    re_path(r'choices/', views.ChoicesView.as_view()),
     # POST (user Signup)
     re_path(r'signup/', views.SignUp.as_view(), name='user-signup'),
     # POST (user Login)
@@ -32,5 +34,7 @@ urlpatterns = [
     re_path(r'request-volunteers/(?P<requestTypeId>[-\w]*)/', views.RequestVolunteers.as_view(), name='request-volunteers'), 
     # GET (to View History Donated Food) and POST (to Add donate Food)
     re_path(r'donate-food/', views.DonateFood.as_view(), name='donate-food'),
+    # GET (to View Volunteer profile) and PUT (to Update Volunteer Profile)
+    re_path(r'volunteer-profile/', views.VolunteerProfile.as_view(), name='volunteer-profile'), 
     
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
