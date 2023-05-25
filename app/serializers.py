@@ -418,3 +418,65 @@ class DonationSerializer(Serializer):
             return DeliveryDetailSerializer(obj.delivery).data
         else:
             return 'Delivery details not specified'
+        
+class VehicleSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    owner = serializers.SerializerMethodField()
+    make =  serializers.CharField(max_length=100)
+    model = serializers.CharField(max_length=100)
+    plateNumber =  serializers.SerializerMethodField()
+    vehicleColour =  serializers.CharField(max_length=100)
+    active = serializers.BooleanField()
+    createdAt = serializers.SerializerMethodField()
+    verified = serializers.BooleanField()
+
+    def get_id(self, obj):
+        return obj.id
+
+    def get_owner(self, obj):
+        if obj.owner is not None:
+            return obj.owner.name
+        else:
+            return 'vehicle owner not specified'
+        
+    def get_make(self, obj):
+        if obj.make is not None:
+            return obj.make
+        else:
+            return 'Vehicle make not specified'
+        
+    def get_model(self, obj):
+        if obj.model is not None:
+            return obj.model
+        else:
+            return 'Vehicle model not specified'
+        
+    def get_plateNumber(self, obj):
+        if obj.plateNumber is not None:
+            return obj.plateNumber
+        else:
+            return 'Vehicle plate number not specified'
+        
+    def get_vehicleColour(self, obj):
+        if obj.vehicleColour is not None:
+            return obj.vehicleColour
+        else:
+            return 'Vehicle colour not specified'
+        
+    def get_active(self, obj):
+        if obj.active is not None:
+            return obj.active
+        else:
+            return False
+
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'Vehicle createdAt not specified'
+        
+    def get_verified(self, obj):
+        if obj.verified is not None:
+            return obj.verified
+        else:
+            return False

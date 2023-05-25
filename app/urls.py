@@ -36,5 +36,7 @@ urlpatterns = [
     re_path(r'donate-food/', views.DonateFood.as_view(), name='donate-food'),
     # GET (to View Volunteer profile) and PUT (to Update Volunteer Profile)
     re_path(r'volunteer-profile/', views.VolunteerProfile.as_view(), name='volunteer-profile'), 
-    
+    # GET (to fetch vehicle Details), POST (to Add Vehicle Details) and PUT (to Update Vehicle Details)
+    re_path(r'volunteer-vehicle/', views.VehicleOperations.as_view(), name='volunteer-vehicle'), 
+
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
