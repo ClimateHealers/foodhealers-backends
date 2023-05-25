@@ -563,8 +563,9 @@ class BookmarkEvent(APIView):
         
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+    ## removed authentication for fetch categories as food seekers do not have access Token
+    # authentication_classes = [VolunteerTokenAuthentication]
+    # permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -579,20 +580,18 @@ class Categories(APIView):
         },
         
         operation_description="Get Food Events Posted by volunteer API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
+        # manual_parameters=[
+        #     openapi.Parameter(
+        #         name='Authorization',
+        #         in_=openapi.IN_HEADER,
+        #         type=openapi.TYPE_STRING,
+        #         description='Token',
+        #     ),
+        # ],
     )
     
     def get(self, request, format=None):
-        try:
-            user = request.user
-            
+        try:            
             category = Category.objects.all()
             categoryList = CategorySerializer(category, many=True).data
             return Response({'success': True, 'categoriesList': categoryList})
@@ -1131,7 +1130,7 @@ class DonateFood(APIView):
             return Response({'success': False, 'message': str(e)})
 
  
-# Update Volunteer Profile API  
+# Volunteer Profile API  
 class VolunteerProfile(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1194,7 +1193,7 @@ class VolunteerProfile(APIView):
         operation_description="Update Volunteer Profile API",
     )
 
-    # user onboarding API required firebase token and name
+    # update Volunteer Profile API
     def put(self, request,  format=None):
 
         if request.data.get('name') is not None:
@@ -1261,5 +1260,197 @@ class VolunteerProfile(APIView):
                 return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':userDetails})
             else:
                 return Response({'success':False, 'message':'Volunteer with email does not exist'})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+
+#  GET, POST and PUT Vehicle API
+class VehicleOperations(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'vehicleDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch all vehicle API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+            user = request.user 
+            if Vehicle.objects.filter(owner=user).exists():
+                vehicle = Vehicle.objects.filter(owner=user)
+                vehicleDetails = VehicleSerializer(vehicle, many=True).data
+                return Response({'success': True, 'vehicleDetails': vehicleDetails})
+            else:
+                return Response({'success': True, 'message': f'No vehicle found for user {user.name}', 'vehicleDetails': []})
+            
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['make', 'model', 'vehicleColour',  'plateNumber', 'active'], 
+            properties={
+                'make': openapi.Schema(type=openapi.TYPE_STRING, example="Audi"),
+                'model': openapi.Schema(type=openapi.TYPE_STRING, example='R8'),
+                'plateNumber': openapi.Schema(type=openapi.TYPE_STRING, example='KA59W6969'),
+                'vehicleColour': openapi.Schema(type=openapi.TYPE_STRING, example='Balck'),
+                'active': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=False),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Vehicle added successfully'),
+                },
+            ),
+        },
+
+        operation_description="Add Vehicle API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, format=None):
+        try:
+            
+            if request.data.get('make') is not None:
+                make = request.data.get('make')
+            else:
+                return Response({'success': False, 'message': 'please enter valid make'})
+            
+            if request.data.get('model') is not None:
+                model = request.data.get('model')
+            else:
+                return Response({'success': False, 'message':'please enter valid model'})
+            
+            if request.data.get('vehicleColour') is not None:
+                vehicleColour = request.data.get('vehicleColour')
+            else:
+                return Response({'success': False, 'message': 'please enter valid vehicle colour'})
+            
+            if request.data.get('plateNumber') is not None:
+                plateNumber = request.data.get('plateNumber')
+            else:
+                return Response({'success': False, 'message': 'please enter valid plate number'})
+            
+            if request.data.get('active') is not None:
+                active = request.data.get('active')
+            else:
+                return Response({'success': False, 'message': 'please enter True if active and False if not active'})
+            
+            user = request.user
+
+            if Vehicle.objects.filter(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour).exists():
+                vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour)
+                vehicleDetails = VehicleSerializer(vehicle).data
+                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicleDetails})
+            else:
+                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour, active=active, createdAt=datetime.now())
+                vehicleDetails = VehicleSerializer(vehicle).data
+
+                # updating isDriver Field of Volunteer model when the user Adds a vehicle.
+                user.isDriver = True
+                user.save()
+
+                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicleDetails})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})    
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['vehicleId', 'vehicleColour', 'plateNumber', 'active'], 
+            properties={
+                'vehicleId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'plateNumber': openapi.Schema(type=openapi.TYPE_STRING, example='KA59W6969'),
+                'vehicleColour': openapi.Schema(type=openapi.TYPE_STRING, example='Balck'),
+                'active': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Vehicle details updated successfully'),
+                },
+            ),
+        },
+
+        operation_description="Update Vehicle API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def put(self, request, format=None):
+        try:
+            if request.data.get('vehicleId') is not None:
+                vehicleId = request.data.get('vehicleId')
+            else:
+                return Response({'success': False, 'message': 'Please enter valid vehicle Id'})
+            
+            if request.data.get('vehicleColour') is not None:
+                vehicleColour = request.data.get('vehicleColour')
+            else:
+                return Response({'success': False, 'message': 'Please enter valid vehicle colour'})
+            
+            if request.data.get('plateNumber') is not None:
+                plateNumber = request.data.get('plateNumber')
+            else:
+                return Response({'success': False, 'message': 'Please enter valid plate number'})
+            
+            if request.data.get('active') is not None:
+                active = request.data.get('active')
+            else:
+                return Response({'success': False, 'message': 'Please enter True if active and False if not active'})
+            
+            user = request.user
+
+            if Vehicle.objects.filter(id=vehicleId, owner=user).exists():
+                vehicle = Vehicle.objects.get(id=vehicleId, owner=user)
+                vehicle.vehicleColour = vehicleColour
+                vehicle.plateNumber = plateNumber
+                vehicle.active = active
+                vehicle.save()
+                vehicleDetails = VehicleSerializer(vehicle).data
+                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicleDetails})
+            else:
+                return Response({'success': False, 'message': f'Vehicle with id {vehicleId} not found'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})

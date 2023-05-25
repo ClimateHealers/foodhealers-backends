@@ -42,6 +42,17 @@ class UserOperations(APITestCase):
                 volunteerType=VOLUNTEER_TYPE[2][0],
             )
 
+            vehicle, created = Vehicle.objects.get_or_create(
+                make='Audi',
+                model='R8',
+                plateNumber='KA69F6969',
+                vehicleColour='Black',
+                active=True,
+                createdAt=datetime.now(), 
+                verified=True,
+                owner=user
+            )
+
             from app.authentication import create_access_token, create_refresh_token
             accessToken = create_access_token(user.id)
             refreshToken = create_refresh_token(user.id)
@@ -57,6 +68,7 @@ class UserOperations(APITestCase):
             self.volunteerRequestType = volunteerRequestType
             self.pickupRequestType = pickupRequestType 
             self.foodItemType = foodItemType
+            self.vehicle = vehicle
             print('<<<---------------------------------------->>>')
 
     # user SignUp test cases
@@ -530,7 +542,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_valid_data(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
@@ -569,7 +581,7 @@ class UserOperations(APITestCase):
     def test_user_findfood_valid_data_with_noEvents(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
@@ -594,7 +606,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_lat(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lng': '52.5777',
@@ -617,7 +629,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_lng(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
@@ -640,7 +652,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_alt(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
@@ -663,7 +675,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_eventStartDate(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
@@ -686,7 +698,7 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_eventEndDate(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            # self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:find-food')
             data = {
                 'lat': '22.5777',
@@ -1826,7 +1838,7 @@ class UserOperations(APITestCase):
             return str(e)
 
     '''
-    Test case to test post Donate Food Whith donation is Already Present
+    Test case to test post Donate Food With donation is Already Present
     '''
     def test_volunteer_postDonateFood_donation_alreadyPresent(self):
 
@@ -2426,3 +2438,396 @@ class UserOperations(APITestCase):
             return result
         except Exception as e:
             return str(e)   
+        
+    # Volunteer Vehicle test cases
+    '''
+    Test case to test Get Vehicle Details with valid data
+    '''
+    def test_volunteer_getVehicleDetails_valid_data(self):
+        
+        try:
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getVehicleDetails_valid_data ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test Get Vehicle Details with No Vehicle details
+    '''
+    def test_volunteer_getVehicleDetails_noVehicle_present(self):
+        
+        try:
+            
+            volunteer = Volunteer.objects.create(name = 'UserTestVolunteer')
+            accessToken = create_access_token(volunteer.id)
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getVehicleDetails_noVehicle_present ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+
+    '''
+    Test case to test Add Vehicle Details with valid data
+    '''
+    def test_volunteer_addVehicleDetails_validData(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'model':'R8',
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_validData ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Add Vehicle Details with Vehicle Already exist
+    '''
+    def test_volunteer_addVehicleDetails_vehicle_alreadyExist(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'model':'R8',
+                'vehicleColour':'Black',
+                'plateNumber':'KA69F6969',
+                'active':True,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_vehicle_alreadyExist ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Add Vehicle Details with missing parameter (make)
+    '''
+    def test_volunteer_addVehicleDetails_missing_make(self):
+        
+        try:
+            
+            data = {
+                'model':'R8',
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_missing_make ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+
+    '''
+    Test case to test Add Vehicle Details with missing parameter (model)
+    '''
+    def test_volunteer_addVehicleDetails_missing_model(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_missing_model ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Add Vehicle Details with missing parameter (vehicleColour)
+    '''
+    def test_volunteer_addVehicleDetails_missing_vehicleColour(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'model':'R8',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_missing_vehicleColour ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Add Vehicle Details with missing parameter (plateNumber)
+    '''
+    def test_volunteer_addVehicleDetails_missing_plateNumber(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'model':'R8',
+                'vehicleColour':'Blue',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_missing_plateNumber ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Add Vehicle Details with missing parameter (active)
+    '''
+    def test_volunteer_addVehicleDetails_missing_active(self):
+        
+        try:
+            
+            data = {
+                'make':'Audi', 
+                'model':'R8',
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.post(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_addVehicleDetails_missing_active ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test Update Vehicle Details with valid data
+    '''
+    def test_volunteer_updateVehicleDetails_validData(self):
+        
+        try:
+            
+            data = {
+                'vehicleId':self.vehicle.id,
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_validData ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)   
+        
+    '''
+    Test case to test Update Vehicle Details with Vehicleid not exist
+    '''
+    def test_volunteer_updateVehicleDetails_vehicleid_notExist(self):
+        
+        try:
+            
+            data = {
+                'vehicleId':0,
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_vehicleid_notExist ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Update Vehicle Details with missing parameter (vehicleId)
+    '''
+    def test_volunteer_updateVehicleDetails_missing_vehicleId(self):
+        
+        try:
+            
+            data = {
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_missing_vehicleId ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+
+    '''
+    Test case to test Update Vehicle Details with missing parameter (vehicleColour)
+    '''
+    def test_volunteer_updateVehicleDetails_missing_vehicleColour(self):
+        
+        try:
+            
+            data = {
+                'vehicleId':0,
+                'plateNumber':'AB77C7777',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_missing_vehicleColour ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Update Vehicle Details with missing parameter (plateNumber)
+    '''
+    def test_volunteer_updateVehicleDetails_missing_plateNumber(self):
+        
+        try:
+            
+            data = {
+                'vehicleId':0,
+                'vehicleColour':'Blue',
+                'active':False,
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_missing_plateNumber ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e) 
+        
+    '''
+    Test case to test Update Vehicle Details with missing parameter (active)
+    '''
+    def test_volunteer_updateVehicleDetails_missing_active(self):
+        
+        try:
+            
+            data = {
+                'vehicleId':0,
+                'vehicleColour':'Blue',
+                'plateNumber':'AB77C7777',
+            }
+
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-vehicle')
+            
+            response = self.client.put(url, data, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_updateVehicleDetails_missing_active ------',result)
+
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
