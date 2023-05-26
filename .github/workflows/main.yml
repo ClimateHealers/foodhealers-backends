@@ -28,5 +28,6 @@ jobs:
           script: |
             source /home/ubuntu/food-env/bin/activate
             cd /home/ubuntu/
-            mkdir new
+            mkdir nextcheck
             sudo systemctl restart foodhealers-gunicorn.service
+            
