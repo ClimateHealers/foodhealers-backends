@@ -30,8 +30,8 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/
-            mkdir deletethisdir
-            source /food-env/bin/activate
+            mkdir removethisdir
+            source home/ubuntu/food-env/bin/activate
             cd /home/ubuntu/foodhealers_backend/
             git checkout develop
             git pull origin develop
