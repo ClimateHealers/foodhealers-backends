@@ -15,7 +15,6 @@ jobs:
 
       - name: Install SSH client
         run: |
-          sudo apt-get update -y
           sudo apt-get install openssh-client -y
           sudo apt-get install git ssh -y
 
