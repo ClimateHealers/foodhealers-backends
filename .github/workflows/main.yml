@@ -32,7 +32,7 @@ jobs:
             cd /home/ubuntu/
             mkdir removethisdir
             source food-env/bin/activate
-            cd foodhealers_backend/
+            cd foodhealers-backend/
             git checkout develop
             git pull origin develop
             pip install -r requirements.txt
