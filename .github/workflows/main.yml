@@ -26,6 +26,6 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            source /home/***/food-env/bin/activate
-            cd /home/***/foodhealers_backend/
+            source /home/ubuntu/food-env/bin/activate
+            cd /home/ubuntu/foodhealers_backend/
             sudo systemctl restart foodhealers-gunicorn.service
