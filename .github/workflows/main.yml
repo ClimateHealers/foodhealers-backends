@@ -10,6 +10,9 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Clear Cache
+        run: rm -rf ${{ runner.temp }}/*
+
       - name: Debug secrets
         run: |
           echo "EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}"
@@ -28,6 +31,5 @@ jobs:
           script: |
             source /home/ubuntu/food-env/bin/activate
             cd /home/ubuntu/
-            mkdir nextcheck
+            mkdir new
             sudo systemctl restart foodhealers-gunicorn.service
-            
