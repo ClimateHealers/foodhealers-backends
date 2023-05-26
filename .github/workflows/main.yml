@@ -31,5 +31,13 @@ jobs:
           script: |
             source /home/ubuntu/food-env/bin/activate
             cd /home/ubuntu/
-            mkdir new
+            mkdir checking-new
+            source /food-env/bin/activate
+            cd /home/ubuntu/foodhealers_backend/
+            git checkout develop
+            git pull origin develop
+            pip install -r requirements.txt
+            python manage.py makemigrations
+            python manage.py migrate
             sudo systemctl restart foodhealers-gunicorn.service
+            exit
