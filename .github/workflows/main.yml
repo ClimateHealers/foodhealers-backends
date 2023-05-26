@@ -29,7 +29,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            source /home/ubuntu/food-env/bin/activate
+            cd /home/ubuntu/
+            source /food-env/bin/activate
             cd /home/ubuntu/
             mkdir checking-new
             source /food-env/bin/activate
