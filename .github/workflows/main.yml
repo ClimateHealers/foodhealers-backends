@@ -1,38 +1,38 @@
-# name: Deploy
+name: Deploy
 
-# on:
-#   push:
-#     branches:
-#       - develop
+on:
+  push:
+    branches:
+      - develop
 
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
+jobs:
+  deploy:
+    runs-on: self-hosted
 
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-#       - name: Install SSH client
-#         run: |
-#           sudo apt-get update -y
-#           sudo apt-get install openssh-client -y
-#           sudo apt-get install git ssh -y
+      - name: Install SSH client
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install openssh-client -y
+          sudo apt-get install git ssh -y
 
-#       - name: Setup SSH
-#         run: |
-#           mkdir -p ~/.ssh
-#           eval $(ssh-agent -s)
-#           echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          eval $(ssh-agent -s)
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
-#       - name: Configure SSH known hosts
-#         run: |
-#           |
-#           cat << EOF >> ~/.ssh/config
-#           Host *
-#               StrictHostKeyChecking no
-#           EOF
+      - name: Configure SSH known hosts
+        run: |
+          |
+          cat << EOF >> ~/.ssh/config
+          Host *
+              StrictHostKeyChecking no
+          EOF
 
-#       - name: Deploy to EC2 server
-#         run: |
-#           ssh ubuntu@$EC2_PUBLIC_IP_ADDRESS "cd /home/ubuntu/foodhealers_backend/ && git stash && git checkout develop && git pull origin develop && cd /home/ubuntu/ && source food-env/bin/activate && cd /home/ubuntu/foodhealers_backend/ && pip install -r requirements.txt && python manage.py makemigrations  && python manage.py migrate && sudo systemctl restart foodhealers-gunicorn.service && sudo systemctl restart foodhealers-celery.service && exit"
+      - name: Deploy to EC2 server
+        run: |
+          ssh ubuntu@$EC2_PUBLIC_IP_ADDRESS "cd /home/ubuntu/foodhealers_backend/ && git stash && git checkout develop && git pull origin develop && cd /home/ubuntu/ && source food-env/bin/activate && cd /home/ubuntu/foodhealers_backend/ && pip install -r requirements.txt && python manage.py makemigrations  && python manage.py migrate && sudo systemctl restart foodhealers-gunicorn.service && sudo systemctl restart foodhealers-celery.service && exit"
