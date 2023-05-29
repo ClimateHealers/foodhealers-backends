@@ -47,5 +47,5 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ github.repository }}:${{ github.sha }}
+          tags: climatehealers/foodhealers-backends:${{ github.sha }}
 
