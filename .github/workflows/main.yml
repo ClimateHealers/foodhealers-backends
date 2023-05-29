@@ -41,14 +41,14 @@ jobs:
 #             sudo systemctl restart foodhealers-gunicorn.service
 #             exit
 #             echo " deployment success"
-      - name: Dockerize code
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ghcr.io/climatehealers/foodhealers-backends:${{ github.sha }}
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: "Build:checkout"
+        uses: actions/checkout@v2
+      - name: 'Build:dockerimage'
+        uses: docker/build-push-action@v1
+        with:
+          registry: ghcr.io
+          username: "aravindmuniraj95"
+          password: ${{ secrets.GITHUB_TOKEN }}
+          repository: climatehealers/foodhealers-backends
+          tags: latest
