@@ -49,6 +49,6 @@ jobs:
         with:
           registry: ghcr.io
           username: "aravindmuniraj95"
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PAT_TOKEN }}
           repository: climatehealers/foodhealers-backends
           tags: latest
