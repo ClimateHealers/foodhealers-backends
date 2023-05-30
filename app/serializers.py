@@ -178,19 +178,19 @@ class FoodEventSerializer(Serializer):
     
     def get_address(self, obj):
         if obj.address is not None:
-            return str(obj.address)
+            return AddressSerializer(obj.address).data
         else:
             return 'address not specified'
 
     def get_eventStartDate(self, obj):
         if obj.eventStartDate is not None:
-            return obj.eventStartDate.strftime('%Y-%m-%d')
+            return obj.eventStartDate
         else:
             return 'Event start date not specified'
         
     def get_eventEndDate(self, obj):
         if obj.eventEndDate is not None:
-            return obj.eventEndDate.strftime('%Y-%m-%d')
+            return obj.eventEndDate
         else:
             return 'Event end date not specified' 
     
@@ -237,7 +237,7 @@ class CategorySerializer(Serializer):
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
-            return obj.createdAt.strftime('%Y-%m-%d')
+            return obj.createdAt
         else:
             return 'CreatedAt not specified'
     
@@ -305,7 +305,7 @@ class RequestTypeSerializer(Serializer):
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
-            return obj.createdAt.strftime('%Y-%m-%d')
+            return obj.createdAt
         else:
             return 'CreatedAt not specified'
     
@@ -336,7 +336,7 @@ class DeliveryDetailSerializer(Serializer):
         
     def get_pickupDate(self, obj):
         if obj.pickupDate is not None:
-            return obj.pickupDate.strftime('%Y-%m-%d')
+            return obj.pickupDate
         else:
             return 'Pickup date not specified'
     
@@ -354,7 +354,7 @@ class DeliveryDetailSerializer(Serializer):
         
     def get_dropDate(self, obj):
         if obj.dropDate is not None:
-            return obj.dropDate.strftime('%Y-%m-%d')
+            return obj.dropDate
         else:
             return 'Drop date not specified'
         

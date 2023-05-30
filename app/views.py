@@ -193,31 +193,31 @@ class SignIn(APIView):
                 else:
                     return Response({'success': False, 'message': 'Please provide valid id token'})
 
-                if Volunteer.objects.filter(email=decoded_token['email']).exists():
-                    user = Volunteer.objects.get(email=decoded_token['email'])
-                    userDetails = UserProfileSerializer(user).data
-                    accessToken = create_access_token(user.id)
-                    refreshToken = create_refresh_token(user.id)
-                else:
-                    return Response({'success': False, 'message':'user with email does not exist'})
+            if Volunteer.objects.filter(email=email).exists():
+                user = Volunteer.objects.get(email=email)
+                userDetails = UserProfileSerializer(user).data
+                accessToken = create_access_token(user.id)
+                refreshToken = create_refresh_token(user.id)
+            else:
+                return Response({'success': False, 'message':'user with email does not exist'})
 
-                if CustomToken.objects.filter(user=user).exists():
-                    token = CustomToken.objects.get(user=user)
-                    token.refreshToken = refreshToken
-                    token.accessToken = accessToken
-                    token.save()
-                else:
-                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+            if CustomToken.objects.filter(user=user).exists():
+                token = CustomToken.objects.get(user=user)
+                token.refreshToken = refreshToken
+                token.accessToken = accessToken
+                token.save()
+            else:
+                token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
 
-                return Response({
-                    'success': True,
-                    'message': 'successfully signed in',
-                    'isAuthenticated': True,
-                    'token': accessToken,
-                    'expiresIn': '2 minutes',
-                    'refreshToken': refreshToken,
-                    'user': userDetails,
-                })
+            return Response({
+                'success': True,
+                'message': 'successfully signed in',
+                'isAuthenticated': True,
+                'token': accessToken,
+                'expiresIn': '2 minutes',
+                'refreshToken': refreshToken,
+                'user': userDetails,
+            })
             
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
@@ -237,8 +237,8 @@ class FindFood(APIView):
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
-                'eventStartDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
-                'eventEndDate': openapi.Schema(type=openapi.FORMAT_DATE, example='2023-05-05'),
+                'eventStartDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER,example=1685346240), # Date-time in epoch format
+                'eventEndDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER, example=1685346240),  # Date-time in epoch format
             },
         ),
         responses={
@@ -284,12 +284,14 @@ class FindFood(APIView):
                 return Response({'success': False, 'message': 'please enter valid altitude'})
             
             if request.data.get('eventStartDate') is not None:
-                fromDate = request.data.get('eventStartDate')
+                fromDateEpochs = request.data.get('eventStartDate')
+                fromDate = datetime.fromtimestamp(fromDateEpochs)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
             if request.data.get('eventEndDate') is not None:
-                toDate = request.data.get('eventEndDate')
+                toDateEpochs = request.data.get('eventEndDate')
+                toDate = datetime.fromtimestamp(toDateEpochs)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event End Date'})
 
@@ -298,8 +300,8 @@ class FindFood(APIView):
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt)
 
-            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city = address.city).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city = address.city)
+            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
@@ -322,8 +324,8 @@ class Event(APIView):
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
-                'eventStartDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
-                'eventEndDate': openapi.Schema(type=openapi.FORMAT_DATE, example='2023-05-05'),
+                'eventStartDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER,example=1685346240), # Date-time in epoch format
+                'eventEndDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER, example=1685346240),  # Date-time in epoch format
                 'additionalInfo': openapi.Schema(type=openapi.TYPE_STRING, example='Free Vegan Meals'),
                 'files': openapi.Schema(type=openapi.TYPE_FILE,),
             },
@@ -373,12 +375,14 @@ class Event(APIView):
                 return Response({'success': False, 'message': 'please enter valid altitude'})
             
             if request.data.get('eventStartDate') is not None:
-                eventStartDate = request.data.get('eventStartDate')
+                eventStartDateEpochs = request.data.get('eventStartDate')
+                eventStartDate = datetime.fromtimestamp(eventStartDateEpochs)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
             if request.data.get('eventEndDate') is not None:
-                eventEndDate = request.data.get('eventEndDate')
+                eventEndDateEpochs = request.data.get('eventEndDate')
+                eventEndDate = datetime.fromtimestamp(eventEndDateEpochs)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event End Date'})
             
@@ -399,7 +403,7 @@ class Event(APIView):
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt)
 
             
-            organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True, volunteerType=VOLUNTEER_TYPE[2][0])
+            organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
             
             
             if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
