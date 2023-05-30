@@ -40,7 +40,7 @@ jobs:
             python manage.py migrate
             sudo systemctl restart foodhealers-gunicorn.service
             exit
-            echo " deployment success"
+            echo " deployment to ec2 completed"
 
       - name: "Build:checkout"
         uses: actions/checkout@v2
