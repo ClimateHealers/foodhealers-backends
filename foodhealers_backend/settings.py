@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'taggit',
     'rest_framework.authtoken',
     'debug_toolbar',
+    'django_celery_beat',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -182,6 +184,13 @@ REST_FRAMEWORK = {
        # 'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+# celery configuration
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'default'
+CELERY_ENABLED = True
+
+
 
 # INTERNAL_IPS = [
 #     # ...
