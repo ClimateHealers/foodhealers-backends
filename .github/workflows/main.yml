@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Clear Cache
-        run: rm -rf ${{ runner.temp }}/*
+        run: sudo rm -rf ${{ runner.temp }}/*
 
       - name: Debug secrets
         run: |
