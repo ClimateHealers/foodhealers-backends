@@ -10,8 +10,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Clear Cache
-        run: sudo rm -rf ${{ runner.temp }}/*
+#       - name: Clear Cache
+#         run: sudo rm -rf ${{ runner.temp }}/*
 
       - name: Debug secrets
         run: |
