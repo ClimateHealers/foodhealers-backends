@@ -10,6 +10,7 @@ COPY . /app/
 
 # Install the requirements using pip
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
+RUN echo "$ENVFILE" > /home/ubuntu/.local.env
 
 # Set environment variables for remote database connection
 ENV DB_ENGINE=django.db.backends.postgresql
