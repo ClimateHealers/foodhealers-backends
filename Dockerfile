@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 # Create the directory /home/ubuntu
 RUN mkdir -p /home/ubuntu
 RUN echo "$FIREBASE_JSON" > /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+RUN echo "FIREBASE_JSON value: $FIREBASE_JSON"
 RUN echo "$ENVFILE" > /home/ubuntu/.local.env
 
 #check
