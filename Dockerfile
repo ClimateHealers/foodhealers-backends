@@ -12,6 +12,7 @@ COPY . /app/
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 # Create the directory /home/ubuntu
 RUN mkdir -p /home/ubuntu
+syntax=docker/dockerfile:experimental
 # ARG FIREBASE_JSON  #for passing args parameter in command
 # RUN echo "$FIREBASE_JSON" > /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 # RUN echo "FIREBASE_JSON value: $FIREBASE_JSON"
