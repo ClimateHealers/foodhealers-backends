@@ -15,6 +15,7 @@ RUN mkdir -p /home/ubuntu
 RUN echo "$FIREBASE_JSON" > /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 RUN echo "$ENVFILE" > /home/ubuntu/.local.env
 
+#check
 # Set environment variables for remote database connection
 ENV DB_ENGINE=django.db.backends.postgresql
 ENV DB_HOST=localhost
