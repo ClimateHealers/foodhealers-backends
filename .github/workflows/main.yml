@@ -52,3 +52,7 @@ jobs:
           password: ${{ secrets.PAT_TOKEN }}
           repository: climatehealers/foodhealers-backends
           tags: latest
+          build-args: |
+              FIREBASE_JSON=${{ secrets.FIREBASE_JSON_SECRET }}
+
+     
