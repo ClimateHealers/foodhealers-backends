@@ -10,11 +10,15 @@ COPY . /app/
 
 # Install the requirements using pip
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
+
 # Create the directory /home/ubuntu
 RUN mkdir -p /home/ubuntu
+
 # ARG FIREBASE_JSON  #for passing args parameter in command
-RUN echo "$FIREBASE_JSON" | base64 -d > /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json \
-    && cat /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+RUN echo "$FIREBASE_JSON" | base64 -d > /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+
+# Display the content of the firebase-adminsdk JSON file
+RUN cat /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 
 RUN echo "$ENVFILE" > /home/ubuntu/.local.env
 
