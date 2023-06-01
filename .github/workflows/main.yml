@@ -65,9 +65,9 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           pwd
-          touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          touch food.json
+          echo "${{ secrets.FIREBASE_JSON }}" >> food.json
+          cat food.json
           ls -R $GITHUB_WORKSPACE
           docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest .
           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
