@@ -62,8 +62,30 @@ jobs:
 #           repository: climatehealers/foodhealers-backends
 #           tags: latest
 
-      - name: Build and Push Docker Image
-        run: |
+#       - name: Build and Push Docker Image
+#         run: |
+#           pwd
+#           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
+#           echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+#           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+#           touch .local.env
+#           echo "${{ secrets.FIREBASE_JSON }}" >> .local.env
+#           ls -R $GITHUB_WORKSPACE
+#           docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest .
+#           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
+#           docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest
+#       - name: "Build:checkout"
+#         uses: actions/checkout@v2
+
+      - name: 'Build:dockerimage'
+        uses: docker/build-push-action@v1
+        with:
+         registry: ghcr.io
+         username: "aravindmuniraj95"
+         password: ${{ secrets.PAT_TOKEN }}
+         repository: climatehealers/foodhealers-backends
+         tags: latest
+         run: |
           pwd
           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
           echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
