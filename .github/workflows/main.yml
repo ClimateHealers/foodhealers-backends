@@ -41,6 +41,12 @@ jobs:
             sudo systemctl restart foodhealers-gunicorn.service
             exit
             echo " deployment to ec2 completed"
+      
+      - name: 'Create json file'
+        run: |
+          touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 
       - name: "Build:checkout"
         uses: actions/checkout@v2
@@ -52,13 +58,4 @@ jobs:
           password: ${{ secrets.PAT_TOKEN }}
           repository: climatehealers/foodhealers-backends
           tags: latest
-      - name: 'Create env file'
-        run: |
-          mkdir -p /home/ubuntu
-          cd /home/ubuntu/
-          touch .local.env
-          echo FIREBASE_ADMIN_SDK=food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json >> .local.env
-          echo DEFAULT_SENDER=apps@alamanceinc.com >> .local.env
-          cat .local.env
 
-     
