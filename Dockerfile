@@ -12,7 +12,7 @@ COPY . /app/
 # Install the requirements using pip
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 RUN mkdir -p /home/ubuntu/
-RUN echo $HOME
+RUN ls -R $HOME
 # Copy the JSON file to the desired location inside the Docker image
 COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json /home/ubuntu/
 
