@@ -86,6 +86,6 @@ jobs:
           touch .local.env
           echo "${{ secrets.FIREBASE_JSON }}" >> .local.env
           ls -R $GITHUB_WORKSPACE
-          docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest .
+          docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
-          docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest
+          docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1
