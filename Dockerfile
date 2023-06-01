@@ -13,8 +13,7 @@ COPY . /app/
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 RUN mkdir -p /home/ubuntu/
 RUN ls -R $HOME
-ARG FILE_PATH=/home/aravind/actions-runner/_work/foodhealers-backends/foodhealers-backends/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-COPY $FILE_PATH /home/
+COPY /home/aravind/actions-runner/_work/foodhealers-backends/foodhealers-backends/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json /home/
 
 
 # Copy the JSON file to the desired location inside the Docker image
