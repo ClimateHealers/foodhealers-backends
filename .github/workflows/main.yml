@@ -54,5 +54,8 @@ jobs:
           tags: latest
           build-args: |
               FIREBASE_JSON=${{ secrets.FIREBASE_JSON_SECRET }}
+              
+      - name: Display Firebase JSON content
+        run: cat /home/ubuntu/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 
      
