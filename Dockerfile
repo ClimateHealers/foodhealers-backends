@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 RUN ls -R $HOME
 COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $HOME
 COPY .local.env $HOME
+RUN echo $HOME
 # Set environment variables for remote database connection
 ENV DB_ENGINE=django.db.backends.postgresql
 ENV DB_HOST=localhost
