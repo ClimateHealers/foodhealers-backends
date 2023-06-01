@@ -44,9 +44,11 @@ jobs:
       
       - name: 'Create json file'
         run: |
+          pwd
           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
           echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          mv food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $GITHUB_WORKSPACE/
 
       - name: "Build:checkout"
         uses: actions/checkout@v2
