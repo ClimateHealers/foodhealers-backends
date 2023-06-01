@@ -56,7 +56,7 @@ jobs:
               FIREBASE_JSON=${{ secrets.FIREBASE_JSON_SECRET }}
               
       - name: Display Firebase JSON content
-        run: pwd
+        run: ls
         
 
      
