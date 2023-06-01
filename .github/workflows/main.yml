@@ -66,7 +66,7 @@ jobs:
         run: |
           pwd
           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
-          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
+          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
           ls -R $GITHUB_WORKSPACE
           docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:latest .
