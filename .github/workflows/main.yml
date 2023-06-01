@@ -61,7 +61,6 @@ jobs:
 #           password: ${{ secrets.PAT_TOKEN }}
 #           repository: climatehealers/foodhealers-backends
 #           tags: latest
-
       - name: Build and Push Docker Image
         run: |
           pwd
@@ -71,14 +70,28 @@ jobs:
           touch .local.env
           echo "${{ secrets.FIREBASE_JSON }}" >> .local.env
           ls -R $GITHUB_WORKSPACE
-          
+          echo "::set-output name=ARTIFACTS_PATH::food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json .local.env"
+          echo "::set-output name=ARTIFACTS_PATH::food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json .local.env"
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: MyArtifacts
+          path: |
+           food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
+           .local.env
       - name: "Build:checkout"
         uses: actions/checkout@v2
+
+      - name: "Fetch artifacts"
+        uses: actions/download-artifact@v2
+        with:
+          name: MyArtifacts
+
       - name: 'Build:dockerimage'
         uses: docker/build-push-action@v1
         with:
-          registry: ghcr.io
-          username: "aravindmuniraj95"
-          password: ${{ secrets.PAT_TOKEN }}
-          repository: climatehealers/foodhealers-backends
-          tags: latest
+         registry: ghcr.io
+         username: "aravindmuniraj95"
+         password: ${{ secrets.PAT_TOKEN }}
+         repository: climatehealers/foodhealers-backends
+         tags: latest
