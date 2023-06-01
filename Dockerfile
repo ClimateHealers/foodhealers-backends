@@ -11,16 +11,6 @@ COPY . /app/
 # Install the requirements using pip
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 
-# Create the directory /home/ubuntu
-RUN mkdir -p /home/ubuntu
-
-# ARG FIREBASE_JSON  #for passing args parameter in command
-RUN echo "$FIREBASE_JSON" | base64 -d > food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-
-# Display the content of the firebase-adminsdk JSON file
-RUN cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-
-RUN echo "$ENVFILE" > .local.env
 
 #check
 # Set environment variables for remote database connection
@@ -30,6 +20,7 @@ ENV DB_PORT=5432
 ENV DB_NAME=foodhealersstagging
 ENV DB_USER=postgres
 ENV DB_PASSWORD=root
+ENV FIREBASE_ADMIN_SDK=food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 
 # Run the Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
