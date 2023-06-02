@@ -14,9 +14,9 @@ RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $HOME
 RUN cd $HOME
 RUN ls -l
-RUN cat .local.env
+RUN cat envfile
 RUN cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-COPY .local.env $HOME
+COPY envfile $HOME
 
 RUN ls -l $HOME
 RUN echo $HOME
