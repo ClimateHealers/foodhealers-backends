@@ -25,6 +25,30 @@ jobs:
           touch .local.env
           echo "${{ secrets.ENVFILE }}" >> .local.env
           cat .local.env
+          
+      - name: Format JSON file
+        run: |
+          # Read the content of the JSON file from GitHub secrets
+          echo "${{ secrets.FIREBASE_JSON }}" > food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+
+          # Load the JSON file contents in Python and add double quotes
+          - name: Set up Python
+            uses: actions/setup-python@v2
+            with:
+              python-version: '3.x'
+
+          - name: Format JSON file
+            run: |
+              python -c "
+              import json
+
+              with open('food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json', 'r') as file:
+                  content = file.read()
+
+              data = json.loads(content)
+
+              with open('food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json', 'w') as file:
+                  file.write(json.dumps(data, indent=2))"
 
       - name: Build Docker image
         run: |
