@@ -1,4 +1,5 @@
 name: Build and Push Docker Image
+
 on:
   push:
     branches:
@@ -24,8 +25,11 @@ jobs:
           touch .local.env
           echo "${{ secrets.ENVFILE }}" >> .local.env
           cat .local.env
+
       - name: Build Docker image
-        run: docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
+        run: |
+          docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
+          working-directory: ${{ github.workspace }}
 
       - name: Login to GitHub Container Registry
         run: docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
