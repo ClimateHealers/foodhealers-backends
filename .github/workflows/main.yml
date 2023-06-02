@@ -15,47 +15,19 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
-      - name: Run commands
+      - name: aws login
         run: |
-          pwd
-          touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
-          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          echo "[default]
+          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          aws s3 cp s3://pipeline-secrets-climatehealers/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json  # Verify the file content
           touch .local.env
           echo "${{ secrets.ENVFILE }}" >> .local.env
           cat .local.env
-          
-      - name: Format JSON file
-        run: |
-          # Read the content of the JSON file from GitHub secrets
-          echo "${{ secrets.FIREBASE_JSON }}" > food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-
-          # Load the JSON file contents in Python and add double quotes
-          - name: Set up Python
-            uses: actions/setup-python@v2
-            with:
-              python-version: '3.x'
-
-          - name: Format JSON file
-            run: |
-              python -c "
-              import json
-
-              with open('food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json', 'r') as file:
-                  content = file.read()
-
-              data = json.loads(content)
-
-              with open('food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json', 'w') as file:
-                  file.write(json.dumps(data, indent=2))"
 
       - name: Build Docker image
         run: |
           docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
-
-      - name: Login to GitHub Container Registry
-        run: docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
-
-      - name: Push Docker image to GitHub Container Registry
-        run: docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1
+          docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
+          docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1
