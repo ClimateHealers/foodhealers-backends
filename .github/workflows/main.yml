@@ -17,9 +17,9 @@ jobs:
 
       - name: Run commands
         run: |
-          touch local.env
-          echo "${{ secrets.ENVFILE }}" >> local.env
-          cat local.env
+          touch local.json
+          echo "${{ secrets.ENVFILE }}" >> local.json
+          cat local.json
       - name: Build Docker image
         run: docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
 
