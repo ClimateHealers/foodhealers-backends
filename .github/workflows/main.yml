@@ -23,7 +23,7 @@ jobs:
       - name: Run commands
         run: |
           touch local.env
-          echo "${{ secrets.ENVFILE }}" >> local.env
+          echo -e "${{ secrets.ENV_FILE }}" > local.env
           cat local.env
 
       - name: Build Docker image
