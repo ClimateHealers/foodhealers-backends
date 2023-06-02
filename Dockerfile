@@ -16,6 +16,7 @@ COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $HOME
 #copy the file to the docker image
 COPY .local.env $HOME
 RUN echo $HOME
+RUN ls ~
 RUN ls -l
 RUN pwd
 # Set environment variables for remote database connection
