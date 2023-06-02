@@ -17,7 +17,6 @@ COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $HOME
 COPY .local.env $HOME
 RUN echo $HOME
 RUN ls -l
-RUN cat $HOME/.local.env
 # Set environment variables for remote database connection
 ENV DB_ENGINE=django.db.backends.postgresql
 ENV DB_HOST=localhost
