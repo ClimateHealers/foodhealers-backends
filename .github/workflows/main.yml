@@ -18,8 +18,8 @@ jobs:
       - name: aws login
         run: |
           echo "[default]
-          aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" > ~/.aws/credentials
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           aws s3 cp s3://pipeline-secrets-climatehealers/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json  # Verify the file content
           touch .local.env
