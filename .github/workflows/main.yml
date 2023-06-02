@@ -17,8 +17,10 @@ jobs:
         uses: docker/setup-buildx-action@v1
       - name: aws login
         run: |
-         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+         mkdir -p ~/.aws
+         echo "[default]" > ~/.aws/credentials
+         echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+         echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
          aws s3 cp s3://pipeline-secrets-climatehealers/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json ./food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json  # Verify the file content
          touch .local.env
