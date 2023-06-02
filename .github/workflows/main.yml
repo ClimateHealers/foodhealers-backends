@@ -17,9 +17,13 @@ jobs:
 
       - name: Run commands
         run: |
-          touch local.json
-          echo "${{ secrets.ENVFILE }}" >> local.json
-          cat local.json
+          pwd
+          touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json.json
+          echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+          touch .local.env
+          echo "${{ secrets.ENVFILE }}" >> .local.env
+          cat .local.env
       - name: Build Docker image
         run: docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
 
