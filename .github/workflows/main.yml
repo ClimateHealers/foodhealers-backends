@@ -26,6 +26,6 @@ jobs:
 
      - name: Build Docker image
        run: |
-          docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
+          docker build -t ghcr.io/climatehealers/foodhealers-backends:latestVersion .
           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
-          docker push ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1
+          docker push ghcr.io/climatehealers/foodhealers-backends:latestVersion
