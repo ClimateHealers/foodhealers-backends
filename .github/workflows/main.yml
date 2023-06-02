@@ -10,57 +10,57 @@ jobs:
     runs-on: self-hosted
 
     steps:
-#       - name: Clear Cache
-#         run: sudo rm -rf ${{ runner.temp }}/*
+# #       - name: Clear Cache
+# #         run: sudo rm -rf ${{ runner.temp }}/*
 
-      - name: Debug secrets
-        run: |
-          echo "EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}"
-          echo "EC2_USERNAME: ${{ secrets.EC2_USERNAME }}"
-          echo "EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}"
-
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-            cd /home/ubuntu/
-            mkdir removethisdir
-            source food-env/bin/activate
-            cd foodhealers-backends/
-            git checkout develop
-            git pull origin develop
-            pip install -r requirements.txt
-            python manage.py makemigrations
-            python manage.py migrate
-            sudo systemctl restart foodhealers-gunicorn.service
-            exit
-            echo " deployment to ec2 completed"
-      
-#       - name: 'Create json file'
+#       - name: Debug secrets
 #         run: |
-#           pwd
-#           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-#           echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-#           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-#       - name: List files in workspace
-#         run: ls -R $GITHUB_WORKSPACE
+#           echo "EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}"
+#           echo "EC2_USERNAME: ${{ secrets.EC2_USERNAME }}"
+#           echo "EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}"
 
-#       - name: "Build:checkout"
+#       - name: Checkout code
 #         uses: actions/checkout@v2
-#       - name: 'Build:dockerimage'
-#         uses: docker/build-push-action@v1
+
+#       - name: Deploy to EC2
+#         uses: appleboy/ssh-action@master
 #         with:
-#           registry: ghcr.io
-#           username: "aravindmuniraj95"
-#           password: ${{ secrets.PAT_TOKEN }}
-#           repository: climatehealers/foodhealers-backends
-#           tags: latest
+#           host: ${{ secrets.EC2_HOST }}
+#           username: ${{ secrets.EC2_USERNAME }}
+#           key: ${{ secrets.EC2_PRIVATE_KEY }}
+#           script: |
+#             cd /home/ubuntu/
+#             mkdir removethisdir
+#             source food-env/bin/activate
+#             cd foodhealers-backends/
+#             git checkout develop
+#             git pull origin develop
+#             pip install -r requirements.txt
+#             python manage.py makemigrations
+#             python manage.py migrate
+#             sudo systemctl restart foodhealers-gunicorn.service
+#             exit
+#             echo " deployment to ec2 completed"
+      
+# #       - name: 'Create json file'
+# #         run: |
+# #           pwd
+# #           touch food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+# #           echo "${{ secrets.FIREBASE_JSON }}" >> food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+# #           cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
+# #       - name: List files in workspace
+# #         run: ls -R $GITHUB_WORKSPACE
+
+# #       - name: "Build:checkout"
+# #         uses: actions/checkout@v2
+# #       - name: 'Build:dockerimage'
+# #         uses: docker/build-push-action@v1
+# #         with:
+# #           registry: ghcr.io
+# #           username: "aravindmuniraj95"
+# #           password: ${{ secrets.PAT_TOKEN }}
+# #           repository: climatehealers/foodhealers-backends
+# #           tags: latest
 
 #       - name: Build and Push Docker Image
 #         run: |
