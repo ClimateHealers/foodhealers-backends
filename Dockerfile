@@ -12,11 +12,14 @@ COPY . /app/
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
 
 COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json $HOME
-
-#copy the file to the docker image
+RUN cd $HOME
+RUN cat food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 COPY .local.env $HOME
+
 RUN ls -l $HOME
+RUN echo $HOME
 RUN pwd
+
 # Set environment variables for remote database connection
 ENV DB_ENGINE=django.db.backends.postgresql
 ENV DB_HOST=localhost
