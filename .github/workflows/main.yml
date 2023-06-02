@@ -29,7 +29,6 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t ghcr.io/aravindmuniraj95/climatehealers/foodhealers-backends:v1 .
-          working-directory: ${{ github.workspace }}
 
       - name: Login to GitHub Container Registry
         run: docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
