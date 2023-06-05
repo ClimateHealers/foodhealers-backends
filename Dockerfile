@@ -29,6 +29,6 @@ ENV DB_NAME=foodhealersstagging
 ENV DB_USER=postgres
 ENV DB_PASSWORD=root
 ENV FIREBASE_ADMIN_SDK=food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-
+#the db setting will be used from settings file
 # Run the Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
