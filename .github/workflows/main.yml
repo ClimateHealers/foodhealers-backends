@@ -2,10 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches:
-      - develop
-      - pipeline/dockerimage
-
+  
 jobs:
   deploy:
     if: github.ref == 'refs/heads/develop'
