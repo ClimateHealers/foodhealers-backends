@@ -23,9 +23,14 @@ jobs:
          touch .local.env
          echo "${{ secrets.ENVFILE }}" >> .local.env
          cat .local.env
+               
+     - name: Set environment variables
+       run: |
+         GIT_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+         echo "GIT_BRANCH=$GIT_BRANCH" >> $GITHUB_ENV
 
      - name: Build Docker image
        run: |
-          docker build -t ghcr.io/climatehealers/foodhealers-backends:${{ github.sha }} .
+          docker build -t ghcr.io/climatehealers/foodhealers-backends:${{ env.GIT_BRANCH }} .
           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
-          docker push ghcr.io/climatehealers/foodhealers-backends:${{ github.sha }}
+          docker push ghcr.io/climatehealers/foodhealers-backends:${{ env.GIT_BRANCH }}
