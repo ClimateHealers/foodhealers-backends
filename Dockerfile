@@ -21,14 +21,5 @@ RUN echo $HOME
 RUN pwd
 COPY .local.env /root/.local.env
 COPY food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json /root/food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-# Set environment variables for remote database connection
-ENV DB_ENGINE=django.db.backends.postgresql
-ENV DB_HOST=localhost
-ENV DB_PORT=5432
-ENV DB_NAME=foodhealersstagging
-ENV DB_USER=postgres
-ENV DB_PASSWORD=root
-ENV FIREBASE_ADMIN_SDK=food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
-#the db setting will be used from settings file
 # Run the Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
