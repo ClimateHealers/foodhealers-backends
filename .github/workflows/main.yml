@@ -28,4 +28,4 @@ jobs:
        run: |
           docker build -t ghcr.io/climatehealers/foodhealers-backends:${{ github.ref_slug }} .
           docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
-          docker push ghcr.io/climatehealers/foodhealers-backends:latest
+          docker push ghcr.io/climatehealers/foodhealers-backends:${{ github.ref_slug }}
