@@ -28,6 +28,7 @@ jobs:
        run: |
          GIT_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
          echo "GIT_BRANCH=$GIT_BRANCH" >> $GITHUB_ENV
+         echo "$GITHUB_ENV"
 
      - name: Build Docker image
        run: |
