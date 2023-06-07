@@ -55,18 +55,18 @@ class Address(models.Model):
         return self.streetAddress if self.streetAddress else "Address Not Available"
     
 
-@receiver(post_save, sender=Address)
-def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
-    # convert coordinates to formatted-human-readable address
-    if created is True:
-        response = getFormattedAddressFromCoords(instance.lat, instance.lng)
-        instance.streetAddress = response['formatted_address']
-        instance.fullAddress = response['formatted_address']
-        instance.city = response['city'] 
-        instance.state = response['state']
-        instance.postalCode = response['postal_code']
-        instance.save()
-    return True
+# @receiver(post_save, sender=Address)
+# def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
+#     # convert coordinates to formatted-human-readable address
+#     if created is True:s
+#         response = getFormattedAddressFromCoords(instance.lat, instance.lng)
+#         instance.streetAddress = response['formatted_address']
+#         instance.fullAddress = response['formatted_address']
+#         instance.city = response['city'] 
+#         instance.state = response['state']
+#         instance.postalCode = response['postal_code']
+#         instance.save()
+#     return True
 
 # 4. model to store Volunteer information
 class Volunteer(User):
@@ -188,6 +188,7 @@ class Donation(models.Model):
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):

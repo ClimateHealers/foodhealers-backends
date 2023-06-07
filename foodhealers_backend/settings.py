@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-m+rp2up2513j@sq+^qdu&*y%9v1-sk*x2mwm-pq%_7s)c=pzv%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'api.climatehealers.com', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', 'api.climatehealers.com', '127.0.0.1', '*']
 
 CSRF_TRUSTED_ORIGINS = ['https://api.climatehealers.com','https://*.127.0.0.1']
 
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_celery_beat',
     'django_celery_results',
+    'analytical',
 ]
 
 MIDDLEWARE = [
@@ -108,6 +109,7 @@ db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
 GOOGLE_MAPS_API_KEY = os.getenv('API_KEY')
 firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
+MIXPANEL_API_TOKEN = os.getenv('MIXPANEL_TOKEN')
 
 # Use the environment variables in your Django settings
 DATABASES = {
