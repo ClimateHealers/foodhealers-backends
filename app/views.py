@@ -11,6 +11,12 @@ import uuid
 import firebase_admin.auth as auth
 # from .local_dev_utils import getAccessToken
 from datetime import datetime
+from django.conf import settings
+from mixpanel import Mixpanel
+from django.shortcuts import render
+import matplotlib.pyplot as plt
+import io
+import urllib, base64
 
 # get Django Access token for development testing. 
 # getAccessToken(2)
@@ -122,6 +128,11 @@ class SignUp(APIView):
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 userDetails = UserProfileSerializer(user).data
+                mixpanel_token = settings.MIXPANEL_API_TOKEN
+                mp = Mixpanel(mixpanel_token)
+                mp.track(user.id, 'Sign-up',  {
+                    'Signup Type': 'Volunteer'
+                })
                 return Response({'success': True, 'message':'user already exists', 'userDetails': userDetails})
             else:
                 user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
@@ -135,6 +146,12 @@ class SignUp(APIView):
                     token.save()
                 else:
                     token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+                
+                mixpanel_token = settings.MIXPANEL_API_TOKEN
+                mp = Mixpanel(mixpanel_token)
+                mp.track(user.id, 'Sign-up',  {
+                    'Signup Type': 'Volunteer'
+                })
                 return Response({'success':True, 'message':'successfully created user', 'userDetails':userDetails})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -208,7 +225,11 @@ class SignIn(APIView):
                 token.save()
             else:
                 token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
-
+            mixpanel_token = settings.MIXPANEL_API_TOKEN
+            mp = Mixpanel(mixpanel_token)
+            mp.track(user.id, 'login',  {
+                'login Type': 'Volunteer'
+            })
             return Response({
                 'success': True,
                 'message': 'successfully signed in',
@@ -232,11 +253,15 @@ class FindFood(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['lat', 'lng', 'alt', 'eventStartDate', 'eventEndDate'],
+            required=['lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'eventStartDate'],
             properties={
-                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
-                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
+                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example=4500),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'eventStartDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER,example=1685346240), # Date-time in epoch format
                 'eventEndDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER, example=1685346240),  # Date-time in epoch format
             },
@@ -281,8 +306,28 @@ class FindFood(APIView):
             if request.data.get('alt') is not None:
                 alt = request.data.get('alt')
             else:
-                return Response({'success': False, 'message': 'please enter valid altitude'})
+                alt = None
+
+            if request.data.get('fullAddress') is not None:
+                fullAddress = request.data.get('fullAddress')
+            else:
+                return Response({'success': False, 'message': 'please enter valid full address'})
             
+            if request.data.get('postalCode') is not None:
+                postalCode = request.data.get('postalCode')
+            else:
+                return Response({'success': False, 'message': 'please enter valid postal code'})
+            
+            if request.data.get('state') is not None:
+                state = request.data.get('state')
+            else:
+                return Response({'success': False, 'message': 'please enter valid state'})
+            
+            if request.data.get('city') is not None:
+                city = request.data.get('city')
+            else:
+                return Response({'success': False, 'message': 'please enter valid city'})
+
             if request.data.get('eventStartDate') is not None:
                 fromDateEpochs = request.data.get('eventStartDate')
                 fromDate = datetime.fromtimestamp(fromDateEpochs)
@@ -293,12 +338,17 @@ class FindFood(APIView):
                 toDateEpochs = request.data.get('eventEndDate')
                 toDate = datetime.fromtimestamp(toDateEpochs)
             else:
-                return Response({'success': False, 'message': 'please enter valid Event End Date'})
+                toDate = None
 
-            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
-                address = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt)
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+
+            if toDate is not None:
+                toDate = toDate
+            else:
+                toDate = fromDate
 
             if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
                 foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
@@ -318,12 +368,16 @@ class Event(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['eventName', 'lat', 'lng', 'alt', 'eventStartDate', 'eventEndDate', 'additionalInfo', 'files'], 
+            required=['eventName', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'eventStartDate', 'additionalInfo', 'files'],
             properties={
                 'eventName': openapi.Schema(type=openapi.TYPE_STRING, example="EVENT NAME"),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'eventStartDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER,example=1685346240), # Date-time in epoch format
                 'eventEndDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER, example=1685346240),  # Date-time in epoch format
                 'additionalInfo': openapi.Schema(type=openapi.TYPE_STRING, example='Free Vegan Meals'),
@@ -372,7 +426,27 @@ class Event(APIView):
             if request.data.get('alt') is not None:
                 alt = request.data.get('alt')
             else:
-                return Response({'success': False, 'message': 'please enter valid altitude'})
+                alt = None
+
+            if request.data.get('fullAddress') is not None:
+                fullAddress = request.data.get('fullAddress')
+            else:
+                return Response({'success': False, 'message': 'please enter valid full address'})
+            
+            if request.data.get('postalCode') is not None:
+                postalCode = request.data.get('postalCode')
+            else:
+                return Response({'success': False, 'message': 'please enter valid postal code'})
+            
+            if request.data.get('state') is not None:
+                state = request.data.get('state')
+            else:
+                return Response({'success': False, 'message': 'please enter valid state'})
+            
+            if request.data.get('city') is not None:
+                city = request.data.get('city')
+            else:
+                return Response({'success': False, 'message': 'please enter valid city'})
             
             if request.data.get('eventStartDate') is not None:
                 eventStartDateEpochs = request.data.get('eventStartDate')
@@ -384,7 +458,7 @@ class Event(APIView):
                 eventEndDateEpochs = request.data.get('eventEndDate')
                 eventEndDate = datetime.fromtimestamp(eventEndDateEpochs)
             else:
-                return Response({'success': False, 'message': 'please enter valid Event End Date'})
+                eventEndDate = None
             
             if request.data.get('additionalInfo') is not None:
                 additionalInfo = request.data.get('additionalInfo')
@@ -397,10 +471,10 @@ class Event(APIView):
                 files=[]
                 return  files
             
-            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
-                address = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt)
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
             
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
@@ -882,6 +956,10 @@ class RequestVolunteers(APIView):
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
                 'numberOfVolunteers': openapi.Schema(type=openapi.TYPE_NUMBER, example='15'),
             }
@@ -927,7 +1005,27 @@ class RequestVolunteers(APIView):
             if request.data.get('alt') is not None:
                 alt = request.data.get('alt')
             else:
-                return Response({'success': False, 'message': 'please enter valid altitude'})
+                alt = None
+
+            if request.data.get('fullAddress') is not None:
+                fullAddress = request.data.get('fullAddress')
+            else:
+                return Response({'success': False, 'message': 'please enter valid full address'})
+            
+            if request.data.get('postalCode') is not None:
+                postalCode = request.data.get('postalCode')
+            else:
+                return Response({'success': False, 'message': 'please enter valid postal code'})
+            
+            if request.data.get('state') is not None:
+                state = request.data.get('state')
+            else:
+                return Response({'success': False, 'message': 'please enter valid state'})
+            
+            if request.data.get('city') is not None:
+                city = request.data.get('city')
+            else:
+                return Response({'success': False, 'message': 'please enter valid city'})
             
             if request.data.get('requiredDate') is not None:
                 requiredDate = request.data.get('requiredDate')
@@ -978,7 +1076,7 @@ class DonateFood(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'alt', 'phoneNumber'], 
+            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'phoneNumber'], 
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
@@ -987,6 +1085,10 @@ class DonateFood(APIView):
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='99802732'),
             }
         ),
@@ -1047,7 +1149,27 @@ class DonateFood(APIView):
             if request.data.get('alt') is not None:
                 alt = request.data.get('alt')
             else:
-                return Response({'success': False, 'message': 'please enter valid altitude'})
+                alt = None
+
+            if request.data.get('fullAddress') is not None:
+                fullAddress = request.data.get('fullAddress')
+            else:
+                return Response({'success': False, 'message': 'please enter valid full address'})
+            
+            if request.data.get('postalCode') is not None:
+                postalCode = request.data.get('postalCode')
+            else:
+                return Response({'success': False, 'message': 'please enter valid postal code'})
+            
+            if request.data.get('state') is not None:
+                state = request.data.get('state')
+            else:
+                return Response({'success': False, 'message': 'please enter valid state'})
+            
+            if request.data.get('city') is not None:
+                city = request.data.get('city')
+            else:
+                return Response({'success': False, 'message': 'please enter valid city'})
             
             if request.data.get('phoneNumber') is not None:
                 phoneNumber = request.data.get('phoneNumber')
@@ -1061,10 +1183,10 @@ class DonateFood(APIView):
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
-                pickupAddress = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
+                pickupAddress = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt)
+                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
             if FoodItem.objects.filter(itemName=foodName).exists():
                 foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
@@ -1175,13 +1297,17 @@ class VolunteerProfile(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['name','email','lat','longitude','altitude','phoneNumber'],
+            required=['name','email','lat','lng', 'fullAddress', 'postalCode', 'state', 'city','phoneNumber'],
             properties={
                 'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
                 'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example=4500),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example=99723732),
             },
         ),
@@ -1223,7 +1349,27 @@ class VolunteerProfile(APIView):
         if request.data.get('alt') is not None:
             alt = request.data.get('alt')
         else:
-            return Response({'success':False, 'message':'Please enter valid altitude'})
+            alt = None
+
+        if request.data.get('fullAddress') is not None:
+            fullAddress = request.data.get('fullAddress')
+        else:
+            return Response({'success': False, 'message': 'please enter valid full address'})
+        
+        if request.data.get('postalCode') is not None:
+            postalCode = request.data.get('postalCode')
+        else:
+            return Response({'success': False, 'message': 'please enter valid postal code'})
+        
+        if request.data.get('state') is not None:
+            state = request.data.get('state')
+        else:
+            return Response({'success': False, 'message': 'please enter valid state'})
+        
+        if request.data.get('city') is not None:
+            city = request.data.get('city')
+        else:
+            return Response({'success': False, 'message': 'please enter valid city'})
 
         if request.data.get('phoneNumber') is not None:
             phoneNumber = request.data.get('phoneNumber')
@@ -1237,10 +1383,10 @@ class VolunteerProfile(APIView):
         
         try:
 
-            if Address.objects.filter(lat=lat, lng=lng, alt=alt).exists():
-                address = Address.objects.get(lat=lat, lng=lng, alt=alt)
+            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt)            
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
