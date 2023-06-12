@@ -10,13 +10,14 @@ from drf_yasg import openapi
 import uuid
 import firebase_admin.auth as auth
 # from .local_dev_utils import getAccessToken
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 from mixpanel import Mixpanel
 from django.shortcuts import render
 import matplotlib.pyplot as plt
 import io
 import urllib, base64
+import calendar
 
 # get Django Access token for development testing. 
 # getAccessToken(2)
@@ -469,7 +470,7 @@ class Event(APIView):
                 files = request.FILES.getlist('files')
             else:
                 files=[]
-                return  files
+                # return  files
             
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
@@ -1604,3 +1605,206 @@ class VehicleOperations(APIView):
                 return Response({'success': False, 'message': f'Vehicle with id {vehicleId} not found'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+
+from django.db.models import Count
+from django.db.models.functions import Trunc
+# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+
+# <-------------------------------- Pie Graph -------------------------------->
+def Create_pie_graph(x_data, y_data, title):
+    
+    fig, ax = plt.subplots()
+    ax.pie(x_data, labels=y_data, autopct='%1.0f%%')
+
+    # Create Pie Graph, Set labels and title
+    ax.set_title(title)
+    # ax.legend(title = title)
+
+    # Save graph in png format
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+
+    return image_png
+
+# <-------------------------------- Bar Graph -------------------------------->
+def Create_bar_graph(x_data, y_data, title, x_label, y_label):
+
+    fig, ax = plt.subplots()
+    bars = ax.bar(x_data, y_data)
+
+    # Set labels and title
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    # Add values to the bars
+    for bar in bars:
+        yval = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width() / 2, yval, yval, ha='center', va='bottom')
+
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    return image_png
+
+# <-------------------------------- Line Graph -------------------------------->
+def Create_line_graph(x_data, y_data, title, x_label, y_label):
+    
+    fig, ax = plt.subplots()
+    ax.plot(x_data, y_data)
+
+    # Set labels and title
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    return image_png
+
+# <-------------------------------- Scatter Graph -------------------------------->
+def Create_scatter_graph(x_data, y_data, title, x_label, y_label):
+    
+    fig, ax = plt.subplots()
+    ax.scatter(x_data, y_data)
+
+    # Set labels and title
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+
+    return image_png
+
+def get_last_12_months(current_date):
+    
+    # Get the current month and year
+    current_month = current_date.month
+    current_year = current_date.year
+
+    # Create a list to store the last 12 months
+    last_12_months = []    
+
+    # Loop through the range from 12 months ago until the current month
+    for i in range(12):
+        
+        # Calculate the month and year for the current iteration
+        month = current_month - i
+        year = current_year
+
+        # Adjust the month and year if necessary
+        if month <= 0:
+            month += 12
+            year -= 1
+
+        # Get the last day of the month
+        last_day = calendar.monthrange(year, month)[1]
+
+        # Create a datetime object for the last day of the month
+        last_day_of_month = datetime(year, month, last_day)
+
+        # Add the last day of the month to the list
+        last_12_months.append(last_day_of_month.strftime("%B %Y"))
+        
+    return last_12_months[::-1]
+
+def plot_view(request):
+
+    # Get the current month and year
+    current_date = datetime.now()
+
+    # function to get the list of last 12 months of the current year
+    last_12_monthList = get_last_12_months(current_date)
+
+
+    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+    data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+    print('data=============>>>>>',data)
+
+    for da in data:
+        print(da['month'].strftime("%B %Y"))
+
+    # Extract the x and y values from the data
+    x = [entry['month'].strftime('%B-%Y') for entry in data]
+    y = [entry['count'] for entry in data]
+
+    print(x,'******************************************',y)
+
+    # call the create bar graph function
+    bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+    line_img_png = Create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+    scatter_img_png = Create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+    pie_img_png = Create_pie_graph(y, x, 'Number of Users Joined')
+
+
+    # Encode the image in base64 for embedding in HTML
+    bar_volunteerGraphic = urllib.parse.quote(base64.b64encode(bar_img_png))
+    line_volunteerGraphic = urllib.parse.quote(base64.b64encode(line_img_png))
+    scatter_volunteerGraphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
+    pie_volunteerGraphic = urllib.parse.quote(base64.b64encode(pie_img_png))
+
+    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+    foodEvents = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+
+    # Extract the x and y values from the data
+    a = [foodEventEntry['month'].strftime('%B-%Y') for foodEventEntry in foodEvents]
+    b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
+
+    # call the create bar graph function
+    bar_foodEventImage_png = Create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+    line_foodEventImage_png = Create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+    scatter_foodEventImage_png = Create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+    pie_foodEventImage_png = Create_pie_graph(b, a, 'Food Events',)
+
+    # Encode the image in base64 for embedding in HTML
+    bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
+    line_foodEventGraphic = urllib.parse.quote(base64.b64encode(line_foodEventImage_png))
+    scatter_foodEventGraphic = urllib.parse.quote(base64.b64encode(scatter_foodEventImage_png))
+    pie_foodEventGraphic = urllib.parse.quote(base64.b64encode(pie_foodEventImage_png))
+
+    # ---------------DONATIONS CREATED ON GRAPH -----------------
+    foodDonation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+
+    # Extract the x and y values from the data
+    a = [foodDonationEntry['month'].strftime('%B-%Y') for foodDonationEntry in foodDonation]
+    b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
+
+    # call the create bar graph function
+    bar_foodDonationImage_png = Create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+    line_foodDonationImage_png = Create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+    scatter_foodDonationImage_png = Create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+    pie_foodDonationImage_png = Create_pie_graph(b, a, 'Food Donations',)
+
+    # Encode the image in base64 for embedding in HTML
+    bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
+    line_foodDonationGraphic = urllib.parse.quote(base64.b64encode(line_foodDonationImage_png))
+    scatter_foodDonationGraphic = urllib.parse.quote(base64.b64encode(scatter_foodDonationImage_png))
+    pie_foodDonationGraphic = urllib.parse.quote(base64.b64encode(pie_foodDonationImage_png))
+
+    #---------------   -----------------
+    bar_graphData = {'bar_volunteerGraphic':bar_volunteerGraphic,'bar_foodEventGraphic':bar_foodEventGraphic, 'bar_foodDonationGraphic':bar_foodDonationGraphic}
+    line_graphData = {'line_volunteerGraphic':line_volunteerGraphic,'line_foodEventGraphic':line_foodEventGraphic, 'line_foodDonationGraphic':line_foodDonationGraphic}
+    scatter_graphData = {'scatter_volunteerGraphic':scatter_volunteerGraphic,'scatter_foodEventGraphic':scatter_foodEventGraphic, 'scatter_foodDonationGraphic':scatter_foodDonationGraphic}
+    pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
+
+    # Pass the graphic to the template context
+    context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData}
+    return render(request, 'base.html', context)
