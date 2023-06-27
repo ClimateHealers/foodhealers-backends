@@ -12,7 +12,7 @@ import firebase_admin.auth as auth
 # from .local_dev_utils import getAccessToken
 from datetime import datetime, timedelta
 from django.conf import settings
-from mixpanel import Mixpanel
+# from mixpanel import Mixpanel
 from django.shortcuts import render
 import matplotlib.pyplot as plt
 import io
@@ -129,11 +129,11 @@ class SignUp(APIView):
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 userDetails = UserProfileSerializer(user).data
-                mixpanel_token = settings.MIXPANEL_API_TOKEN
-                mp = Mixpanel(mixpanel_token)
-                mp.track(user.id, 'Sign-up',  {
-                    'Signup Type': 'Volunteer'
-                })
+                # mixpanel_token = settings.MIXPANEL_API_TOKEN
+                # mp = Mixpanel(mixpanel_token)
+                # mp.track(user.id, 'Sign-up',  {
+                #     'Signup Type': 'Volunteer'
+                # })
                 return Response({'success': True, 'message':'user already exists', 'userDetails': userDetails})
             else:
                 user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
@@ -148,11 +148,11 @@ class SignUp(APIView):
                 else:
                     token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
                 
-                mixpanel_token = settings.MIXPANEL_API_TOKEN
-                mp = Mixpanel(mixpanel_token)
-                mp.track(user.id, 'Sign-up',  {
-                    'Signup Type': 'Volunteer'
-                })
+                # mixpanel_token = settings.MIXPANEL_API_TOKEN
+                # mp = Mixpanel(mixpanel_token)
+                # mp.track(user.id, 'Sign-up',  {
+                #     'Signup Type': 'Volunteer'
+                # })
                 return Response({'success':True, 'message':'successfully created user', 'userDetails':userDetails})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -226,11 +226,11 @@ class SignIn(APIView):
                 token.save()
             else:
                 token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
-            mixpanel_token = settings.MIXPANEL_API_TOKEN
-            mp = Mixpanel(mixpanel_token)
-            mp.track(user.id, 'login',  {
-                'login Type': 'Volunteer'
-            })
+            # mixpanel_token = settings.MIXPANEL_API_TOKEN
+            # mp = Mixpanel(mixpanel_token)
+            # mp.track(user.id, 'login',  {
+            #     'login Type': 'Volunteer'
+            # })
             return Response({
                 'success': True,
                 'message': 'successfully signed in',
@@ -351,8 +351,8 @@ class FindFood(APIView):
             else:
                 toDate = fromDate
 
-            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
+            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, address__city=address.city).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, address__city=address.city)
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
