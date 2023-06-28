@@ -42,10 +42,10 @@ class Category(models.Model):
 
 # 3. Model to Store all types of Address
 class Address(models.Model):
-    lat = models.FloatField(default='12.317277') 
-    lng = models.FloatField(default='78.713890')
-    alt = models.FloatField(default=' 1500.0')
-    streetAddress = models.TextField(max_length=500, default='')
+    lat = models.FloatField(default='12.317277',null=True, blank=True) 
+    lng = models.FloatField(default='78.713890',null=True, blank=True)
+    alt = models.FloatField(default=' 1500.0', null=True, blank=True)
+    streetAddress = models.TextField(max_length=500, default='', null=True, blank=True)
     city = models.CharField(max_length=30, default='', null=True, blank=True)
     state = models.CharField(max_length=30, default='', null=True, blank=True)
     postalCode = models.CharField(max_length=30, default='', null=True, blank=True)

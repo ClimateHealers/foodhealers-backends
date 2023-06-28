@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'django_celery_results',
     'analytical',
+    'django_matplotlib',
 ]
 
 MIDDLEWARE = [
@@ -70,7 +71,7 @@ ROOT_URLCONF = 'foodhealers_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [str(PROJECT_DIR/"templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
