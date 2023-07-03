@@ -22,6 +22,73 @@ import calendar
 # get Django Access token for development testing. 
 # getAccessToken(2)
 
+class GetRefreshToken(APIView):
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['refreshTokenId'],
+            properties={
+                'refreshTokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
+            },            
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully generated Access Token'),
+                    'isAuthenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'accessToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9.3EyvZffo4g2R3Zy8sZw'),
+                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='2 minutes'),
+                    'refreshToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIiwiZXhwIjoxNjgzNzk4MzU5LCJpYXQiOjE2ODM2Mrffo4g2R3Zy8sZw'),
+                },
+            ),
+        },
+        operation_description="Generating Access Token in API",
+    )
+
+    # Generate Access Token Using Referesh Token
+    def post(self, request, format=None):
+        if request.data.get('refreshTokenId') is not None:
+            refreshTokenId = request.data.get('refreshTokenId')
+        else:
+            return Response({'success':False, 'message':'please enter valid refresh token'})
+        
+        try:
+            if refreshTokenId is not None:
+                if CustomToken.objects.filter(refreshToken=refreshTokenId).exists():
+                    token = CustomToken.objects.get(refreshToken=refreshTokenId)
+                    email = token.user.email
+
+                    if Volunteer.objects.filter(email=email).exists():
+                        user = Volunteer.objects.get(email=email)
+                        userDetails = UserProfileSerializer(user).data
+                        accessToken = create_access_token(user.id)
+                        refreshToken = create_refresh_token(user.id)
+                        token.refreshToken = refreshToken
+                        token.accessToken = accessToken
+                        token.save()
+                    else:
+                        return Response({'success': False, 'message':'user with email does not exist'})
+                else:
+                    return Response({'success': False, 'message':'Custom Token Object does not exist'})
+            else:
+                return Response({'success': False, 'message': 'Please provide valid id token'})
+            
+            return Response({
+                'success': True,
+                'message': 'successfully generated token',
+                'isAuthenticated': True,
+                'token': accessToken,
+                'expiresIn': '2 minutes',
+                'refreshToken': refreshToken,
+                'user': userDetails,
+            })
+            
+        except Exception as e:
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+
 class ChoicesView(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -339,20 +406,15 @@ class FindFood(APIView):
                 toDateEpochs = request.data.get('eventEndDate')
                 toDate = datetime.fromtimestamp(toDateEpochs)
             else:
-                toDate = None
+                toDate = datetime.now()
 
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
-            if toDate is not None:
-                toDate = toDate
-            else:
-                toDate = fromDate
-
-            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, address__city=address.city).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, address__city=address.city)
+            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
