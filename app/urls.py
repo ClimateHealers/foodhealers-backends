@@ -10,6 +10,8 @@ from app import views
 app_name = "app"
 
 urlpatterns = [
+    # POST (Update AccessToken)
+    re_path(r'refresh-token/', views.GetRefreshToken.as_view()),
     # GET (CHOICES)
     re_path(r'choices/', views.ChoicesView.as_view()),
     # POST (user Signup)
