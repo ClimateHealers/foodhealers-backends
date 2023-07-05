@@ -18,9 +18,10 @@ import matplotlib.pyplot as plt
 import io
 import urllib, base64
 import calendar
+from django.db.models import Q
 
 # get Django Access token for development testing. 
-# getAccessToken(2)
+# getAccessToken(3)
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -411,7 +412,7 @@ class FindFood(APIView):
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
             if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
                 foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
@@ -537,7 +538,7 @@ class Event(APIView):
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
             
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
@@ -593,6 +594,7 @@ class Event(APIView):
             ),
         ],
     )
+    # My Events Only 
     def get(self, request, format=None):
         try:
             user = request.user
@@ -1249,7 +1251,7 @@ class DonateFood(APIView):
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 pickupAddress = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
             if FoodItem.objects.filter(itemName=foodName).exists():
                 foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
@@ -1319,7 +1321,7 @@ class DonateFood(APIView):
             return Response({'success': False, 'message': str(e)})
 
  
-# Volunteer Profile API  
+# GET and PUT Volunteer Profile API  
 class VolunteerProfile(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1449,7 +1451,7 @@ class VolunteerProfile(APIView):
             if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
@@ -1667,6 +1669,47 @@ class VehicleOperations(APIView):
                 return Response({'success': False, 'message': f'Vehicle with id {vehicleId} not found'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+ 
+class AllEvents(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'AllEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch all vehicle API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+            # user = request.user
+            todayDate = datetime.now()
+
+            if FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate)).exists():
+                foodEvents = FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate))
+                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
+                return Response({'success': True, 'foodEvents': foodEventsDetails})
+            else:
+                return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
 
 from django.db.models import Count
 from django.db.models.functions import Trunc
@@ -1703,7 +1746,9 @@ def Create_bar_graph(x_data, y_data, title, x_label, y_label):
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
-    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    if len(y_data) > 0:
+        ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
 
     # Add values to the bars
     for bar in bars:
@@ -1715,6 +1760,7 @@ def Create_bar_graph(x_data, y_data, title, x_label, y_label):
     buffer.seek(0)
     image_png = buffer.getvalue()
     buffer.close()
+    matplotlib.pyplot.close()
     return image_png
 
 # <-------------------------------- Line Graph -------------------------------->
@@ -1727,7 +1773,9 @@ def Create_line_graph(x_data, y_data, title, x_label, y_label):
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
-    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    if len(y_data)>0:
+        ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png')
@@ -1746,7 +1794,9 @@ def Create_scatter_graph(x_data, y_data, title, x_label, y_label):
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
-    ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
+
+    if len(y_data)>0:
+        ax.set_yticks(range(int(min(y_data)), int(max(y_data)) + 1))
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png')
@@ -1799,7 +1849,7 @@ def plot_view(request):
 
     # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
     data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-    print('data=============>>>>>',data)
+    # print('data=============>>>>>',data)
 
     for da in data:
         print(da['month'].strftime("%B %Y"))
@@ -1808,7 +1858,7 @@ def plot_view(request):
     x = [entry['month'].strftime('%B-%Y') for entry in data]
     y = [entry['count'] for entry in data]
 
-    print(x,'******************************************',y)
+    # print(x,'******************************************',y)
 
     # call the create bar graph function
     bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
@@ -1868,5 +1918,31 @@ def plot_view(request):
     pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
 
     # Pass the graphic to the template context
-    context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData}
+    context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData, 'updatedTime':0}
     return render(request, 'base.html', context)
+
+def dashboard_view(request):
+
+    # Get the current month and year
+    current_date = datetime.now()
+
+
+    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+    users = Volunteer.objects.all().order_by('-id')
+    userDetails = UserProfileSerializer(users, many=True).data
+
+    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+    foodEvents = FoodEvent.objects.filter(verified=False).order_by('-id')
+    eventDetails = FoodEventSerializer(foodEvents, many=True).data
+
+    # print(eventDetails)
+
+    # ---------------DONATIONS CREATED ON GRAPH -----------------
+    foodDonations = Donation.objects.all().order_by('-id')
+    donationDetails = DonationSerializer(foodDonations, many=True).data
+
+    # print(donationDetails)
+
+    # Pass the graphic to the template context
+    context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
+    return render(request, 'dashboard.html', context)
