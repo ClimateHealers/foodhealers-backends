@@ -1,4 +1,4 @@
-name: S3-ec2Deploy-Dockerize
+name: S3-ec2Deploy-Dockerize-image
 
 on:
   push:
