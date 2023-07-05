@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: S3-ec2Deploy-Dockerize
 
 on:
   push:
