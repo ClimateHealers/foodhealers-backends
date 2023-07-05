@@ -112,6 +112,7 @@ class FoodEvent(models.Model):
     createdBy = models.ForeignKey(Volunteer, null=True, blank=True, related_name='food_event_organiser', on_delete=models.PROTECT)
     createdAt = models.DateTimeField(null=True, blank=True) 
     additionalInfo = models.TextField(blank=True, null=True)
+    verified = models.BooleanField(default=False, null=True, blank=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
@@ -176,6 +177,7 @@ class Request(models.Model):
     foodItem = models.ForeignKey(FoodItem, null=True, blank=True, on_delete=models.PROTECT)
     deliver = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     foodEvent = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
+    verified = models.BooleanField(default=False, null=True, blank=True)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -189,6 +191,7 @@ class Donation(models.Model):
     delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
     createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    verified = models.BooleanField(default=False, null=True, blank=True)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):

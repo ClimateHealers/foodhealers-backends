@@ -20,6 +20,8 @@ urlpatterns = [
     re_path(r'login/', views.SignIn.as_view(), name='user-login'),
     # POST (to view food Events occuring based on Start and End Date)
     re_path(r'find-food/', views.FindFood.as_view(), name='find-food'),
+    # GET (View All Events By All Users API)
+    re_path(r'all-events/', views.AllEvents.as_view()),
     # GET (to View Events added by user) and POST (to Add Events)
     re_path(r'event/', views.Event.as_view(), name='food-event'), 
     # GET (to View Bookmarked Events added by user) and POST (to Add Bookmarked Events)
