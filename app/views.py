@@ -1932,7 +1932,7 @@ def dashboard_view(request):
     userDetails = UserProfileSerializer(users, many=True).data
 
     # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-    foodEvents = FoodEvent.objects.filter(verified=False).order_by('-id')
+    foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
     eventDetails = FoodEventSerializer(foodEvents, many=True).data
 
     # print(eventDetails)

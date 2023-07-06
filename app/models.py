@@ -26,6 +26,11 @@ DOCUMENT_TYPE = (
     ('vehicle_photo','Vehicle Photo')
 )
 
+EVENT_STATUS = (
+    ('approved','Approved'),
+    ('rejected','Rejected'),
+    ('pending','Pending'),
+)
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # 1. Model to Store types of Food (food, supplies)
@@ -113,6 +118,7 @@ class FoodEvent(models.Model):
     createdAt = models.DateTimeField(null=True, blank=True) 
     additionalInfo = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
