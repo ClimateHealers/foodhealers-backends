@@ -1,0 +1,124 @@
+
+{% extends "admin/base_site.html" %}
+
+
+  {% block title %}Climate Healers{% endblock %}
+
+  {% block branding %}
+  <h1 id="site-name"><a href="{% url 'admin:index' %}">Climate Healers Admin</a></h1>
+  {% endblock %}
+
+  {% block extrahead %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  {% endblock %}
+
+  {% block content %}
+    <div id="content-main">
+
+      <!-- VOLUNTEER GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-6">
+
+            <div class="card-body">
+              <h4 class="card-title">Volunteer Section</h4>
+              <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+              
+              <div class="list-group mb-3">
+                {% for volunteer in volunteerDetails %}
+                <div href="#" class="list-group-item list-group-item-action mb-2" aria-current="true">
+                    <div class="d-flex w-100 justify-content-between">
+                      <h6 class="mb-1">{{ volunteer.name }} </h6>
+                    </div>
+                    
+                    <div class="d-flex w-100 justify-content-between">
+                        <small class="mb-1">{{ volunteer.email }}</small>
+                        <button type="button" class="btn btn-sm btn-primary">
+                            View Details
+                        </button>
+                    </div>
+
+                    <small>{{ volunteer.createdAt }} </small>
+                </div> 
+                {% endfor %}
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FOOOD EVENTS GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-6">
+
+            <div class="card-body">
+              <h4 class="card-title">Food Events Section</h4>
+              <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+              
+              <div class="list-group mb-3">
+                {% for event in eventDetails %}
+                <div href="#" class="list-group-item list-group-item-action mb-2" aria-current="true">
+                    <div class="d-flex w-100 justify-content-between">
+                      <h6 class="mb-1">{{ event.name }} </h6>
+                    </div>
+
+                    <div class="d-flex w-100 justify-content-between"> 
+                        <small class="mb-1">{{ event.createdBy.name }}</small>
+                        <button type="button" class="btn btn-sm btn-primary">
+                            View Details
+                        </button>
+                    </div>
+                    <small>{{ event.createdAt }} </small>
+                </div> 
+                {% endfor %}
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FOOOD DONATIONS GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-6">
+
+            <div class="card-body">
+                <h4 class="card-title">Food Donations Section</h4>
+                <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+                
+                <div class="list-group mb-3">
+                  {% for donation in donationDetails %}
+                  <div href="#" class="list-group-item list-group-item-action mb-2" aria-current="true">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ donation.foodItem }} </h6>
+                      </div>
+  
+                      <div class="d-flex w-100 justify-content-between"> 
+                        <small class="mb-1">{{ donation.donatedBy.name }}</small>
+                          <button type="button" class="btn btn-sm btn-primary">
+                              View Details
+                          </button>
+                      </div>
+                      <small>{{ donation.createdAt }} </small>
+                  </div> 
+                  {% endfor %}
+                </div>
+  
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <script>
+        // Your Scripts
+      </script>
+
+    </div>
+  {% endblock %}

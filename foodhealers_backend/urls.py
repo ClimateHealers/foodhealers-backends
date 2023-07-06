@@ -38,7 +38,8 @@ schema_view = get_schema_view(
 
 if settings.DEBUG :
    urlpatterns = [
-        path('admin/analytics/',plot_view, name='plot'),
+        path('admin/dashboard/', dashboard_view, name='dashboard'),
+        path('admin/analytics/', plot_view, name='plot'),
         path('admin/', admin.site.urls),
         path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
             name='schema-swagger-ui'),
@@ -52,6 +53,7 @@ if settings.DEBUG :
     ]
 else:
     urlpatterns = [
+        path('admin/dashboard/', dashboard_view, name='dashboard'),
         path('admin/analytics/',plot_view, name='plot'),
         path('admin/', admin.site.urls),
         path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
