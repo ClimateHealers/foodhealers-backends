@@ -29,9 +29,9 @@ SECRET_KEY = 'django-insecure-m+rp2up2513j@sq+^qdu&*y%9v1-sk*x2mwm-pq%_7s)c=pzv%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'climatehealers.alamanceinc.com', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', 'api.climatehealers.com', '127.0.0.1', '*']
 
-CSRF_TRUSTED_ORIGINS = ['https://climatehealers.alamanceinc.com','https://*.127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://api.climatehealers.com','https://*.127.0.0.1']
 
 # Application definition
 
@@ -49,6 +49,10 @@ INSTALLED_APPS = [
     'taggit',
     'rest_framework.authtoken',
     'debug_toolbar',
+    'django_celery_beat',
+    'django_celery_results',
+    'analytical',
+    'django_matplotlib',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +71,7 @@ ROOT_URLCONF = 'foodhealers_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [str(PROJECT_DIR/"templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -88,7 +92,7 @@ WSGI_APPLICATION = 'foodhealers_backend.wsgi.application'
 
 # Database
 # Load environment variables from .local.env
-env_file_path = '/home/ubuntu/.local.env' # your local env path
+env_file_path = os.path.join(os.environ['HOME'], '.local.env')
 
 with open(env_file_path) as f:
     for line in f:
@@ -104,8 +108,9 @@ db_user = os.getenv('DB_USER')
 db_password = os.getenv('DB_PASSWORD')
 db_host = os.getenv('DB_HOST')
 db_port = os.getenv('DB_PORT')
-google_maps_api_key = os.getenv('API_KEY')
+GOOGLE_MAPS_API_KEY = os.getenv('API_KEY')
 firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
+MIXPANEL_API_TOKEN = os.getenv('MIXPANEL_TOKEN')
 
 # Use the environment variables in your Django settings
 DATABASES = {
@@ -176,14 +181,22 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+       # 'rest_framework.permissions.IsAuthenticated',
     ]
 }
 
-INTERNAL_IPS = [
-    # ...
-    "127.0.0.1",
-    # ...
-]
+# celery configuration
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'default'
+CELERY_ENABLED = True
+
+
+
+# INTERNAL_IPS = [
+#     # ...
+#     "127.0.0.1",
+#     # ...
+# ]

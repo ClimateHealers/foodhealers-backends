@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ubuntu/foodhealers-backends/
+    file_exists_behavior: OVERWRITE
+hooks:
+  BeforeInstall:
+    - location: DeployScripts/BeforeInstall.sh
+      runas: root
+  AfterInstall:
+    - location: DeployScripts/AfterInstall.sh
+      timeout: 180
+      runas: root
