@@ -1,0 +1,60 @@
+services:
+  - docker:20.10.10-dind
+variables:
+  COMMIT_SHA: $CI_COMMIT_SHA
+  DEPLOYMENT_FILE: deploy.yaml
+
+stages:
+  - zip
+  - upload
+  - build
+  - deploy
+#zipping main branch
+zip_files:
+  stage: zip
+  image: alpine
+  before_script:
+    - apk add --update zip
+  script:
+    - zip -r foodhealers.zip . -x .gitignore -x .gitlab-ci.yml -x .git/*
+  artifacts:
+    paths:
+      - '*.zip'
+  only:
+    - main
+
+#uploading zipped file in aws s3 for prod deployment from main branch
+s3_deployment:
+  stage: upload
+  image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
+  script:
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set aws_deafult_region $AWS_DEFAULT_REGION
+    - aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3
+  only:
+    - main
+
+build:
+  stage: build
+  image: docker:20.10.10
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  only:
+    - develop
+deploy_stage:
+  stage: deploy
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y && apt-get --yes install git ssh )'
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    - ssh-add <(echo "$SSH_PRIVATE_KEY" | base64 -d)
+  script:
+    - ssh ubuntu@$EC2_PUBLIC_IP_ADDRESS "cd /home/ubuntu/foodhealers_backend/ && git stash && git checkout develop && git pull origin develop && cd /home/ubuntu/ && source food-env/bin/activate && cd /home/ubuntu/foodhealers_backend/ && pip install -r requirements.txt && python manage.py makemigrations  && python manage.py migrate && sudo systemctl restart foodhealers-gunicorn.service && sudo systemctl restart foodhealers-celery.service && exit"
+
+  when: manual
+  only:
+    - develop

@@ -1,0 +1,81 @@
+name: S3-ec2Deploy-Dockerize-image
+
+on:
+  push:
+  
+jobs:
+  s3_deployment:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+      - name: Zip code
+        run: zip -r foodhealers.zip .
+      - name: Copy files to S3
+        run: aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3
+        
+  deploy:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted
+
+    steps:
+
+      - name: Debug secrets
+        run: |
+          echo "EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}"
+          echo "EC2_USERNAME: ${{ secrets.EC2_USERNAME }}"
+          echo "EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/
+            mkdir removethisdir
+            source food-env/bin/activate
+            cd foodhealers-backends/
+            git checkout develop
+            git pull origin develop
+            pip install -r requirements.txt
+            python manage.py makemigrations
+            python manage.py migrate
+            sudo systemctl restart foodhealers-gunicorn.service
+            exit
+            echo " deployment to ec2 completed"
+      
+
+  dockerimage_feature_branch:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted
+
+    steps:
+     - name: Checkout code
+       uses: actions/checkout@v2
+     - name: create-json
+       id: create-json
+       uses: jsdaniell/create-json@1.1.2
+       with:
+          name: "food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json"
+          json: ${{ secrets.FIREBASE_JSON }}
+     - name: buildimage
+       run: |
+         touch .local.env
+         echo "${{ secrets.ENVFILE }}" >> .local.env
+         cat .local.env
+
+     - name: Build Docker image
+       run: |
+          docker build -t ghcr.io/climatehealers/foodhealers-backends:${{ github.sha }} .
+          docker login ghcr.io -u aravindmuniraj95 -p ${{ secrets.PAT_TOKEN }}
+          docker push ghcr.io/climatehealers/foodhealers-backends:${{ github.sha }}

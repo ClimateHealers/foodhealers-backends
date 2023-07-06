@@ -1,0 +1,282 @@
+
+{% extends "admin/base_site.html" %}
+
+
+  {% block title %}Climate Healers{% endblock %}
+
+  {% block branding %}
+  <h1 id="site-name"><a href="{% url 'admin:index' %}">Climate Healers Admin</a></h1>
+  {% endblock %}
+
+  {% block extrahead %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  {% endblock %}
+
+  {% block content %}
+    <div id="content-main">
+
+      <!-- VOLUNTEER GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-4">
+            <div class="card-body">
+              <h5 class="card-title">Volunteer Section</h5>
+              <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+              <select class="form-select" aria-label="Default select example" onchange="change_graph(bar_volunteerGraph, line_volunteerGraph, scatter_volunteerGraph, pie_volunteerGraph, this.value)">
+                <option value="bar">Bar Graph</option>
+                <option value="line">Line Graph</option>
+                <option value="scatter">Scatter graph</option>
+                <option value="pie">Pie graph</option>
+              </select>
+
+              <p class="card-text"></p>
+
+              <table class="table table-striped table-hover caption-top">
+                <caption>Volunter Insights</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Volunteers</th>
+                    <th scope="col">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="col">Total</th>
+                    <th scope="col">{{ total_volunteers }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">This Month</th>
+                    <th scope="col">{{ currentMonth_volunteers }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">Last Month</th>
+                    <th scope="col">{{ lastMonth_volunteers }}</th>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-md-8" >
+            <div class="card-body" id="bar_volunteerGraph" style="display: block;">
+              <!-- Bar Volunteer style="max-width: 540px;"-->
+              {% if bar_graphData is None and bar_graphData.bar_volunteerGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  bar_graphData.bar_volunteerGraphic }}" alt="Volunteers Joined Graph">
+              {% endif %} 
+            </div>
+            <div class="card-body" id="line_volunteerGraph" style="display: none;">
+              <!-- Line Volunteer -->
+              {% if line_graphData is None and line_graphData.line_volunteerGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  line_graphData.line_volunteerGraphic }}" alt="Volunteers Joined Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="scatter_volunteerGraph" style="display: none;">
+              <!-- Scatter Volunteer  -->
+              {% if scatter_graphData is None and scatter_graphData.scatter_volunteerGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  scatter_graphData.scatter_volunteerGraphic }}" alt="Volunteers Joined Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="pie_volunteerGraph" style="display: none;">
+              <!-- Pie Volunteer  -->
+              {% if pie_graphData is None and pie_graphData.pie_volunteerGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  pie_graphData.pie_volunteerGraphic }}" alt="Volunteers Joined Graph">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- FOOOD EVENTS GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-4">
+            <div class="card-body">
+              <h5 class="card-title">Food Events Section</h5>
+              <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+              <select class="form-select" aria-label="Default select example" onchange="change_graph(bar_foodEventGraph, line_foodEventGraph, scatter_foodEventGraph, pie_foodEventGraph, this.value)">
+                <option value="bar">Bar Graph</option>
+                <option value="line">Line Graph</option>
+                <option value="scatter">Scatter graph</option>
+                <option value="pie">Pie graph</option>
+              </select>
+
+              <p class="card-text"> </p>
+              <table class="table table-striped table-hover caption-top">
+                <caption>Food Events Insights</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Food Events</th>
+                    <th scope="col">Posted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="col">Total</th>
+                    <th scope="col">{{ total_FoodEvents }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">This Month</th>
+                    <th scope="col">{{ currentMonth_foodEvents }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">Last Month</th>
+                    <th scope="col">{{ lastMonth_foodEvents }}</th>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-md-8" >
+            <div class="card-body" id="bar_foodEventGraph" style="display: block;">
+              <!-- Bar Food Event -->
+              {% if bar_graphData is None and bar_graphData.bar_foodEventGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  bar_graphData.bar_foodEventGraphic }}" alt="Food Events Graph">
+              {% endif %} 
+            </div>
+            <div class="card-body" id="line_foodEventGraph" style="display: none;">
+              <!-- Line Food Event  -->
+              {% if line_graphData is None and line_graphData.line_foodEventGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  line_graphData.line_foodEventGraphic }}" alt="Food Events Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="scatter_foodEventGraph" style="display: none;">
+              <!-- Scatter Food Event  -->
+              {% if scatter_graphData is None and scatter_graphData.scatter_foodEventGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  scatter_graphData.scatter_foodEventGraphic }}" alt="Food Events Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="pie_foodEventGraph" style="display: none;">
+              <!-- Pie Food Event  -->
+              {% if pie_graphData is None and pie_graphData.pie_foodEventGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  pie_graphData.pie_foodEventGraphic }}" alt="Food Events Graph">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOOD DONATIONS GRAPHS -->
+      <div class="card mb-3" > 
+        <div class="row g-0">
+          <div class="col-md-4">
+            <div class="card-body">
+              <h5 class="card-title">Food Donation Section</h5>
+              <p class="card-text"><small class="text-muted">Last updated {{updatedTime}} mins ago</small></p>
+              <select id="foodDonationSelect" class="form-select" aria-label="Default select example" onchange="change_graph(bar_foodDonationGraph, line_foodDonationGraph, scatter_foodDonationGraph, pie_foodDonationGraph, this.value)">
+                <option value="bar">Bar Graph</option>
+                <option value="line">Line Graph</option>
+                <option value="scatter">Scatter graph</option>
+                <option value="pie">Pie graph</option>
+              </select>
+
+              <p class="card-text"> </p>
+
+              <table class="table table-striped table-hover caption-top">
+                <caption>Food Donation Insights</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Food Donations</th>
+                    <th scope="col">Posted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="col">Total</th>
+                    <th scope="col">{{ total_foodDonations }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">This Month</th>
+                    <th scope="col">{{ currentMonth_foodDonations }}</th>
+                  </tr>
+                  <tr>
+                    <th scope="col">Last Month</th>
+                    <th scope="col">{{ lastMonth_foodDonations }}</th>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-md-8" >
+            <div class="card-body" id="bar_foodDonationGraph" style="display: block;">
+              <!-- Bar Food Donation -->
+              {% if bar_graphData is None and bar_graphData.bar_foodDonationGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  bar_graphData.bar_foodDonationGraphic }}" alt="Food Donation Graph">
+              {% endif %} 
+            </div>
+            <div class="card-body" id="line_foodDonationGraph" style="display: none;">
+              <!-- Line Food Donation   -->
+              {% if line_graphData is None and line_graphData.line_foodDonationGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  line_graphData.line_foodDonationGraphic }}" alt="Food Donation Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="scatter_foodDonationGraph" style="display: none;">
+              <!-- Scatter Food Donation   -->
+              {% if scatter_graphData is None and scatter_graphData.scatter_foodDonationGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  scatter_graphData.scatter_foodDonationGraphic }}" alt="Food Donation Graph">
+              {% endif %}
+            </div>
+            <div class="card-body" id="pie_foodDonationGraph" style="display: none;">
+              <!-- Pie Food Donation   -->
+              {% if pie_graphData is None and pie_graphData.pie_foodDonationGraphic is None %}
+                <h1>No Data</h1>
+              {% else %}
+                <img src="data:image/png;base64,{{  pie_graphData.pie_foodDonationGraphic }}" alt="Food Donation Graph">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function change_graph(bar_Graph, line_Graph, scatter_Graph, pie_Graph, selectedValue){ 
+          if (selectedValue === 'line') {
+            bar_Graph.style.display = 'none';
+            line_Graph.style.display = 'block';
+            scatter_Graph.style.display = 'none';   
+            pie_Graph.style.display = 'none';               
+          } 
+          else if (selectedValue === 'scatter') {
+            bar_Graph.style.display = 'none';
+            line_Graph.style.display = 'none';
+            scatter_Graph.style.display = 'block';          
+            pie_Graph.style.display = 'none';          
+          }
+          else if (selectedValue === 'pie') {
+            bar_Graph.style.display = 'none';
+            line_Graph.style.display = 'none';
+            scatter_Graph.style.display = 'none';          
+            pie_Graph.style.display = 'block';          
+          }
+          else {
+            bar_Graph.style.display = 'block';
+            line_Graph.style.display = 'none';
+            scatter_Graph.style.display = 'none';          
+            pie_Graph.style.display = 'none';          
+          }
+        } 
+      </script>
+
+    </div>
+  {% endblock %}
