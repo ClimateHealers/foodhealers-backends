@@ -42,10 +42,10 @@ class Category(models.Model):
 
 # 3. Model to Store all types of Address
 class Address(models.Model):
-    lat = models.FloatField(default='12.317277') 
-    lng = models.FloatField(default='78.713890')
-    alt = models.FloatField(default=' 1500.0')
-    streetAddress = models.TextField(max_length=500, default='')
+    lat = models.FloatField(default='12.317277',null=True, blank=True) 
+    lng = models.FloatField(default='78.713890',null=True, blank=True)
+    alt = models.FloatField(default=' 1500.0', null=True, blank=True)
+    streetAddress = models.TextField(max_length=500, default='', null=True, blank=True)
     city = models.CharField(max_length=30, default='', null=True, blank=True)
     state = models.CharField(max_length=30, default='', null=True, blank=True)
     postalCode = models.CharField(max_length=30, default='', null=True, blank=True)
@@ -55,18 +55,18 @@ class Address(models.Model):
         return self.streetAddress if self.streetAddress else "Address Not Available"
     
 
-@receiver(post_save, sender=Address)
-def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
-    # convert coordinates to formatted-human-readable address
-    if created is True:
-        response = getFormattedAddressFromCoords(instance.lat, instance.lng)
-        instance.streetAddress = response['formatted_address']
-        instance.fullAddress = response['formatted_address']
-        instance.city = response['city'] 
-        instance.state = response['state']
-        instance.postalCode = response['postal_code']
-        instance.save()
-    return True
+# @receiver(post_save, sender=Address)
+# def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
+#     # convert coordinates to formatted-human-readable address
+#     if created is True:s
+#         response = getFormattedAddressFromCoords(instance.lat, instance.lng)
+#         instance.streetAddress = response['formatted_address']
+#         instance.fullAddress = response['formatted_address']
+#         instance.city = response['city'] 
+#         instance.state = response['state']
+#         instance.postalCode = response['postal_code']
+#         instance.save()
+#     return True
 
 # 4. model to store Volunteer information
 class Volunteer(User):
@@ -112,6 +112,7 @@ class FoodEvent(models.Model):
     createdBy = models.ForeignKey(Volunteer, null=True, blank=True, related_name='food_event_organiser', on_delete=models.PROTECT)
     createdAt = models.DateTimeField(null=True, blank=True) 
     additionalInfo = models.TextField(blank=True, null=True)
+    verified = models.BooleanField(default=False, null=True, blank=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
@@ -175,6 +176,8 @@ class Request(models.Model):
     quantity = models.CharField(max_length=100, default='', null=True, blank=True)
     foodItem = models.ForeignKey(FoodItem, null=True, blank=True, on_delete=models.PROTECT)
     deliver = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
+    foodEvent = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
+    verified = models.BooleanField(default=False, null=True, blank=True)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -185,8 +188,10 @@ class Donation(models.Model):
     needsPickup = models.BooleanField(default=False)
     fullfilled = models.BooleanField(default=False, null=True, blank=True)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
-    Delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
+    delivery = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    verified = models.BooleanField(default=False, null=True, blank=True)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):
