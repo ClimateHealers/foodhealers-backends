@@ -178,6 +178,7 @@ class FoodEventSerializer(Serializer):
     createdBy = serializers.SerializerMethodField()
     createdAt = serializers.SerializerMethodField()
     verified = serializers.BooleanField()
+    status = serializers.CharField(max_length=50)
 
     def get_id(self, obj):
         return obj.id
@@ -231,6 +232,12 @@ class FoodEventSerializer(Serializer):
             return obj.verified
         else:
             return False
+
+    def get_status(self, obj):
+        if obj.status is not None:
+            return obj.status
+        else:
+            return 'pending'
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
