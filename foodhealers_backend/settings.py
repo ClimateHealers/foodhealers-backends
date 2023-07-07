@@ -111,6 +111,8 @@ db_port = os.getenv('DB_PORT')
 GOOGLE_MAPS_API_KEY = os.getenv('API_KEY')
 firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
 MIXPANEL_API_TOKEN = os.getenv('MIXPANEL_TOKEN')
+S3_AWS_ACCESS_KEY_ID = os.getenv('S3_AWS_ACCESS_KEY_ID')
+S3_AWS_SECRET_ACCESS_KEY = os.getenv('S3_AWS_SECRET_ACCESS_KEY')
 
 # Use the environment variables in your Django settings
 DATABASES = {
@@ -160,7 +162,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATIC_URL = 'static/'
+# STATIC_URL = 'static/'
+
+AWS_ACCESS_KEY_ID = S3_AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = S3_AWS_SECRET_ACCESS_KEY
+AWS_S3_OBJECT_PARAMETERS = {
+   ' CacheControl' : 'max-age=86400',
+}
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_STORAGE_BUCKET_NAME = 'foodhealers-static-files-django'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS_STORAGE_BUCKET_NAME
+AWS_LOCATION = 'static'
+AWS_S3_REGION_NAME = 'ap-south-1'
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
+    AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
+STATIC_URL = 'https://%s/%s/' % (AWS_S3_CUSTOM_DOMAIN, AWS_LOCATION)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
