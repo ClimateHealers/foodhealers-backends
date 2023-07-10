@@ -113,6 +113,8 @@ firebase_admin_sdk_file = os.getenv('FIREBASE_ADMIN_SDK')
 MIXPANEL_API_TOKEN = os.getenv('MIXPANEL_TOKEN')
 S3_AWS_ACCESS_KEY_ID = os.getenv('S3_AWS_ACCESS_KEY_ID')
 S3_AWS_SECRET_ACCESS_KEY = os.getenv('S3_AWS_SECRET_ACCESS_KEY')
+S3_AWS_MEDIA_ACCESS_KEY_ID = os.getenv('S3_AWS_MEDIA_ACCESS_KEY_ID')
+S3_AWS_MEDIA_SECRET_ACCESS_KEY = os.getenv('S3_AWS_MEDIA_SECRET_ACCESS_KEY')
 
 # Use the environment variables in your Django settings
 DATABASES = {
@@ -190,6 +192,18 @@ firebase_admin.initialize_app(cred)
 # Managing  image
 MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media/')
 MEDIA_URL = '/media/'
+
+AWS_ACCESS_KEY_ID = S3_AWS_MEDIA_ACCESS_KEY_ID 
+AWS_SECRET_ACCESS_KEY = S3_AWS_MEDIA_SECRET_ACCESS_KEY
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS__MEDIA_STORAGE_BUCKET_NAME = 'foodhealers-media-files'
+AWS_S3_MEDIA_CUSTOM_DOMAIN = '%s.s3.amazonaws.com' % AWS__MEDIA_STORAGE_BUCKET_NAME
+AWS_MEDIA_LOCATION = 'media'
+AWS_S3_MEDIA_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
+    AWS__MEDIA_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
+MEDIA_URL = 'https://%s/%s/' % (AWS_S3_MEDIA_CUSTOM_DOMAIN, AWS_MEDIA_LOCATION)
 
 # REST FRAMEWORK SETTINGS
 REST_FRAMEWORK = {
