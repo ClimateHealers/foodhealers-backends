@@ -409,13 +409,13 @@ class FindFood(APIView):
             else:
                 toDate = datetime.now()
 
-            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
-            if FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__gte=fromDate, eventEndDate__lte=toDate, address__city=address.city)
+            if FoodEvent.objects.filter(eventStartDate__date__gte=fromDate.date(), eventEndDate__date__lte=toDate.date(), address__city=address.city).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__date__gte=fromDate.date(), eventEndDate__date__lte=toDate.date(), address__city=address.city)
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
@@ -529,14 +529,15 @@ class Event(APIView):
             else:
                 return Response({'success': False, 'message': 'please enter valid Description'})
             
-            if request.FILES.getlist('files') is not None:
-                files = request.FILES.getlist('files')
+            if request.FILES.get('files') is not None:
+                eventPhoto = request.FILES.getlist('files')
+                print('FILE ========================>',eventPhoto)
             else:
-                files=[]
+                eventPhoto=[]
                 # return  files
             
-            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
@@ -560,14 +561,18 @@ class Event(APIView):
                     createdAt=createdAt, 
                     additionalInfo=additionalInfo,
                     active=True 
-                ) # to be modified if active True or False
-                for file in files:
-                    Document.objects.create(
-                        docType=DOCUMENT_TYPE[1][0], 
-                        document=file, 
-                        createdAt=createdAt, 
-                        event=foodEvent
-                    )
+                )
+
+                foodEvent.eventPhoto = eventPhoto 
+                foodEvent.save()
+                # to be modified if active True or False
+                # for file in files:
+                Document.objects.create(
+                    docType=DOCUMENT_TYPE[1][0], 
+                    document=eventPhoto, 
+                    createdAt=createdAt, 
+                    event=foodEvent
+                )
                 return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -1248,8 +1253,8 @@ class DonateFood(APIView):
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
-                pickupAddress = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
+                pickupAddress = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
                 pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
@@ -1448,8 +1453,8 @@ class VolunteerProfile(APIView):
         
         try:
 
-            if Address.objects.filter(lat=lat, lng=lng, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
+                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
 
