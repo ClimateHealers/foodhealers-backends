@@ -179,6 +179,7 @@ class FoodEventSerializer(Serializer):
     createdAt = serializers.SerializerMethodField()
     verified = serializers.BooleanField()
     status = serializers.CharField(max_length=50)
+    eventPhoto = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -238,6 +239,14 @@ class FoodEventSerializer(Serializer):
             return obj.status
         else:
             return 'pending'
+        
+    def get_eventPhoto(self, obj): # to be modified
+        if obj.eventPhoto is not None:
+            mediaStorage = get_storage_class()()
+            documentUrl = mediaStorage.url(name=obj.eventPhoto.name)
+            return documentUrl
+        else:
+            return 'Event Photo not specified'
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()

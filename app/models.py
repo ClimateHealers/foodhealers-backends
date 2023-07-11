@@ -119,6 +119,7 @@ class FoodEvent(models.Model):
     additionalInfo = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
+    eventPhoto = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
