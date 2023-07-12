@@ -19,6 +19,9 @@ import io
 import urllib, base64
 import calendar
 from django.db.models import Q
+from rest_framework.parsers import MultiPartParser
+from django.core.files.base import File
+import tempfile
 
 # get Django Access token for development testing. 
 # getAccessToken(3)
@@ -322,7 +325,7 @@ class FindFood(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'eventStartDate'],
+            required=['lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'eventStartDate', 'eventEndDate'],
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
@@ -346,18 +349,10 @@ class FindFood(APIView):
         },
 
         operation_description="Find Food Events API",
-        # manual_parameters=[
-        #     openapi.Parameter(
-        #         name='Authorization',
-        #         in_=openapi.IN_HEADER,
-        #         type=openapi.TYPE_STRING,
-        #         description='Token',
-        #     ),
-        # ],
     )
 
     def post(self, request, format=None):
-        # Find Food API will return all the Food Events occuring within same city of the User location
+        # Find Food API will return Only Todays Food Events occuring within same city of the User location
         # Address (latitude, longitude and altitude)
         # From and to date
         try:
@@ -414,8 +409,8 @@ class FindFood(APIView):
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
-            if FoodEvent.objects.filter(eventStartDate__date__gte=fromDate.date(), eventEndDate__date__lte=toDate.date(), address__city=address.city).exists():
-                foodEvents = FoodEvent.objects.filter(eventStartDate__date__gte=fromDate.date(), eventEndDate__date__lte=toDate.date(), address__city=address.city)
+            if FoodEvent.objects.filter(eventStartDate__date__lte=fromDate.date(), eventEndDate__date__gte=toDate.date(), address__city=address.city, status=EVENT_STATUS[0][0]).exists():
+                foodEvents = FoodEvent.objects.filter(eventStartDate__date__lte=fromDate.date(), eventEndDate__date__gte=toDate.date(), address__city=address.city, status=EVENT_STATUS[0][0])
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
@@ -425,29 +420,27 @@ class FindFood(APIView):
         
 #  GET and Post Food Event API
 class Event(APIView):
+    parser_classes = [MultiPartParser]
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['eventName', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'eventStartDate', 'additionalInfo', 'files'],
-            properties={
-                'eventName': openapi.Schema(type=openapi.TYPE_STRING, example="EVENT NAME"),
-                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
-                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
-                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
-                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
-                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
-                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
-                'eventStartDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER,example=1685346240), # Date-time in epoch format
-                'eventEndDate': openapi.Schema(description='DateTime in Epochs Format', type=openapi.TYPE_NUMBER, example=1685346240),  # Date-time in epoch format
-                'additionalInfo': openapi.Schema(type=openapi.TYPE_STRING, example='Free Vegan Meals'),
-                'files': openapi.Schema(type=openapi.TYPE_FILE,),
-            },
-        ),
+        manual_parameters=[
+            openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token',),    
+            openapi.Parameter(name='eventName',in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='EVENT NAME', required=True),   
+            openapi.Parameter(name='lat', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=12.916540, required=True),
+            openapi.Parameter(name='lng', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=77.651950, required=True),
+            openapi.Parameter(name='alt', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=4500),
+            openapi.Parameter(name='fullAddress', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='318 CLINTON AVE NEWARK NJ 07108-2899 USA', required=True),
+            openapi.Parameter(name='postalCode', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=7108-2899, required=True),
+            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='New Jersey State', required=True),
+            openapi.Parameter(name='city', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Newark City', required=True),
+            openapi.Parameter(name='eventStartDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=1685346240, required=True), # Date-time in epoch format
+            openapi.Parameter(name='eventEndDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=1685346240, required=True),  # Date-time in epoch format
+            openapi.Parameter(name='additionalInfo', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Free Vegan Meals',),
+            openapi.Parameter(name='files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),     
+        ],   
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -457,21 +450,12 @@ class Event(APIView):
                 },
             ),
         },
-
         operation_description="Post An Event API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
+        consumes=['multipart/form-data'],
     )
 
     def post(self, request, format=None):
         try:
-            
             if request.data.get('eventName') is not None:
                 eventName = request.data.get('eventName')
             else:
@@ -514,13 +498,13 @@ class Event(APIView):
             
             if request.data.get('eventStartDate') is not None:
                 eventStartDateEpochs = request.data.get('eventStartDate')
-                eventStartDate = datetime.fromtimestamp(eventStartDateEpochs)
+                eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs))
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
             if request.data.get('eventEndDate') is not None:
                 eventEndDateEpochs = request.data.get('eventEndDate')
-                eventEndDate = datetime.fromtimestamp(eventEndDateEpochs)
+                eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs))
             else:
                 eventEndDate = None
             
@@ -530,23 +514,32 @@ class Event(APIView):
                 return Response({'success': False, 'message': 'please enter valid Description'})
             
             if request.FILES.get('files') is not None:
-                eventPhoto = request.FILES.getlist('files')
-                print('FILE ========================>',eventPhoto)
-            else:
-                eventPhoto=[]
-                # return  files
-            
+                eventPhoto = request.FILES.get('files')
+
+                # Read the contents of the InMemoryUploadedFile
+                file_contents = eventPhoto.read()
+                # Create a temporary file
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
+
+                try:
+                    # Write the contents to the temporary file
+                    temp_file.write(file_contents)
+                    temp_file.close()
+
+                except Exception as e:
+                    # If an exception occurs, make sure to close the temporary file
+                    temp_file.close()
+                    return Response({'success': False, 'message': str(e)})
+                    
             if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
                 address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
 
-            
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
-            
-            
-            if FoodEvent.objects.filter(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
-                foodEvent = FoodEvent.objects.get(address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer)
+    
+            if FoodEvent.objects.filter(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
+                foodEvent = FoodEvent.objects.get(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer)
                 foodEventDetaills = FoodEventSerializer(foodEvent).data
                 return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
             else:
@@ -563,16 +556,23 @@ class Event(APIView):
                     active=True 
                 )
 
-                foodEvent.eventPhoto = eventPhoto 
+                with open(temp_file.name, 'rb') as f:
+                    foodEvent.eventPhoto.save(eventPhoto.name, File(f))
                 foodEvent.save()
-                # to be modified if active True or False
-                # for file in files:
-                Document.objects.create(
+                f.close()
+
+                doc = Document.objects.create(
                     docType=DOCUMENT_TYPE[1][0], 
-                    document=eventPhoto, 
                     createdAt=createdAt, 
                     event=foodEvent
                 )
+
+                with open(temp_file.name, 'rb') as f:
+                    doc.document.save(eventPhoto.name, File(f))
+
+                doc.save()
+                f.close()
+
                 return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
