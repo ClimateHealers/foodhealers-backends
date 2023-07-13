@@ -27,11 +27,11 @@ PROJECT_DIR = BASE_DIR / "app"
 SECRET_KEY = 'django-insecure-m+rp2up2513j@sq+^qdu&*y%9v1-sk*x2mwm-pq%_7s)c=pzv%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost', 'api.climatehealers.com', '127.0.0.1', '*']
 
-CSRF_TRUSTED_ORIGINS = ['https://api.climatehealers.com','https://*.127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://api.climatehealers.com','https://*.127.0.0.1', 'https://foodhealers.climatehealers.com']
 
 # Application definition
 

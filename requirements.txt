@@ -168,3 +168,6 @@ uritemplate==4.1.1
 urllib3==1.26.15
 vine==5.0.0
 wcwidth==0.2.6
+django-storages==1.13.2
+gevent==22.10.2
+matplotlip==0.2
