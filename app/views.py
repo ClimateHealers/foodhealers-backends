@@ -321,14 +321,14 @@ class FindFood(APIView):
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter(name='lat', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description=12.916540, required=True),
-            openapi.Parameter(name='lng', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description=77.651950, required=True),
-            openapi.Parameter(name='fullAddress', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description='318 CLINTON AVE NEWARK NJ 07108-2899 USA', required=True),
-            openapi.Parameter(name='postalCode', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description=7108-2899, required=True),
-            openapi.Parameter(name='state', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description='New Jersey State', required=True),
-            openapi.Parameter(name='city', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description='Newark City', required=True),
-            openapi.Parameter(name='eventStartDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description=1685346240, required=True), # Date-time in epoch format
-            openapi.Parameter(name='eventEndDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, description=1685346240, required=True),  # Date-time in epoch format
+            openapi.Parameter(name='lat', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='lng', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='fullAddress', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='postalCode', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter(name='state', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter(name='city', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING),
+            openapi.Parameter(name='eventStartDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True), # Date-time in epoch format
+            openapi.Parameter(name='eventEndDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),  # Date-time in epoch format
         ],   
         responses={
             200: openapi.Schema(
@@ -348,43 +348,43 @@ class FindFood(APIView):
         # Address (latitude, longitude and altitude)
         # From and to date
         try:
-            if request.query_params.get('lat') is not None:
+            if request.query_params.get('lat') is not None and request.query_params.get('lat') is not ' ' and request.query_params.get('lat') is not '':
                 lat = float(request.query_params.get('lat'))
             else:
                 return Response({'success': False, 'message':'please enter valid latitude'})
             
-            if request.query_params.get('lng') is not None:
+            if request.query_params.get('lng') is not None and request.query_params.get('lng') is not ' ' and request.query_params.get('lng') is not '':
                 lng = float(request.query_params.get('lng'))
             else:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
 
-            if request.query_params.get('fullAddress') is not None:
+            if request.query_params.get('fullAddress') is not None and request.query_params.get('fullAddress') is not ' ' and request.query_params.get('fullAddress') is not '':
                 fullAddress = request.query_params.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.query_params.get('postalCode') is not None:
+            if request.query_params.get('postalCode') is not None and request.query_params.get('postalCode') is not ' ' and request.query_params.get('postalCode') is not '':
                 postalCode = int(request.query_params.get('postalCode'))
             else:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
+                postalCode = 0
             
             if request.query_params.get('state') is not None:
                 state = request.query_params.get('state')
             else:
-                return Response({'success': False, 'message': 'please enter valid state'})
+                state = ''
             
             if request.query_params.get('city') is not None:
                 city = request.query_params.get('city')
             else:
-                return Response({'success': False, 'message': 'please enter valid city'})
+                city = ''
 
-            if request.query_params.get('eventStartDate') is not None:
+            if request.query_params.get('eventStartDate') is not None and request.query_params.get('eventStartDate') is not ' ' and request.query_params.get('eventStartDate') is not '':
                 fromDateEpochs = int(request.query_params.get('eventStartDate'))
                 fromDate = datetime.fromtimestamp(fromDateEpochs)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
-            if request.query_params.get('eventEndDate') is not None:
+            if request.query_params.get('eventEndDate') is not None and request.query_params.get('eventEndDate') is not ' ' and request.query_params.get('eventEndDate') is not '':
                 toDateEpochs = int(request.query_params.get('eventEndDate'))
                 toDate = datetime.fromtimestamp(toDateEpochs)
             else:
@@ -400,8 +400,14 @@ class FindFood(APIView):
 
             # ( (Eventstart >= fromDate & Eventstart <= toDate) Or (Eventstart <=fromDate & Eventend >= fromDate) city = city, status = approved )--------------> FIND FOOD API LOGIC
 
-            if FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0]).exists():
-                foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
+            if FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).exists():
+                if address.city == None or address.city == ' ' or address.city == '' :
+                    if address.state == None or address.state == ' ' or address.state == '' :
+                        foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')[:50]              
+                    else:
+                        foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__state=address.state, status=EVENT_STATUS[0][0])
+                else:
+                    foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
                 foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
                 return Response({'success': True, 'foodEvents': foodEventsDetails})
             else:
@@ -420,16 +426,16 @@ class Event(APIView):
         manual_parameters=[
             openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token',),    
             openapi.Parameter(name='eventName',in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='EVENT NAME', required=True),   
-            openapi.Parameter(name='lat', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=12.916540, required=True),
-            openapi.Parameter(name='lng', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=77.651950, required=True),
-            openapi.Parameter(name='alt', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=4500),
-            openapi.Parameter(name='fullAddress', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='318 CLINTON AVE NEWARK NJ 07108-2899 USA', required=True),
-            openapi.Parameter(name='postalCode', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=7108-2899, required=True),
-            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='New Jersey State', required=True),
-            openapi.Parameter(name='city', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Newark City', required=True),
-            openapi.Parameter(name='eventStartDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=1685346240, required=True), # Date-time in epoch format
-            openapi.Parameter(name='eventEndDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, description=1685346240, required=True),  # Date-time in epoch format
-            openapi.Parameter(name='additionalInfo', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Free Vegan Meals',),
+            openapi.Parameter(name='lat', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),
+            openapi.Parameter(name='lng', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),
+            openapi.Parameter(name='alt', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER),
+            openapi.Parameter(name='fullAddress', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='postalCode', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),
+            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='city', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='eventStartDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True), # Date-time in epoch format
+            openapi.Parameter(name='eventEndDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),  # Date-time in epoch format
+            openapi.Parameter(name='additionalInfo', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Free Vegan Meals', required=True),
             openapi.Parameter(name='files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),     
         ],   
         responses={
