@@ -527,7 +527,9 @@ class Event(APIView):
                     # If an exception occurs, make sure to close the temporary file
                     temp_file.close()
                     return Response({'success': False, 'message': str(e)})
-                    
+            else:
+                temp_file = None
+
             if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
             else:
@@ -553,22 +555,24 @@ class Event(APIView):
                     active=True 
                 )
 
-                with open(temp_file.name, 'rb') as f:
-                    foodEvent.eventPhoto.save(eventPhoto.name, File(f))
-                foodEvent.save()
-                f.close()
+                if temp_file != None:
 
-                doc = Document.objects.create(
-                    docType=DOCUMENT_TYPE[1][0], 
-                    createdAt=createdAt, 
-                    event=foodEvent
-                )
+                    with open(temp_file.name, 'rb') as f:
+                        foodEvent.eventPhoto.save(eventPhoto.name, File(f))
+                    foodEvent.save()
+                    f.close()
 
-                with open(temp_file.name, 'rb') as f:
-                    doc.document.save(eventPhoto.name, File(f))
+                    doc = Document.objects.create(
+                        docType=DOCUMENT_TYPE[1][0], 
+                        createdAt=createdAt, 
+                        event=foodEvent
+                    )
 
-                doc.save()
-                f.close()
+                    with open(temp_file.name, 'rb') as f:
+                        doc.document.save(eventPhoto.name, File(f))
+
+                    doc.save()
+                    f.close()
 
                 return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
@@ -1526,6 +1530,9 @@ class VolunteerProfile(APIView):
                 userId= request.user.id
                 if Volunteer.objects.filter(id=userId).exists():
                     user = Volunteer.objects.get(id=userId)
+
+                    # Delete Custom Token Object
+                    CustomToken.objects.filter(user=user).delete()
 
                     # Volunteer Profile Photo Deleted
                     if Document.objects.filter(volunteer=user, docType=DOCUMENT_TYPE[0][0]).exists():
