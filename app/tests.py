@@ -9,6 +9,7 @@ import json
 from app.authentication import create_access_token, create_refresh_token
 from rest_framework.test import force_authenticate
 from datetime import datetime
+from django.utils.datastructures import MultiValueDict
 
 
 class UserOperations(APITestCase):
@@ -69,7 +70,8 @@ class UserOperations(APITestCase):
             self.pickupRequestType = pickupRequestType 
             self.foodItemType = foodItemType
             self.vehicle = vehicle
-            print('<<<---------------------------------------->>>')
+            print('<<<----------------- Start Test Cases ----------------------->>>')
+
 
     # user SignUp test cases
     '''
@@ -80,50 +82,61 @@ class UserOperations(APITestCase):
         session['email'] = "user@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-signup')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-                'name': 'Test User ',
-                'email': 'user@example.com',
-                'isVolunteer': True
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_driver_onboarding_valid_data ------',result)
+        url = reverse('app:user-signup')
+        data = {
+            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'name': 'Test User',
+            'email': 'user@example.com',
+            'isVolunteer': True
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertIn('userDetails', result)
+        self.assertEqual(result['success'], True)
+        self.assertEqual(result['message'], 'successfully created user')
 
-            return result
-        except Exception as e:
-            return str(e)
+        self.assertEqual(result['userDetails']['id'], 2)
+        self.assertEqual(result['userDetails']['name'], 'Test User')
+        self.assertEqual(result['userDetails']['email'], 'user@example.com')
+        self.assertEqual(result['userDetails']['isDriver'], False)
+        self.assertEqual(result['userDetails']['isVolunteer'], True)
+        self.assertEqual(result['userDetails']['volunteerType'], 'food_seeker')
+        self.assertEqual(result['userDetails']['phoneNumber'], '')
+
+        print('1) ------ test case response for  : test_user_onboarding_valid_data ------', result)
     
+
     '''
     Test case to test onboarding with missing parameters (token_id)
     '''
 
-    def test_user_onboarding_with_missing_token_id(self):
+    def test_user_onboarding_with_missing_tokenId(self):
         session = self.client.session
         session['email'] = "user@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-signup')
-            data = {
-                'name': 'Test User ',
-                'email': 'user@example.com',
-                'isVolunteer': True
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_onboarding_with_missing_token_id ------',result)
+        url = reverse('app:user-signup')
+        data = {
+            'name': 'Test User ',
+            'email': 'user@example.com',
+            'isVolunteer': True
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertEqual(result['success'], False)
+        self.assertEqual(result['message'], 'please enter valid token')
 
-            return result
-        except Exception as e:
-            return str(e)
-        
+        print('2) ------ test case response for  : test_user_onboarding_with_missing_token_id ------',result)
+
+
     '''
     Test case to test onboarding with missing parameters (name)
     '''
@@ -133,21 +146,23 @@ class UserOperations(APITestCase):
         session['email'] = "user@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-signup')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-                'email': 'user@example.com',
-                'isVolunteer': True
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_onboarding_with_missing_name ------',result)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        url = reverse('app:user-signup')
+        data = {
+            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'email': 'user@example.com',
+            'isVolunteer': True
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            return result
-        except Exception as e:
-            return str(e)
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertEqual(result['success'], False)
+        self.assertEqual(result['message'], 'please enter valid name')
+
+        print('3) ------ test case response for  : test_user_onboarding_with_missing_name ------',result)
+
 
     '''
         Test case to test onboarding with missing parameters (email)
@@ -155,26 +170,24 @@ class UserOperations(APITestCase):
 
     def test_user_onboarding_with_missing_email(self):
         session = self.client.session
-        # session['email'] = "user@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-signup')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-                'name': 'Test User ',
-                'isVolunteer': True
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_onboarding_with_missing_email ------',result)
+        url = reverse('app:user-signup')
+        data = {
+            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'name': 'Test User ',
+            'isVolunteer': True
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)        
+        self.assertEqual(result['success'], False)
 
-            return result
-        except Exception as e:
-            return str(e)
+        print('4) ------ test case response for  : test_user_onboarding_with_missing_email ------',result)
     
+
     '''
         Test case to test onboarding with missing parameters (isVolunteer)
     '''
@@ -184,45 +197,62 @@ class UserOperations(APITestCase):
         session['email'] = "user@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-signup')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-                'name': 'Test User ',
-                'email': 'user@example.com',
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_onboarding_with_missing_isVolunteer ------',result)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        url = reverse('app:user-signup')
+        data = {
+            'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
+            'name': 'Test User ',
+            'email': 'user@example.com',
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            return result
-        except Exception as e:
-            return str(e)   
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertEqual(result['success'], False)
+        self.assertEqual(result['message'], 'please enter if Volunteer or not')
+
+        print('5) ------ test case response for  : test_user_onboarding_with_missing_isVolunteer ------' ,result)
+ 
 
     # user Login In test cases
     '''
     Test case to test login with valid data
     '''
+
     def test_user_login_valid_data(self):
         session = self.client.session
-        session['email'] = "user@example.com"
+        session['email'] = "testuser@example.com"
         session.save()
 
-        try:
-            url = reverse('app:user-login')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_login_valid_data ------',result)
+        url = reverse('app:user-login')
+        data = {
+            'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertIn('isAuthenticated', result)
+        self.assertIn('token', result)
+        self.assertIn('refreshToken', result)
+        self.assertIn('user', result)
 
-            return result
-        except Exception as e:
-            return str(e)
+        self.assertEqual(result['success'], True)
+        self.assertEqual(result['message'], 'successfully signed in')
+
+        self.assertIn('id', result['user'])
+        self.assertIn('name', result['user'])
+        self.assertIn('email', result['user'])
+        self.assertIn('phoneNumber', result['user'])
+        self.assertIn('isDriver', result['user'])
+        self.assertIn('isVolunteer', result['user'])
+        self.assertIn('volunteerType', result['user'])
+
+        print('6) ------ test case response for  : test_user_login_valid_data ------',result)
+
     
     '''
     Test case to test login with missing parameters (token_id)
@@ -232,41 +262,44 @@ class UserOperations(APITestCase):
         session = self.client.session
         session['email'] = "user@example.com"
         session.save()
-
-        try:
-            url = reverse('app:user-login')
-            data = { }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_login_with_missing_token_id ------',result)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-            return result
-        except Exception as e:
-            return str(e)
         
+        url = reverse('app:user-login')
+        data = {}
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertEqual(result['success'], False)
+        self.assertEqual(result['message'], 'please enter valid token')
+
+        print('7) ------ test case response for  : test_user_login_with_missing_token_id ------',result)
+        
+
     '''
     Test case to test login with missing parameters (email)
     '''
 
-    def test_user_login_with_missing_email(self):
+    def test_user_login_with_email_notExist(self):
         session = self.client.session
-        # session['email'] = "user@example.com"
+        session['email'] = ""
         session.save()
 
-        try:
-            url = reverse('app:user-login')
-            data = {
-                'token_id': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9',
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_login_with_missing_email ------',result)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        url = reverse('app:user-login')
+        data = {
+            'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
+        }
+        response = self.client.post(url, data, format='json')
+        result = json.loads(response.content)
 
-            return result
-        except Exception as e:
-            return str(e)
+        self.assertEqual(response.status_code, status.HTTP_200_OK) 
+        self.assertIn('success', result)
+        self.assertIn('message', result)
+        self.assertEqual(result['success'], False)
+        self.assertEqual(result['message'], 'user with email does not exist')
+
+        print('8) ------ test case response for  : test_user_login_with_email_notExist ------', result)
 
     # Volunteer Post Food Events test cases
     '''
