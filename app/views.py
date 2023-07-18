@@ -1340,6 +1340,14 @@ class VolunteerProfile(APIView):
             ),
         },
         operation_description="Fetch Profile User API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
     )
 
     # fetch volunteer Profile API
@@ -1388,6 +1396,14 @@ class VolunteerProfile(APIView):
             ),
         },
         operation_description="Update Volunteer Profile API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
     )
 
     # update Volunteer Profile API
@@ -1480,6 +1496,78 @@ class VolunteerProfile(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING),
+                },
+            ),
+        },
+        operation_description="Delete Profile User API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # Delete volunteer Profile API
+    # Delete Volunteer Object, Documents Object, Vehicle Object, Food Events Object, Donations Object, To be Implemented ---> [Requests Object (Volunteer, food/supplies/ pickup/drop)], 
+    def delete(self, request,  format=None):
+        try:
+            if request.user.id is not None:
+                userId= request.user.id
+                if Volunteer.objects.filter(id=userId).exists():
+                    user = Volunteer.objects.get(id=userId)
+
+                    # Volunteer Profile Photo Deleted
+                    if Document.objects.filter(volunteer=user, docType=DOCUMENT_TYPE[0][0]).exists():
+                        allDocuments = Document.objects.filter(volunteer=user, docType=DOCUMENT_TYPE[0][0])
+                        for doc in allDocuments:
+                            doc.delete()
+                    
+                    # Volunteer Vehicle and Vehicle Photo Deleted
+                    if Vehicle.objects.filter(owner=user).exists():
+                        allVehicles = Vehicle.objects.filter(owner=user)
+                        for vehicle in allVehicles:
+                            if Document.objects.filter(vehicle=vehicle, docType=DOCUMENT_TYPE[3][0]).exists():
+                                allVehicleDocs = Document.objects.filter(vehicle=vehicle, docType=DOCUMENT_TYPE[3][0])
+                                for vehicleDocs in allVehicleDocs:
+                                    vehicleDocs.delete()
+                            vehicle.delete()
+
+                    # Donations Deleted (Donation to be Deleted Before Food Events Deletion)
+                    if Donation.objects.filter(donatedBy=user).exists():
+                        allDonations = Donation.objects.filter(donatedBy=user)
+                        for donation in allDonations:
+                            donation.delete()
+
+                    # Food Event and Event Photo Deleted
+                    if FoodEvent.objects.filter(createdBy=user).exists():
+                        foodEvents = FoodEvent.objects.filter(createdBy=user)
+                        for fEvent in foodEvents:
+                            if Document.objects.filter(docType=DOCUMENT_TYPE[1][0], event=fEvent).exists():
+                                allFoodEventDocs = Document.objects.filter(docType=DOCUMENT_TYPE[1][0], event=fEvent)
+                                for foodEventDocs in allFoodEventDocs:
+                                    foodEventDocs.delete()
+                            fEvent.delete()
+
+                    user.delete()
+                    return Response({'success':True, 'message':'User has been successfully deleted'})
+                else:
+                    return Response({'success': False, 'message': 'user not found'})
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'})
+
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
 
 #  GET, POST and PUT Vehicle API
 class VehicleOperations(APIView):
