@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<style>
+    .button {
+        background-color: #b00000;
+        /* Green */
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+    }
+</style>
+
+<body>
+    <h2>Hi {{name}},</h2>
+
+    <p>
+        You are receiving this email since we received a request to delete your account.<br>
+        Please click the below link to proceed further
+    </p>
+
+    
+    <p>
+        <a href="{{delete_url}}/v1/api/delete-account/{{uniqueID}}">
+            <button type="button" class="button">Delete Account</button>
+        </a>
+    </p>
+
+    <p>
+        If you haven't requested for account deletion, please ignore this email. 
+    </p>
+    
+    <h3>
+        Thank you,<br />
+        Climate Healers team.
+    </h3>
+    
+</body>
+
+</html>
