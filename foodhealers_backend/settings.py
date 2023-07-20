@@ -115,6 +115,12 @@ S3_AWS_ACCESS_KEY_ID = os.getenv('S3_AWS_ACCESS_KEY_ID')
 S3_AWS_SECRET_ACCESS_KEY = os.getenv('S3_AWS_SECRET_ACCESS_KEY')
 S3_AWS_MEDIA_ACCESS_KEY_ID = os.getenv('S3_AWS_MEDIA_ACCESS_KEY_ID')
 S3_AWS_MEDIA_SECRET_ACCESS_KEY = os.getenv('S3_AWS_MEDIA_SECRET_ACCESS_KEY')
+# EMAIL_AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+# EMAIL_AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# EMAIL_AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
+# EMAIL_AWS_DEFAULT_SENDER = os.getenv('AWS_DEFAULT_SENDER')
+EMAIL_SENDINBLUE_API_KEY = os.getenv('EMAIL_SENDINBLUE_API_KEY')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Use the environment variables in your Django settings
 DATABASES = {
@@ -163,6 +169,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+# Static File Settings 
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # STATIC_URL = 'static/'
 
@@ -189,6 +196,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 cred = credentials.Certificate(firebase_admin_sdk_file)
 firebase_admin.initialize_app(cred)
 
+# Media File Settings
 # Managing  image
 MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media/')
 MEDIA_URL = '/media/'
@@ -204,6 +212,24 @@ AWS_MEDIA_LOCATION = 'media'
 AWS_S3_MEDIA_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (
     AWS__MEDIA_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
 MEDIA_URL = 'https://%s/%s/' % (AWS_S3_MEDIA_CUSTOM_DOMAIN, AWS_MEDIA_LOCATION)
+
+# # AWS Email Settings
+# AWS_ACCESS_KEY_ID = EMAIL_AWS_ACCESS_KEY_ID
+# AWS_SECRET_ACCESS_KEY = EMAIL_AWS_SECRET_ACCESS_KEY
+# DEFAULT_SENDER = EMAIL_AWS_DEFAULT_SENDER
+# EMAIL_BACKEND = 'django_amazon_ses.EmailBackend'
+# AWS_DEFAULT_REGION=EMAIL_AWS_DEFAULT_REGION
+# EMAIL_PORT = 587
+
+# Send in Blue Settings
+SENDINBLUE_API_KEY = EMAIL_SENDINBLUE_API_KEY
+EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_HOST_USER = 'climatehealers@climatehealers.org'
+EMAIL_HOST_PASSWORD = EMAIL_HOST_PASSWORD
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+DEFAULT_SENDER = 'climatehealers@climatehealers.org'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # REST FRAMEWORK SETTINGS
 REST_FRAMEWORK = {
@@ -223,7 +249,8 @@ CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'default'
 CELERY_ENABLED = True
 
-
+PRODUCTION_URL = 'https://foodhealers.climatehealers.com'
+DEPLOYED_URL = 'https://api.climatehealers.com'
 
 # INTERNAL_IPS = [
 #     # ...
