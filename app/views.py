@@ -1526,7 +1526,7 @@ class VolunteerProfile(APIView):
         ],
     )
 
-    # Delete volunteer Profile API
+   
     # Delete Volunteer Object, Documents Object, Vehicle Object, Food Events Object, Donations Object, To be Implemented ---> [Requests Object (Volunteer, food/supplies/ pickup/drop)], 
     def delete(self, request,  format=None):
         try:            
