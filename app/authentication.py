@@ -12,7 +12,7 @@ def create_access_token(userId):
     return jwt.encode({
         'data': value,
         # Expiry time of a token
-        'exp': datetime.datetime.utcnow()+datetime.timedelta(days=1),
+        'exp': datetime.datetime.utcnow()+datetime.timedelta(days=31),
         'iat': datetime.datetime.utcnow()  # created at
     }, 'access_secret', algorithm='HS256')
 
@@ -29,7 +29,7 @@ def create_refresh_token(userId):
     value = signing.dumps(str(userId))
     return jwt.encode({
         'data': value,
-        'exp': datetime.datetime.utcnow()+datetime.timedelta(days=2),
+        'exp': datetime.datetime.utcnow()+datetime.timedelta(days=38),
         'iat': datetime.datetime.utcnow()
     }, 'refresh_secret', algorithm='HS256')
 
