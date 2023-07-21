@@ -19,6 +19,7 @@ from firebase_admin import credentials
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_DIR = BASE_DIR / "app"
+APPS_DIR = BASE_DIR / "usermgmnt"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -71,7 +72,7 @@ ROOT_URLCONF = 'foodhealers_backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [str(PROJECT_DIR/"templates")],
+        'DIRS': [str(APPS_DIR/"templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -251,6 +252,7 @@ CELERY_ENABLED = True
 
 PRODUCTION_URL = 'https://foodhealers.climatehealers.com'
 DEPLOYED_URL = 'https://api.climatehealers.com'
+LOCAL_URL = 'http://127.0.0.1:8000'
 
 # INTERNAL_IPS = [
 #     # ...

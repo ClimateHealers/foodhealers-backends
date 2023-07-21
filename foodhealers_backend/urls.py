@@ -49,7 +49,8 @@ if settings.DEBUG :
 
         re_path(r'^v1/api/', include('app.urls', namespace='v1')),
         re_path(r'^v2/api/', include('app.urls', namespace='v2')),
-
+        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v1-user')),
+        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v2-user')),
     ]
 else:
     urlpatterns = [
@@ -63,5 +64,6 @@ else:
 
         re_path(r'^v1/api/', include('app.urls', namespace='v1')),
         re_path(r'^v2/api/', include('app.urls', namespace='v2')),
-
+        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v1-user')),
+        re_path(r'^v2/user/', include('usermgmnt.urls', namespace='v2-user')),
     ]
