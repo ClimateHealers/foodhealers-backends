@@ -23,6 +23,10 @@ from rest_framework.parsers import MultiPartParser
 from django.core.files.base import File
 from django.core.mail import EmailMultiAlternatives
 from django.http import JsonResponse
+from django.utils import timezone
+from geopy.distance import lonlat, distance
+from rest_framework.pagination import PageNumberPagination
+
 
 # from .local_dev_utils import getAccessToken
 # from mixpanel import Mixpanel
@@ -384,15 +388,15 @@ class FindFood(APIView):
 
             if request.query_params.get('eventStartDate') is not None and request.query_params.get('eventStartDate') is not ' ' and request.query_params.get('eventStartDate') is not '':
                 fromDateEpochs = int(request.query_params.get('eventStartDate'))
-                fromDate = datetime.fromtimestamp(fromDateEpochs)
+                fromDate = datetime.fromtimestamp(fromDateEpochs).astimezone(timezone.utc)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
             if request.query_params.get('eventEndDate') is not None and request.query_params.get('eventEndDate') is not ' ' and request.query_params.get('eventEndDate') is not '':
                 toDateEpochs = int(request.query_params.get('eventEndDate'))
-                toDate = datetime.fromtimestamp(toDateEpochs)
+                toDate = datetime.fromtimestamp(toDateEpochs).astimezone(timezone.utc)
             else:
-                toDate = datetime.now()
+                toDate = timezone.now()
 
             if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
                 address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
@@ -404,16 +408,34 @@ class FindFood(APIView):
 
             # ( (Eventstart >= fromDate & Eventstart <= toDate) Or (Eventstart <=fromDate & Eventend >= fromDate) city = city, status = approved )--------------> FIND FOOD API LOGIC
 
+            foodEvents = []
+            searched_xy = (lng, lat)
+
             if FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).exists():
-                if address.city == None or address.city == ' ' or address.city == '' :
-                    if address.state == None or address.state == ' ' or address.state == '' :
-                        foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')[:50]              
-                    else:
-                        foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__state=address.state, status=EVENT_STATUS[0][0])
-                else:
-                    foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
-                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
-                return Response({'success': True, 'foodEvents': foodEventsDetails})
+                foodEventList = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')
+ 
+                for fEvent in foodEventList:
+                    event_xy = (fEvent.address.lng, fEvent.address.lat)
+                    eventDistance = distance(lonlat(*searched_xy), lonlat(*event_xy)).km
+                                    
+                    if eventDistance <= 50: # If Events Location is Less Than 50 Km then Event will be Fetched.
+                        foodEvents.append(fEvent)
+
+                # <---------------------------- Depreceated Code ----------------------------------------------------->
+                
+                # if address.city == None or address.city == ' ' or address.city == '' :
+                #     if address.state == None or address.state == ' ' or address.state == '' :
+                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')[:50]              
+                #     else:
+                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__state=address.state, status=EVENT_STATUS[0][0])
+                # else:
+                #     foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
+                
+                paginator = PageNumberPagination()
+                paginated_foodEvents = paginator.paginate_queryset(foodEvents, request)
+
+                foodEventsDetails = FoodEventSerializer(paginated_foodEvents, many=True).data  
+                return paginator.get_paginated_response({'success': True, 'foodEvents': foodEventsDetails})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
@@ -499,13 +521,13 @@ class Event(APIView):
             
             if request.data.get('eventStartDate') is not None:
                 eventStartDateEpochs = request.data.get('eventStartDate')
-                eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs))
+                eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs)).astimezone(timezone.utc)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
             if request.data.get('eventEndDate') is not None:
                 eventEndDateEpochs = request.data.get('eventEndDate')
-                eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs))
+                eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs)).astimezone(timezone.utc)
             else:
                 eventEndDate = None
             
@@ -546,7 +568,7 @@ class Event(APIView):
                 foodEventDetaills = FoodEventSerializer(foodEvent).data
                 return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
             else:
-                createdAt = datetime.now()
+                createdAt = timezone.now()
                 foodEvent = FoodEvent.objects.create(
                     name = eventName,
                     address=address, 
@@ -667,7 +689,7 @@ class BookmarkEvent(APIView):
                 if EventBookmark.objects.filter(user=user, event=foodEvent).exists():
                     return Response({'success':False, 'message': 'Bookmark already exists'})
                 else:
-                    createdAt = datetime.now()
+                    createdAt = timezone.now()
                     EventBookmark.objects.create(user=user, event=foodEvent, createdAt=createdAt)
                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
@@ -832,7 +854,7 @@ class FindFoodRecipe(APIView):
                 return Response({'success': True, 'message': 'Food Recipe already exists','recipe':recipe.id})
             else:
                 recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, category=category, cookingInstructions=cookingInstructions)
-                createdAt = datetime.now()
+                createdAt = timezone.now()
                 for file in files:
                     doc = Document.objects.create(
                         docType=DOCUMENT_TYPE[2][0], 
@@ -998,7 +1020,7 @@ class RequestFoodSupplies(APIView):
             if FoodItem.objects.filter(itemName=itemName, itemType=itemType).exists():
                 foodItem = FoodItem.objects.get(itemName=itemName, itemType=itemType)
             else:
-                foodItem = FoodItem.objects.create(itemName=itemName, itemType=itemType, addedBy=user, createdAt=datetime.now())
+                foodItem = FoodItem.objects.create(itemName=itemName, itemType=itemType, addedBy=user, createdAt=timezone.now())
             
             if RequestType.objects.filter(id=requestTypeId).exists():
                 requestType = RequestType.objects.get(id=requestTypeId)
@@ -1009,7 +1031,7 @@ class RequestFoodSupplies(APIView):
                 itemRequest = Request.objects.get(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem)
                 return Response({'success': True, 'message': 'Request already exists','itemRequest':itemRequest.id})
             else:
-                createdAt = datetime.now()
+                createdAt = timezone.now()
                 itemRequest = Request.objects.create(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem, createdAt=createdAt)
                 return Response({'success': True, 'message': 'Successfully requested items'})
             
@@ -1134,7 +1156,7 @@ class RequestVolunteers(APIView):
                     createdBy=user, 
                     requiredDate=requiredDate,
                     active=True,
-                    createdAt=datetime.now(),
+                    createdAt=timezone.now(),
                     quantity=numberOfVolunteers,
                     foodEvent=foodEvent
                 )
@@ -1266,7 +1288,7 @@ class DonateFood(APIView):
             if FoodItem.objects.filter(itemName=foodName).exists():
                 foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
             else:
-                foodItem = FoodItem.objects.create(itemName=foodName, addedBy=user, itemType=itemType, createdAt=datetime.now())
+                foodItem = FoodItem.objects.create(itemName=foodName, addedBy=user, itemType=itemType, createdAt=timezone.now())
 
             if DeliveryDetail.objects.filter(pickupAddress=pickupAddress, pickupDate=pickupDate).exists():
                 deliveryDetails = DeliveryDetail.objects.get(pickupAddress=pickupAddress, pickupDate=pickupDate)
@@ -1685,7 +1707,7 @@ class VehicleOperations(APIView):
                 vehicleDetails = VehicleSerializer(vehicle).data
                 return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicleDetails})
             else:
-                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour, active=active, createdAt=datetime.now())
+                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour, active=active, createdAt=timezone.now())
                 vehicleDetails = VehicleSerializer(vehicle).data
 
                 # updating isDriver Field of Volunteer model when the user Adds a vehicle.
@@ -1796,7 +1818,7 @@ class AllEvents(APIView):
     def get(self, request, format=None):
         try:
             # user = request.user
-            todayDate = datetime.now()
+            todayDate = timezone.now()
 
             if FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate)).exists():
                 foodEvents = FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate))
