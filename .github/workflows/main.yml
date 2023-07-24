@@ -25,29 +25,29 @@ jobs:
           name: foodhealers
           path: foodhealers.zip
 
-  s3_deployment:
-    needs: zip_files
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: foodhealers
-          path: .
+#   s3_deployment:
+#     needs: zip_files
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/main'
+#     steps:
+#       - name: Download artifact
+#         uses: actions/download-artifact@v2
+#         with:
+#           name: foodhealers
+#           path: .
 
-      - name: Configure AWS credentials
-        run: |
-          echo "[default]" >> $HOME/.aws/credentials
-          echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> $HOME/.aws/credentials
-          echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $HOME/.aws/credentials
-          echo "region=$AWS_DEFAULT_REGION" >> $HOME/.aws/credentials
+#       - name: Configure AWS credentials
+#         run: |
+#           echo "[default]" >> $HOME/.aws/credentials
+#           echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> $HOME/.aws/credentials
+#           echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $HOME/.aws/credentials
+#           echo "region=$AWS_DEFAULT_REGION" >> $HOME/.aws/credentials
 
-      - name: Install AWS CLI
-        run: |
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
+#       - name: Install AWS CLI
+#         run: |
+#           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#           unzip awscliv2.zip
+#           sudo ./aws/install
 
-      - name: Upload to S3
-        run: aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3
+#       - name: Upload to S3
+#         run: aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3
