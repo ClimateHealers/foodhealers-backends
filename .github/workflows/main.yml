@@ -39,25 +39,17 @@ jobs:
         name: foodhealers
         path: foodhealers.zip
 
-#     - name: Configure AWS credentials
-#       run: |
-#         mkdir -p $HOME/.aws
-#         echo "[default]" >> $HOME/.aws/credentials
-#         echo "aws_access_key_id=$AWS_ACCESS_KEY_ID" >> $HOME/.aws/credentials
-#         echo "aws_secret_access_key=$AWS_SECRET_ACCESS_KEY" >> $HOME/.aws/credentials
-#         echo "region=$AWS_DEFAULT_REGION" >> $HOME/.aws/credentials
-
-#     - name: Install AWS CLI
-#       run: sudo apt-get -q install -y awscli
-
-#     - name: Upload to AWS S3
-#       run: |
-#         aws s3 cp ./foodhealers.zip s3://$BUCKET_NAME/
-    - name: Set AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
+  s3_deployment:
+    if: github.ref == 'refs/heads/develop'
+    runs-on: self-hosted
+    steps:
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
-    - name: Upload zip file to S3
-      run: aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3/
+      - name: Zip code
+        run: zip -r foodhealers.zip . -x .gitignore -x .github -x .git/*
+      - name: Copy files to S3
+        run: aws s3 cp ./foodhealers.zip s3://foodhealers-backend-codepipeline-s3
