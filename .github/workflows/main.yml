@@ -42,7 +42,7 @@ jobs:
 
   s3_deployment:
     if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: zip_files
     steps:
       - name: Set up AWS CLI
