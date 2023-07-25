@@ -26,6 +26,7 @@ jobs:
           path: foodhealers.zip
 
   upload:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: zip_files   # Wait for the "zip_files" job to finish before running this job.
 
