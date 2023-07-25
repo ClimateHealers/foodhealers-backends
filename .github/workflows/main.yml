@@ -15,7 +15,7 @@ jobs:
 
       - name: Zip the code
         run: |
-          zip -r foodhealers.zip .
+          zip -r foodhealers.zip . -x "*.git*" ".github*" ".gitlab-ci.yml" ".gitignore"
 
       - name: Install AWS CLI
         run: |
