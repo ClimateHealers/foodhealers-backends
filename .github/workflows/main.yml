@@ -36,7 +36,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: foodhealers
-        path: .
+        path: foodhealers.zip
 
     - name: Configure AWS credentials
       run: |
