@@ -43,6 +43,7 @@ jobs:
   s3_deployment:
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted
+    needs: zip_files
     steps:
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v1
