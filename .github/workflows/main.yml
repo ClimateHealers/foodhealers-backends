@@ -60,10 +60,4 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
     - name: Upload zip file to S3
-      uses: actions/s3/cp@v2
-      with:
-          source: foodhealers.zip
-          target: s3://$BUCKET_NAME/foodhealers.zip
-          accessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: ap-south-1
+      run: aws s3 cp ./foodhealers.zip s3://$BUCKET_NAME/
