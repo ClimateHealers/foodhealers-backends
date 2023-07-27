@@ -411,8 +411,8 @@ class FindFood(APIView):
             foodEvents = []
             searched_xy = (lng, lat)
 
-            if FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).exists():
-                foodEventList = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')
+            if FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).exists():
+                foodEventList = FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).order_by('-id')
  
                 for fEvent in foodEventList:
                     event_xy = (fEvent.address.lng, fEvent.address.lat)
