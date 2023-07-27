@@ -4,6 +4,7 @@ from taggit.managers import TaggableManager
 from django.dispatch import receiver
 from .geoutils import getFormattedAddressFromCoords
 from django.db.models.signals import post_save
+from .validators import validate_file_size
 
 
 
@@ -119,13 +120,13 @@ class FoodEvent(models.Model):
     additionalInfo = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
-    eventPhoto = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
+    eventPhoto = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
 class Document(models.Model):
     docType =  models.CharField(max_length=50, null=True, blank=True, choices=DOCUMENT_TYPE, default='profile_photo') # To be modified
-    document = models.FileField(upload_to='user/documents', default='', null=True, blank=True)
+    document = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     verified = models.BooleanField(default=False, blank=True)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
