@@ -137,6 +137,14 @@ def upload_recipes_action(request):
                     recipe_source = None
             else:
                 return render(request, 'BulkRecipeUpload.html', {'success': False, 'error':'Recipe Source column not present'})
+            
+            if 'Recipe Credits' in list(df.columns):
+                if df['Recipe Credits'][lst] is not None:
+                    recipe_credits = df['Recipe Credits'][lst]
+                else:
+                    recipe_credits = None
+            else:
+                return render(request, 'BulkRecipeUpload.html', {'success': False, 'error':'Recipe Credits column not present'})
 
             try:
                 category_list = ast.literal_eval(category)
@@ -159,7 +167,7 @@ def upload_recipes_action(request):
                     # Get the image name from the URL (you can modify this logic based on your needs)
                     urllib.request.urlretrieve(image, filename)
 
-                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions, recipeSource=recipe_source)
+                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions, recipeSource=recipe_source, recipeCredits=recipe_credits)
                     for cat in  category_list:
                         if Category.objects.filter(name=cat).exists():
                             recipe_category = Category.objects.get(name=cat)

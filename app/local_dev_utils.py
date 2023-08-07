@@ -24,7 +24,7 @@ def extract_recipe_page(url):
             final_recipe_data += recipe_data
 
         with open('recipeData.csv', 'w', newline='') as file:
-            fieldnames = ["Recipe Name", "Ingredients", "Instructions", "Category", "Image"]
+            fieldnames = ["Recipe Name", "Ingredients", "Instructions", "Category", "Image", "Recipe Source", "Recipe Credits"]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
 
@@ -84,6 +84,17 @@ def extract_recipe_data(url):
                 # Now, we can access the "@graph" data as a dictionary
                 if '@graph' in data:
                     graph_data = data['@graph'][1]
+                    credits_source_data = data['@graph'][0]
+
+                    try:
+                        recipe_credits = credits_source_data['name']
+                    except:
+                        recipe_credits = 'Credits not Available'
+
+                    try:
+                        recipe_source = credits_source_data['url']
+                    except:
+                        recipe_source = 'Source not Available'
 
                     # print(' Name ')
                     try:
@@ -123,7 +134,7 @@ def extract_recipe_data(url):
                     except:
                         img_url = 'Image Not Available'
                     
-                    return {"Recipe Name": recipe_name, "Ingredients": ingredient_list, "Instructions": instruction_list, "Category": category_list, "Image":img_url}
+                    return {"Recipe Name": recipe_name, "Ingredients": ingredient_list, "Instructions": instruction_list, "Category": category_list, "Image":img_url, "Recipe Source": recipe_source, "Recipe Credits":recipe_credits }
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
