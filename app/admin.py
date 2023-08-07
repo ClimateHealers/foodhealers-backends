@@ -3,6 +3,26 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import *
 
+from django.contrib.admin.widgets import AdminFileWidget
+from django.utils.html import format_html
+from django.db import models
+
+class CustomAdminFileWidget(AdminFileWidget):
+    def render(self, name, value, attrs=None, renderer=None):
+        result = []
+        if hasattr(value, "url"):
+            result.append(
+                f'''<a href="{value.url}" target="_blank">
+                      <img 
+                        src="{value.url}" alt="{value}" 
+                        width="300" height="300"
+                        style="object-fit: cover;"
+                      />
+                    </a>'''
+            )
+        result.append(super().render(name, value, attrs, renderer))
+        return format_html("".join(result))
+    
 class ItemTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'createdAt', 'active')
 
@@ -13,8 +33,8 @@ class AddressAdmin(admin.ModelAdmin):
     list_display = ('id', 'city', 'state', 'postalCode')
 
 class VolunteerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'phoneNumber', 'volunteerType', 'isDriver')
-    search_fields = ['name', 'phoneNumber']
+    list_display = ('id', 'name', 'phoneNumber', 'email', 'isDriver')
+    search_fields = ['name', 'phoneNumber', 'email']
     filter_fields = ['name', 'phoneNumber', 'volunteerType', 'isDriver', 'verified']
 
 class VehicleAdmin(admin.ModelAdmin):
@@ -23,12 +43,18 @@ class VehicleAdmin(admin.ModelAdmin):
     filter_fields = ['isDeleted', 'model', 'vehicleColour', 'verified']
 
 class FoodEventAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdBy', 'eventStartDate', 'active')
-    search_fields = ['organizerPhoneNumber', 'foodType', 'createdBy']
-    filter_fields = ['address', 'pickupDate', 'foodType', 'createdBy']
+    formfield_overrides = {         
+        models.FileField: {"widget": CustomAdminFileWidget}
+    }
+    list_display = ('id', 'createdBy', 'name','eventStartDate', 'status', 'active')
+    search_fields = ['createdBy', 'name', 'eventStartDate', 'status', 'active', 'additionalInfo', 'verified']
+    filter_fields = ['name',  'createdBy', 'eventStartDate', 'status', 'active', 'additionalInfo', 'verified']
 
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdAt', 'docType', 'verified')
+    formfield_overrides = {         
+        models.FileField: {"widget": CustomAdminFileWidget}
+    }
+    list_display = ('id', 'createdAt', 'docType', 'name', 'verified')
 
 class FoodItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'itemName', 'itemType', 'addedBy', 'expiryDate')
@@ -36,6 +62,9 @@ class FoodItemAdmin(admin.ModelAdmin):
     filter_fields = ['itemName', 'itemType', 'addedBy', 'expiryDate']
 
 class FoodRecipeAdmin(admin.ModelAdmin):
+    formfield_overrides = {         
+        models.FileField: {"widget": CustomAdminFileWidget}
+    }
     list_display = ('id', 'foodName', 'category', 'tags')
     search_fields = ['foodName', 'tags', 'category']
     filter_fields = ['foodName', 'tags', 'category']

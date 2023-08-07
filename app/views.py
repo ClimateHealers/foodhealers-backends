@@ -26,13 +26,19 @@ from django.http import JsonResponse
 from django.utils import timezone
 from geopy.distance import lonlat, distance
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count
+from django.db.models.functions import Trunc
+import matplotlib
+matplotlib.use('Agg')
 
-
-# from .local_dev_utils import getAccessToken
+# from .local_dev_utils import getAccessToken, extract_recipe_page
 # from mixpanel import Mixpanel
 
 # get Django Access token for development testing. 
 # getAccessToken(2)
+
+# To Extract Recipe From PCRM Website
+# extract_recipe_page("https://www.pcrm.org/good-nutrition/plant-based-diets/")
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -1828,12 +1834,6 @@ class AllEvents(APIView):
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
-
-from django.db.models import Count
-from django.db.models.functions import Trunc
-# import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
 
 # <-------------------------------- Pie Graph -------------------------------->
 def Create_pie_graph(x_data, y_data, title):
