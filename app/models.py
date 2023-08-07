@@ -164,6 +164,7 @@ class FoodRecipe(models.Model):
     foodImage = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
     cookingInstructions = models.TextField(max_length=1000, default='')
     recipeSource = models.CharField(max_length=100, null=True, blank=True)
+    recipeCredits = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
