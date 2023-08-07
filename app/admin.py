@@ -65,9 +65,13 @@ class FoodRecipeAdmin(admin.ModelAdmin):
     formfield_overrides = {         
         models.FileField: {"widget": CustomAdminFileWidget}
     }
-    list_display = ('id', 'foodName', 'category', 'tags')
-    search_fields = ['foodName', 'tags', 'category']
-    filter_fields = ['foodName', 'tags', 'category']
+    list_display = ('id', 'foodName', 'display_categories')
+    search_fields = ['foodName', 'category__name']
+    filter_fields = ['foodName']
+
+    def display_categories(self, obj):
+        return ", ".join([cat.name for cat in obj.category.all()])
+    display_categories.short_description = 'Category'
 
 class DeliveryDetailAdmin(admin.ModelAdmin):
     list_display = ('id', 'pickupDate', 'dropDate', 'driver')

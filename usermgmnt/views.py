@@ -129,6 +129,13 @@ def upload_recipes_action(request):
                     category = None
             else:
                 return render(request, 'BulkRecipeUpload.html', {'success': False, 'error':'Category column not present'})
+            import ast
+
+            try:
+                category_list = ast.literal_eval(category)
+            except:
+                category_list=[]
+                category_list.append(category)
 
             if FoodRecipe.objects.filter(foodName=foodName).exists():
                 recipe = FoodRecipe.objects.get(foodName=foodName)
@@ -145,16 +152,26 @@ def upload_recipes_action(request):
                     # Get the image name from the URL (you can modify this logic based on your needs)
                     urllib.request.urlretrieve(image, filename)
 
+                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions)
+                    for cat in  category_list:
+                        if Category.objects.filter(name=cat).exists():
+                            recipe_category = Category.objects.get(name=cat)
+                        else:
+                            recipe_category = Category.objects.create(name=cat, active=True)
+
+                        recipe.category.add(recipe_category)
+
+                    recipe.slug = recipe.id 
+                    recipe.tags.add(*category_list)
+
+                    with open(filename, 'rb') as f:
+                        recipe.foodImage.save(foodName+extension, File(f))
+                    recipe.save()
+
                     recipeDocs = Document.objects.create(docType=DOCUMENT_TYPE[2][0], createdAt=timezone.now(), food=recipe)
                     with open(filename, 'rb') as f:
                         recipeDocs.document.save(foodName+extension, File(f))
                     recipeDocs.save()
-
-                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions)
-                    recipe.slug = recipe.id                    
-                    with open(filename, 'rb') as f:
-                        recipe.foodImage.save(foodName+extension, File(f))
-                    recipe.save()
                 except:
                     pass
 

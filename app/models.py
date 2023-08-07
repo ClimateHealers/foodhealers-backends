@@ -160,14 +160,14 @@ class FoodItem(models.Model):
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
     ingredients = models.TextField(max_length=1000, default='', null=True, blank=True)
-    category =  models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
+    category =  models.ManyToManyField(Category, null=True, blank=True, related_name='recipe_category')
     foodImage = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
     cookingInstructions = models.TextField(max_length=1000, default='')
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
     def __str__(self):
-        return self.foodName + str(self.category)
+        return self.foodName
 
 # 10. model to store information about Food Delivery Details
 class DeliveryDetail(models.Model):
