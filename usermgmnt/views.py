@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from app.models import *
 from app.serializers import *
 from django.shortcuts import render
-
+import ast
 import urllib, base64
 import os
 import pandas as pd
@@ -129,7 +129,14 @@ def upload_recipes_action(request):
                     category = None
             else:
                 return render(request, 'BulkRecipeUpload.html', {'success': False, 'error':'Category column not present'})
-            import ast
+            
+            if 'Recipe Source' in list(df.columns):
+                if df['Recipe Source'][lst] is not None:
+                    recipe_source = df['Recipe Source'][lst]
+                else:
+                    recipe_source = None
+            else:
+                return render(request, 'BulkRecipeUpload.html', {'success': False, 'error':'Recipe Source column not present'})
 
             try:
                 category_list = ast.literal_eval(category)
@@ -152,7 +159,7 @@ def upload_recipes_action(request):
                     # Get the image name from the URL (you can modify this logic based on your needs)
                     urllib.request.urlretrieve(image, filename)
 
-                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions)
+                    recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, cookingInstructions=cookingInstructions, recipeSource=recipe_source)
                     for cat in  category_list:
                         if Category.objects.filter(name=cat).exists():
                             recipe_category = Category.objects.get(name=cat)

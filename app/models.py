@@ -163,6 +163,7 @@ class FoodRecipe(models.Model):
     category =  models.ManyToManyField(Category, null=True, blank=True, related_name='recipe_category')
     foodImage = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
     cookingInstructions = models.TextField(max_length=1000, default='')
+    recipeSource = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
