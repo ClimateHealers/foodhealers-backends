@@ -2864,3 +2864,46 @@ class UserOperations(APITestCase):
             return result
         except Exception as e:
             return str(e)
+        
+    '''
+    Test case to test get Notification for volunteer (Existing Notifications)
+    '''
+
+    def test_volunteer_getNotification(self):
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-notification')
+
+            # user = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
+            Notification.objects.create(
+                user=self.user,
+                title='Event Rejected',
+                message='Your Event has beend Rejected', 
+                notificationType='event'
+            )
+    
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getNotification ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)
+        
+    '''
+    Test case to test get Notifications for volunteer (No Notifications)
+    '''
+
+    def test_volunteer_getNotification_with_noNotification(self):
+        try:
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
+            url = reverse('app:volunteer-notification')
+            response = self.client.get(url, format='json')
+            result = json.loads(response.content)
+            print('------ test case response for  : test_volunteer_getNotification_with_noNotification ------',result)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+            return result
+        except Exception as e:
+            return str(e)

@@ -2106,9 +2106,7 @@ class VolunteerNotification(APIView):
             user = request.user
             today = timezone.now().date()
             seven_days_ago = today - timedelta(days=7, hours=0.0)
-            print(today)
-            print(seven_days_ago)
-            print(user)
+
             if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
                 notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
                 notificationDetails = NotificationSerializer(notification, many=True).data
