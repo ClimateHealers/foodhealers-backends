@@ -10,18 +10,23 @@ from django.db import models
 class CustomAdminFileWidget(AdminFileWidget):
     def render(self, name, value, attrs=None, renderer=None):
         result = []
-        if hasattr(value, "url"):
-            result.append(
-                f'''<a href="{value.url}" target="_blank">
-                      <img 
-                        src="{value.url}" alt="{value}" 
-                        width="300" height="300"
-                        style="object-fit: cover;"
-                      />
-                    </a>'''
-            )
-        result.append(super().render(name, value, attrs, renderer))
-        return format_html("".join(result))
+        if value!= None and value != '' and value!=' ':
+            if hasattr(value, "url"):
+                result.append(
+                    f'''<a href="{value.url}" target="_blank">
+                          <img 
+                            src="{value.url}" alt="{value}" 
+                            width="300" height="300"
+                            style="object-fit: cover;"
+                          />
+                        </a>'''
+                )
+
+            result.append(super().render(name, value, attrs, renderer))
+            return format_html("".join(result))
+        else:
+            result.append(super().render(name, value, attrs, renderer))
+            return format_html("".join(result))
     
 class ItemTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'createdAt', 'active')

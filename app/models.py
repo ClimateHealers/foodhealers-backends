@@ -191,7 +191,7 @@ class FoodRecipe(models.Model):
     ingredients = models.TextField(max_length=1000, default='', null=True, blank=True)
     category =  models.ManyToManyField(Category, null=True, blank=True, related_name='recipe_category')
     foodImage = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
-    cookingInstructions = models.TextField(max_length=1000, default='')
+    cookingInstructions = models.TextField(max_length=1000, default='', null=True, blank=True)
     recipeSource = models.CharField(max_length=100, null=True, blank=True)
     recipeCredits = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
@@ -255,7 +255,7 @@ class EventVolunteer(models.Model):
 class CustomToken(models.Model):
     accessToken = models.CharField(max_length=255, default='')
     refreshToken = models.CharField(max_length=255, default='')
-    expoPushToken = models.CharField(max_length=255, default='')
+    expoPushToken = models.CharField(max_length=255, default='', null=True, blank=True,)
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -270,9 +270,9 @@ class EventBookmark(models.Model):
 class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    title = models.CharField(max_length=50, default='title')
-    message = models.CharField(max_length=255, default='this is sample message')
+    title = models.CharField(max_length=50, default='title', null=True, blank=True)
+    message = models.CharField(max_length=255, default='this is sample message', null=True, blank=True)
     is_unread = models.BooleanField(default=True)
     modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
-    notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other')
+    notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other', null=True, blank=True)
     isDeleted = models.BooleanField(default=False, null=True, blank=True)
