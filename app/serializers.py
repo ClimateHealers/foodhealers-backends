@@ -543,3 +543,67 @@ class VehicleSerializer(Serializer):
             return obj.verified
         else:
             return False
+        
+class NotificationSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+    title =  serializers.CharField(max_length=50)
+    message = serializers.CharField(max_length=255)
+    is_unread = serializers.BooleanField()
+    modifiedAt = serializers.SerializerMethodField()
+    notificationType = serializers.CharField(max_length=50)
+    isDeleted = serializers.BooleanField()
+
+    def get_id(self, obj):
+        return obj.id
+
+    def get_user(self, obj):
+        if obj.user is not None:
+            user = Volunteer.objects.get(id=obj.user.id)
+            userDetails = UserProfileSerializer(user).data
+            return userDetails
+        else:
+            return 'Notification user not specified'
+        
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'Notification createdAt not specified'
+        
+    def get_title(self, obj):
+        if obj.title is not None:
+            return obj.title
+        else:
+            return 'Notification Title not specified'
+        
+    def get_message(self, obj):
+        if obj.message is not None:
+            return obj.message
+        else:
+            return 'Notification Message not specified'
+        
+    def get_is_unread(self, obj):
+        if obj.is_unread is not None:
+            return obj.is_unread
+        else:
+            return False
+
+    def get_modifiedAt(self, obj):
+        if obj.modifiedAt is not None:
+            return obj.modifiedAt
+        else:
+            return 'Notification modifiedAt not specified'
+    
+    def get_notificationType(self, obj):
+        if obj.notificationType is not None:
+            return obj.notificationType
+        else:
+            return 'other'
+        
+    def get_isDeleted(self, obj):
+        if obj.isDeleted is not None:
+            return obj.isDeleted
+        else:
+            return True

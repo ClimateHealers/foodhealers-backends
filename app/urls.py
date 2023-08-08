@@ -42,6 +42,9 @@ urlpatterns = [
     re_path(r'volunteer-profile/', views.VolunteerProfile.as_view(), name='volunteer-profile'), 
     # GET (to fetch vehicle Details), POST (to Add Vehicle Details) and PUT (to Update Vehicle Details)
     re_path(r'volunteer-vehicle/', views.VehicleOperations.as_view(), name='volunteer-vehicle'), 
+    # GET (to fetch Volunteer notification of last 7 days)
+    re_path(r'volunteer-notifications/', views.VolunteerNotification.as_view(), name='volunteer-notification'), 
+
     
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)

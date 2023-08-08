@@ -28,6 +28,7 @@ from geopy.distance import lonlat, distance
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count
 from django.db.models.functions import Trunc
+from datetime import timedelta
 import matplotlib
 matplotlib.use('Agg')
 
@@ -2072,27 +2073,47 @@ def dashboard_view(request):
     context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
     return render(request, 'dashboard.html', context)
 
-# from exponent_server_sdk import PushClient, PushMessage 
+class VolunteerNotification(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
-# def send_push_message(user, title, message, notificationType):
-#     try:
-#         Notification.objects.create(user=user, title=title, message=message, notificationType=notificationType)
-        
-#         if CustomToken.objects.filter(user=user).exists():
-#             customToken = CustomToken.objects.get(user=user)
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'notificationa': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
 
-#             try:
-#                 response = PushClient().publish(
-#                     PushMessage(
-#                         to=customToken.expoPushToken,
-#                         title=title,
-#                         body=message,
-#                     )
-#                 )
-#                 print(response)
-#             except Exception as e:
-#                 print(str(e))
-#         else:
-#             print('Custom Token for user not exists') 
-#     except Exception as e:
-#         print('Cant Send MSG', str(e))
+        operation_description="Get Volunteer Notifications API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # My notifications 
+    def get(self, request, format=None):
+        try:
+            user = request.user
+            today = timezone.now().date()
+            seven_days_ago = today - timedelta(days=7, hours=0.0)
+            print(today)
+            print(seven_days_ago)
+            print(user)
+            if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
+                notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
+                notificationDetails = NotificationSerializer(notification, many=True).data
+                return Response({'success': True, 'notifications': notificationDetails})
+            else:
+                return Response({'success': True, 'notifications': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
