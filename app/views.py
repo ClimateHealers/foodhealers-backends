@@ -26,13 +26,20 @@ from django.http import JsonResponse
 from django.utils import timezone
 from geopy.distance import lonlat, distance
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count
+from django.db.models.functions import Trunc
+from datetime import timedelta
+import matplotlib
+matplotlib.use('Agg')
 
-
-# from .local_dev_utils import getAccessToken
+# from .local_dev_utils import getAccessToken, extract_recipe_page
 # from mixpanel import Mixpanel
 
 # get Django Access token for development testing. 
 # getAccessToken(2)
+
+# To Extract Recipe From PCRM Website
+# extract_recipe_page("https://www.pcrm.org/good-nutrition/plant-based-diets/")
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -146,7 +153,8 @@ class SignUp(APIView):
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
                 'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
-                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
+                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
             },
         ),
         responses={
@@ -179,6 +187,11 @@ class SignUp(APIView):
             isVolunteer = request.data.get('isVolunteer')
         else:
             return Response({'success':False, 'message':'please enter if Volunteer or not'})
+        
+        if request.data.get('ExpoPushToken') != None:
+            expoPushToken = request.data.get('expoPushToken')
+        else:
+            return Response({'success':False, 'message':'please enter valid expoPushToken'})
         
         password = 'Admin123'
 
@@ -223,9 +236,10 @@ class SignUp(APIView):
                     token = CustomToken.objects.get(user=user)
                     token.refreshToken = refreshToken
                     token.accessToken = accessToken
+                    token.expoPushToken = expoPushToken
                     token.save()
                 else:
-                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user, expoPushToken=expoPushToken)
                 
                 # mixpanel_token = settings.MIXPANEL_API_TOKEN
                 # mp = Mixpanel(mixpanel_token)
@@ -1829,12 +1843,6 @@ class AllEvents(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
-from django.db.models import Count
-from django.db.models.functions import Trunc
-# import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
-
 # <-------------------------------- Pie Graph -------------------------------->
 def Create_pie_graph(x_data, y_data, title):
     
@@ -2064,3 +2072,48 @@ def dashboard_view(request):
     # Pass the graphic to the template context
     context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
     return render(request, 'dashboard.html', context)
+
+class VolunteerNotification(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'notificationa': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Volunteer Notifications API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # My notifications 
+    def get(self, request, format=None):
+        try:
+            user = request.user
+            today = timezone.now().date()
+            seven_days_ago = today - timedelta(days=7, hours=0.0)
+            print(today)
+            print(seven_days_ago)
+            print(user)
+            if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
+                notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
+                notificationDetails = NotificationSerializer(notification, many=True).data
+                return Response({'success': True, 'notifications': notificationDetails})
+            else:
+                return Response({'success': True, 'notifications': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})

@@ -40,11 +40,11 @@ if settings.DEBUG :
    urlpatterns = [
         path('admin/dashboard/', dashboard_view, name='dashboard'),
         path('admin/analytics/', plot_view, name='plot'),
-        path('admin/', admin.site.urls),
-        path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
+        path('admin/docs/', schema_view.with_ui('swagger', cache_timeout=0),
             name='schema-swagger-ui'),
-        path('redoc/', schema_view.with_ui('redoc', cache_timeout=0),
+        path('admin/redoc/', schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
+        path('admin/', admin.site.urls),
         path('__debug__/', include('debug_toolbar.urls')),
 
         re_path(r'^v1/api/', include('app.urls', namespace='v1')),
@@ -56,12 +56,11 @@ else:
     urlpatterns = [
         path('admin/dashboard/', dashboard_view, name='dashboard'),
         path('admin/analytics/',plot_view, name='plot'),
-        path('admin/', admin.site.urls),
-        path('docs/', schema_view.with_ui('swagger', cache_timeout=0),
+        path('admin/docs/', schema_view.with_ui('swagger', cache_timeout=0),
             name='schema-swagger-ui'),
-        path('redoc/', schema_view.with_ui('redoc', cache_timeout=0),
+        path('admin/redoc/', schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
-
+        path('admin/', admin.site.urls),
         re_path(r'^v1/api/', include('app.urls', namespace='v1')),
         re_path(r'^v2/api/', include('app.urls', namespace='v2')),
         re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v1-user')),

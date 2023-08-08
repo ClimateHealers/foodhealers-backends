@@ -32,6 +32,11 @@ EVENT_STATUS = (
     ('rejected','Rejected'),
     ('pending','Pending'),
 )
+
+NOTIFICATION_TYPE = (
+    ('event', 'Event'),
+    ('other','Other')
+)
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # 1. Model to Store types of Food (food, supplies)
@@ -87,7 +92,7 @@ class Volunteer(User):
     lastLogin = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     def __str__(self):
-        return self.name + '-' + str(self.volunteerType)
+        return self.name
 
     class Meta:
         verbose_name = "Volunteer"
@@ -121,7 +126,32 @@ class FoodEvent(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
     eventPhoto = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
+    # adminFeedback = models.TextField(blank=True, null=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
+
+@receiver(post_save, sender=FoodEvent)
+def send_notification_on_change(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    # if event has been created
+    if created :
+        title = 'Event Under Review'
+        message = f'Your Event - {instance.name} is under review'
+        notificationType = NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
+
+    # logic to check if status has changed to approved or rejected
+    elif instance.status == EVENT_STATUS[0][0]:
+        title = 'Event Approved'
+        message = f'Your Event - {instance.name} has been approved by Food healers team'
+        notificationType= NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
+
+    elif instance.status == EVENT_STATUS[1][0]:
+        title = 'Event Rejected'
+        message = f'Your Event - {instance.name} has been rejected by Food healers team'
+        notificationType= NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
 class Document(models.Model):
@@ -132,8 +162,19 @@ class Document(models.Model):
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     vehicle = models.ForeignKey(Vehicle, null=True, blank=True, on_delete=models.PROTECT, related_name='vehicle_photo')
     volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT, related_name='volunteer_profile_img')
+    food = models.ForeignKey('FoodRecipe', null=True, blank=True, on_delete=models.PROTECT, related_name='food_recipe_img')
     isActive = models.BooleanField(default=True, null=True, blank=True)
-
+    
+    def name(self):
+        if self.docType == DOCUMENT_TYPE[0][0]:
+            return self.volunteer.name
+        elif self.docType == DOCUMENT_TYPE[1][0]:
+            return self.event.name
+        elif self.docType == DOCUMENT_TYPE[2][0]:
+            return self.food
+        elif self.docType == DOCUMENT_TYPE[3][0]:
+            return self.vehicle.make
+        
 # 8. model to store information about food Items
 class FoodItem(models.Model):
     itemName = models.CharField(max_length=100, default='Food Name')
@@ -147,15 +188,17 @@ class FoodItem(models.Model):
 # 9. model to store information about FoodRecipes
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
-    ingredients = models.TextField(max_length=500, default='', null=True, blank=True)
-    category =  models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
-    foodImage = models.ManyToManyField(Document, null=True, blank=True, related_name='recipe_photos')
-    cookingInstructions = models.TextField(max_length=500, default='')
+    ingredients = models.TextField(max_length=1000, default='', null=True, blank=True)
+    category =  models.ManyToManyField(Category, null=True, blank=True, related_name='recipe_category')
+    foodImage = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
+    cookingInstructions = models.TextField(max_length=1000, default='')
+    recipeSource = models.CharField(max_length=100, null=True, blank=True)
+    recipeCredits = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
     def __str__(self):
-        return self.foodName + str(self.category)
+        return self.foodName
 
 # 10. model to store information about Food Delivery Details
 class DeliveryDetail(models.Model):
@@ -212,6 +255,7 @@ class EventVolunteer(models.Model):
 class CustomToken(models.Model):
     accessToken = models.CharField(max_length=255, default='')
     refreshToken = models.CharField(max_length=255, default='')
+    expoPushToken = models.CharField(max_length=255, default='')
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -220,4 +264,15 @@ class EventBookmark(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    isDeleted = models.BooleanField(default=False, null=True, blank=True)
+
+# model to store Information about Notifcations
+class Notification(models.Model):
+    user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    title = models.CharField(max_length=50, default='title')
+    message = models.CharField(max_length=255, default='this is sample message')
+    is_unread = models.BooleanField(default=True)
+    modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
+    notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other')
     isDeleted = models.BooleanField(default=False, null=True, blank=True)
