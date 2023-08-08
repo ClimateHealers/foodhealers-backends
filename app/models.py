@@ -32,6 +32,11 @@ EVENT_STATUS = (
     ('rejected','Rejected'),
     ('pending','Pending'),
 )
+
+NOTIFICATION_TYPE = (
+    ('event', 'Event'),
+    ('other','Other')
+)
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # 1. Model to Store types of Food (food, supplies)
@@ -121,8 +126,32 @@ class FoodEvent(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
     eventPhoto = models.FileField(upload_to='user/documents', default='', null=True, blank=True, validators=[validate_file_size])
-    adminFeedback = models.TextField(blank=True, null=True)
+    # adminFeedback = models.TextField(blank=True, null=True)
     # quantity = models.CharField(max_length=100, default='', null=True, blank=True) # to be modified
+
+@receiver(post_save, sender=FoodEvent)
+def send_notification_on_change(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    # if event has been created
+    if created :
+        title = 'Event Under Review'
+        message = f'Your Event - {instance.name} is under review'
+        notificationType = NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
+
+    # logic to check if status has changed to approved or rejected
+    elif instance.status == EVENT_STATUS[0][0]:
+        title = 'Event Approved'
+        message = f'Your Event - {instance.name} has been approved by Food healers team'
+        notificationType= NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
+
+    elif instance.status == EVENT_STATUS[1][0]:
+        title = 'Event Rejected'
+        message = f'Your Event - {instance.name} has been rejected by Food healers team'
+        notificationType= NOTIFICATION_TYPE[0][0]
+        send_push_message(instance.createdBy, title, message, notificationType)
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
 class Document(models.Model):
@@ -226,6 +255,7 @@ class EventVolunteer(models.Model):
 class CustomToken(models.Model):
     accessToken = models.CharField(max_length=255, default='')
     refreshToken = models.CharField(max_length=255, default='')
+    expoPushToken = models.CharField(max_length=255, default='')
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
@@ -234,4 +264,15 @@ class EventBookmark(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    isDeleted = models.BooleanField(default=False, null=True, blank=True)
+
+# model to store Information about Notifcations
+class Notification(models.Model):
+    user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
+    createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    title = models.CharField(max_length=50, default='title')
+    message = models.CharField(max_length=255, default='this is sample message')
+    is_unread = models.BooleanField(default=True)
+    modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
+    notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other')
     isDeleted = models.BooleanField(default=False, null=True, blank=True)

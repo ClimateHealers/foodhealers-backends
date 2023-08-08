@@ -100,6 +100,9 @@ class CustomeTokenAdmin(admin.ModelAdmin):
 class EventBookmarkAdmin(admin.ModelAdmin):
     list_display = ('id', 'event', 'user', 'createdAt')
 
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'title', 'createdAt')
+
 admin.site.register(ItemType, ItemTypeAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Address, AddressAdmin)
@@ -116,3 +119,4 @@ admin.site.register(Donation, DonationAdmin)
 admin.site.register(EventVolunteer, EventVolunteerAdmin)
 admin.site.register(CustomToken, CustomeTokenAdmin)
 admin.site.register(EventBookmark, EventBookmarkAdmin)
+admin.site.register(Notification, NotificationAdmin)

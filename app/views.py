@@ -152,7 +152,8 @@ class SignUp(APIView):
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
                 'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
-                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
+                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
             },
         ),
         responses={
@@ -185,6 +186,11 @@ class SignUp(APIView):
             isVolunteer = request.data.get('isVolunteer')
         else:
             return Response({'success':False, 'message':'please enter if Volunteer or not'})
+        
+        if request.data.get('ExpoPushToken') != None:
+            expoPushToken = request.data.get('expoPushToken')
+        else:
+            return Response({'success':False, 'message':'please enter valid expoPushToken'})
         
         password = 'Admin123'
 
@@ -229,9 +235,10 @@ class SignUp(APIView):
                     token = CustomToken.objects.get(user=user)
                     token.refreshToken = refreshToken
                     token.accessToken = accessToken
+                    token.expoPushToken = expoPushToken
                     token.save()
                 else:
-                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user, expoPushToken=expoPushToken)
                 
                 # mixpanel_token = settings.MIXPANEL_API_TOKEN
                 # mp = Mixpanel(mixpanel_token)
@@ -2064,3 +2071,28 @@ def dashboard_view(request):
     # Pass the graphic to the template context
     context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
     return render(request, 'dashboard.html', context)
+
+# from exponent_server_sdk import PushClient, PushMessage 
+
+# def send_push_message(user, title, message, notificationType):
+#     try:
+#         Notification.objects.create(user=user, title=title, message=message, notificationType=notificationType)
+        
+#         if CustomToken.objects.filter(user=user).exists():
+#             customToken = CustomToken.objects.get(user=user)
+
+#             try:
+#                 response = PushClient().publish(
+#                     PushMessage(
+#                         to=customToken.expoPushToken,
+#                         title=title,
+#                         body=message,
+#                     )
+#                 )
+#                 print(response)
+#             except Exception as e:
+#                 print(str(e))
+#         else:
+#             print('Custom Token for user not exists') 
+#     except Exception as e:
+#         print('Cant Send MSG', str(e))
