@@ -100,13 +100,115 @@ class GetRefreshToken(APIView):
                 'message': 'successfully generated token',
                 'isAuthenticated': True,
                 'token': accessToken,
-                'expiresIn': '2 minutes',
+                'expiresIn': '31 Days',
                 'refreshToken': refreshToken,
                 'user': userDetails,
             })
             
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+        
+class VolunteerExpoPushToken(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['expoPushToken'],
+            properties={
+                'expoPushToken': openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]'),
+            },            
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully updated ExpoPush Token'),
+                },
+            ),
+        },
+        operation_description="Generating Access Token in API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # Update ExpoPushToken
+    def put(self, request, format=None):
+
+        if request.data.get('expoPushToken') is not None:
+            expoPushToken = request.data.get('expoPushToken')
+        else:
+            return Response({'success':False, 'message':'please enter valid expoPushToken'})
+        
+        try:
+            if request.user is not None:
+                user = request.user
+
+                if CustomToken.objects.filter(user=user).exists():
+                    token = CustomToken.objects.get(user=user)
+                    token.expoPushToken = expoPushToken
+                    token.save()
+
+                    return Response({
+                        'success': True, 
+                        'message': 'successfully updated expoPushToken', 
+                    })
+                
+                else:
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+            else:
+                return Response({'success': False, 'message': 'User does not exist'})
+            
+        except Exception as e:
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'expoPushToken': openapi.Schema(type=openapi.TYPE_STRING, default='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]'),
+                },
+            ),
+        },
+        operation_description="Updating ExpoPushToken API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    ) 
+
+    def get(self, request, format=None):
+        try:
+            if request.user is not None:
+                user = request.user
+
+                if CustomToken.objects.filter(user=user).exists():
+                    token = CustomToken.objects.get(user=user)
+                    return Response({'success': True, 'expoPushToken': token.expoPushToken })
+                else:
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+            else:
+                return Response({'success': False, 'message': 'User does not exist'})
+            
+        except Exception as e:
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+
 
 class ChoicesView(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -270,7 +372,7 @@ class SignIn(APIView):
                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully signed in'),
                     'isAuthenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
                     'accessToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9.3EyvZffo4g2R3Zy8sZw'),
-                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='2 minutes'),
+                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='31 Days'),
                     'refreshToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIiwiZXhwIjoxNjgzNzk4MzU5LCJpYXQiOjE2ODM2Mrffo4g2R3Zy8sZw'),
                 },
             ),
