@@ -12,6 +12,8 @@ app_name = "app"
 urlpatterns = [
     # POST (Update AccessToken)
     re_path(r'refresh-token/', views.GetRefreshToken.as_view()),
+    # GET (to fetch expoPushToken), PUT (Update expoPushToken)
+    re_path(r'expoPush-token/', views.VolunteerExpoPushToken.as_view(), name='volunteer-expoPushToken'),
     # GET (CHOICES)
     re_path(r'choices/', views.ChoicesView.as_view()),
     # POST (user Signup)
