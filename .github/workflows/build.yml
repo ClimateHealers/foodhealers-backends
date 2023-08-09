@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     branches:
-      - sonarqube/codecheck #test branch to test sonarqube analysis
+      - sonarqube/codecheck #test branch to test sbackend python code
 jobs:
   build:
     name: Build
