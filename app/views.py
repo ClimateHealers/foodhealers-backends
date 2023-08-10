@@ -1695,7 +1695,7 @@ def sendMailForConfirmDeletion(userId):
             firebase_user = auth.get_user_by_email(email=user.email)
 
             html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/ConfirmUserAccountDelete.html')).read()
-            email_text = html.replace('{{name}}', user.name).replace('{{email}}', user.email).replace('{{delete_url}}', settings.PRODUCTION_URL).replace('{{uniqueID}}', firebase_user.uid)
+            email_text = html.replace('{{name}}', user.name).replace('{{email}}', user.email).replace('{{delete_url}}', settings.PRODUCTION_URL).replace('{{unique_id}}', firebase_user.uid)
             
             try:
                 

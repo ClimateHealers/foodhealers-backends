@@ -18,15 +18,15 @@ class DeleteUserAccountView(APIView):
 
     def get(self, request, *args, **kwargs):
 
-        # Retrieve the URL parameter 'uniqueID' using self.kwargs
-        unique_id = self.kwargs.get('uniqueID')
+        # Retrieve the URL parameter 'unique_id' using self.kwargs
+        unique_id = self.kwargs.get('unique_id')
 
-        return render(request, 'EmailConfirmationForUserDeletion.html', {'uniqueID': unique_id})
+        return render(request, 'EmailConfirmationForUserDeletion.html', {'unique_id': unique_id})
 
-def delete_user_account_action(request, uniqueID):
+def delete_user_account_action(request, unique_id):
     template_name = 'ThankYouPage.html'
     try:
-        firebase_user = auth.get_user(uniqueID)
+        firebase_user = auth.get_user(unique_id)
         email = firebase_user.email
         
         try:
@@ -48,13 +48,13 @@ def delete_user_account_action(request, uniqueID):
             Donation.objects.filter(donatedBy=user).delete()
             
             # Delete Food Events and related documents
-            food_events = FoodEvent.objects.filter(createdBy=user)
-            for fEvent in food_events:
-                Document.objects.filter(docType=DOCUMENT_TYPE[1][0], event=fEvent).delete()
-            food_events.delete()
+            food_events_list = FoodEvent.objects.filter(createdBy=user)
+            for food_event in food_events_list:
+                Document.objects.filter(docType=DOCUMENT_TYPE[1][0], event=food_event).delete()
+            food_events_list.delete()
             
             user.delete()
-            auth.delete_user(uniqueID)
+            auth.delete_user(unique_id)
             
             return render(request, template_name, {'success': True, 'message': 'User has been successfully Deleted'})
         
@@ -73,115 +73,76 @@ def upload_recipes_action(request):
     template_name = 'BulkRecipeUpload.html'
     bulk_recipe_file = request.FILES.get('bulkRecipeFile')
     df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
-   
+
     try:
-        for lst in list(df.index):
-
+        for lst in df.index:
             name_column = 'Recipe Name'
-            if name_column in list(df.columns):
-                if df[name_column][lst] is not None:
-                    food_name = df[name_column][lst]
-                else:
-                    food_name = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Recipe Name column not present'})
-
             ingredients_column = 'Ingredients'
-            if ingredients_column in list(df.columns): 
-                if df[ingredients_column][lst] is not None:
-                    ingredients = df[ingredients_column][lst]
-                else:
-                    ingredients = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Ingredients column not present'})
-            
             instructions_column = 'Instructions'
-            if instructions_column in list(df.columns):
-                if df[instructions_column][lst] is not None:
-                    cooking_instructions = df[instructions_column][lst]
-                else:
-                    cooking_instructions = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Instruction column not present'})
-            
             image_column = 'Image'
-            if image_column in list(df.columns):
-                if df[image_column][lst] is not None:
-                    image = df[image_column][lst]
-                else:
-                    image = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Image column not present'})
-            
             category_column = 'Category'
-            if category_column in list(df.columns):
-                if df[category_column][lst] is not None:
-                    category = df[category_column][lst]
-                else:
-                    category = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Category column not present'})
-            
             source_column = 'Recipe Source'
-            if source_column in list(df.columns):
-                if df[source_column][lst] is not None:
-                    recipe_source = df[source_column][lst]
-                else:
-                    recipe_source = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Recipe Source column not present'})
-            
             credits_column = 'Recipe Credits'
-            if credits_column in list(df.columns):
-                if df[credits_column][lst] is not None:
-                    recipe_credits = df[credits_column][lst]
-                else:
-                    recipe_credits = None
-            else:
-                return render(request, template_name, {'success': False, 'error':'Recipe Credits column not present'})
+            
+            if any(col not in df.columns for col in [name_column, ingredients_column, instructions_column, image_column, category_column, source_column, credits_column]):
+                return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
+
+            food_name = df[name_column][lst]
+            ingredients = df[ingredients_column][lst]
+            cooking_instructions = df[instructions_column][lst]
+            image = df[image_column][lst]
+            category = df[category_column][lst]
+            recipe_source = df[source_column][lst]
+            recipe_credits = df[credits_column][lst]
 
             try:
                 category_list = ast.literal_eval(category)
-            except Exception as e:
-                category_list=[]
-                category_list.append(category)
+            except Exception:
+                category_list = [category]
 
-            if FoodRecipe.objects.filter(foodName=food_name).exists():
-                pass
-            else:
+            if not FoodRecipe.objects.filter(foodName=food_name).exists():
                 try:
                     extension = os.path.splitext(image)[1]
-                    if not os.path.exists("images"):
-                        os.makedirs("images")
-                    # Download each image
                     filename = os.path.join("images", f"{food_name}{extension}")
 
-                    # Get the image name from the URL (you can modify this logic based on your needs)
+                    if not os.path.exists("images"):
+                        os.makedirs("images")
+
                     urllib.request.urlretrieve(image, filename)
 
-                    recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, cookingInstructions=cooking_instructions, recipeSource=recipe_source, recipeCredits=recipe_credits)
-                    for cat in  category_list:
-                        if Category.objects.filter(name=cat).exists():
-                            recipe_category = Category.objects.get(name=cat)
-                        else:
-                            recipe_category = Category.objects.create(name=cat, active=True)
+                    recipe = FoodRecipe.objects.create(
+                        foodName=food_name,
+                        ingredients=ingredients,
+                        cookingInstructions=cooking_instructions,
+                        recipeSource=recipe_source,
+                        recipeCredits=recipe_credits
+                    )
 
+                    for cat in category_list:
+                        recipe_category, _ = Category.objects.get_or_create(name=cat, active=True)
                         recipe.category.add(recipe_category)
 
-                    recipe.slug = recipe.id 
+                    recipe.slug = recipe.id
                     recipe.tags.add(*category_list)
 
                     with open(filename, 'rb') as f:
-                        recipe.foodImage.save(food_name+extension, File(f))
+                        recipe.foodImage.save(food_name + extension, File(f))
                     recipe.save()
 
-                    recipe_docs = Document.objects.create(docType=DOCUMENT_TYPE[2][0], createdAt=timezone.now(), food=recipe)
+                    recipe_docs = Document.objects.create(
+                        docType=DOCUMENT_TYPE[2][0],
+                        createdAt=timezone.now(),
+                        food=recipe
+                    )
+
                     with open(filename, 'rb') as f:
-                        recipe_docs.document.save(food_name+extension, File(f))
+                        recipe_docs.document.save(food_name + extension, File(f))
                     recipe_docs.save()
-                except Exception as e:
+
+                except Exception:
                     pass
 
-        return render(request, template_name, {'success': True, 'message':'Recipes Uploaded Successfully'})
+        return render(request, template_name, {'success': True, 'message': 'Recipes Uploaded Successfully'})
+
     except Exception as e:
         return render(request, template_name, {'success': False, 'error': str(e)})

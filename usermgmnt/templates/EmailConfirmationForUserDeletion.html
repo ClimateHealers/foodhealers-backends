@@ -60,7 +60,7 @@
         Click on the Delete Account button to confirm your account deletion
       </span>
 
-      <form method="post" action="{% url 'usermgmnt:delete-account-action' uniqueID %}">
+      <form method="post" action="{% url 'usermgmnt:delete-account-action' unique_id %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-warning bold" style="margin-top: 10px">
           <span>Delete Account</span>
