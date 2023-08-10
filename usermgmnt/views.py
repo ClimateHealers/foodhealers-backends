@@ -72,22 +72,18 @@ class UploadBulkRecipeView(APIView):
 def upload_recipes_action(request):
     template_name = 'BulkRecipeUpload.html'
     bulk_recipe_file = request.FILES.get('bulkRecipeFile')
-
+    
     try:
         df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
         required_columns = ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
-        
+
         if not all(col in df.columns for col in required_columns):
             return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
 
         for index, row in df.iterrows():
-            food_name = row['Recipe Name']
-            ingredients = row['Ingredients']
-            cooking_instructions = row['Instructions']
-            image = row['Image']
-            category = row['Category']
-            recipe_source = row['Recipe Source']
-            recipe_credits = row['Recipe Credits']
+            food_name, ingredients, cooking_instructions, image, category, recipe_source, recipe_credits = row[
+                ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
+            ]
 
             try:
                 category_list = ast.literal_eval(category)
