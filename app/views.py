@@ -62,13 +62,13 @@ class GetRefreshToken(APIView):
 
     # Generate Access Token Using Referesh Token
     def post(self, request, format=None):
-        if request.data.get('refreshTokenId') is not None:
+        if request.data.get('refreshTokenId') != None:
             refresh_token_id = request.data.get('refreshTokenId')
         else:
             return Response({'success':False, 'message':'please enter valid refresh token'})
         
         try:
-            if refresh_token_id is not None:
+            if refresh_token_id != None:
                 if CustomToken.objects.filter(refreshToken=refresh_token_id).exists():
                     token = CustomToken.objects.get(refreshToken=refresh_token_id)
                     email = token.user.email
@@ -137,13 +137,13 @@ class VolunteerExpoPushToken(APIView):
     # Update ExpoPushToken
     def put(self, request, format=None):
 
-        if request.data.get('expoPushToken') is not None:
+        if request.data.get('expoPushToken') != None:
             expo_push_token = request.data.get('expoPushToken')
         else:
             return Response({'success':False, 'message':'please enter valid Expo Push Token'})
         
         try:
-            if request.user is not None:
+            if request.user != None:
                 user = request.user
 
                 if CustomToken.objects.filter(user=user).exists():
@@ -188,7 +188,7 @@ class VolunteerExpoPushToken(APIView):
 
     def get(self, request, format=None):
         try:
-            if request.user is not None:
+            if request.user != None:
                 user = request.user
 
                 if CustomToken.objects.filter(user=user).exists():
@@ -268,17 +268,17 @@ class SignUp(APIView):
     # user onboarding API required firebase token and name
     def post(self, request,  format=None):
 
-        if request.data.get('tokenId') is not None:
+        if request.data.get('tokenId') != None:
             token_id = request.data.get('tokenId')
         else:
             return Response({'success':False, 'message':'please enter valid token'})
         
-        if request.data.get('name') is not None:
+        if request.data.get('name') != None:
             name = request.data.get('name')
         else:
             return Response({'success':False, 'message':'please enter valid name'})
         
-        if request.data.get('isVolunteer') is not None:
+        if request.data.get('isVolunteer') != None:
             is_volunteer = request.data.get('isVolunteer')
         else:
             return Response({'success':False, 'message':'please enter if Volunteer or not'})
@@ -295,20 +295,14 @@ class SignUp(APIView):
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
             else:
-                if token_id is not None:
-                    try:
-                        decoded_token = auth.verify_id_token(token_id)
-                        if decoded_token is not None:
-                            if 'email' in decoded_token:
-                                email = decoded_token['email']
-                            else:
-                                email = None
-                        else:
-                            return Response({'success': False, 'message': 'unable to verify user'})
-                    except Exception as e:
-                        return Response({'success': False, 'error': str(e)})
-                else:
-                    return Response({'success': False, 'message': 'Please provide valid firebase token'})
+                try:
+                    decoded_token = auth.verify_id_token(token_id)
+                    if 'email' in decoded_token:
+                        email = decoded_token['email']
+                    else:
+                        email = None
+                except Exception as e:
+                    return Response({'success': False, 'error': str(e)})
                 
             random_number = str(uuid.uuid4())[:6]
             username = random_number + '@' + name
@@ -322,14 +316,11 @@ class SignUp(APIView):
                 user_details = UserProfileSerializer(user).data
                 access_token = create_access_token(user.id)
                 refresh_token = create_refresh_token(user.id)
-                if CustomToken.objects.filter(user=user).exists():
-                    token = CustomToken.objects.get(user=user)
-                    token.refreshToken = refresh_token
-                    token.accessToken = access_token
-                    token.expoPushToken = expo_push_token
-                    token.save()
-                else:
-                    token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
+                token, _ = CustomToken.objects.get_or_create(user=user)
+                token.refreshToken = refresh_token
+                token.accessToken = access_token
+                token.expoPushToken = expo_push_token
+                token.save()
                 return Response({'success':True, 'message':'successfully created user', 'userDetails':user_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
