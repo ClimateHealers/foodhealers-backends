@@ -72,28 +72,22 @@ class UploadBulkRecipeView(APIView):
 def upload_recipes_action(request):
     template_name = 'BulkRecipeUpload.html'
     bulk_recipe_file = request.FILES.get('bulkRecipeFile')
-    df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
 
     try:
-        for lst in df.index:
-            name_column = 'Recipe Name'
-            ingredients_column = 'Ingredients'
-            instructions_column = 'Instructions'
-            image_column = 'Image'
-            category_column = 'Category'
-            source_column = 'Recipe Source'
-            credits_column = 'Recipe Credits'
-            
-            if any(col not in df.columns for col in [name_column, ingredients_column, instructions_column, image_column, category_column, source_column, credits_column]):
-                return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
+        df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
+        required_columns = ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
+        
+        if not all(col in df.columns for col in required_columns):
+            return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
 
-            food_name = df[name_column][lst]
-            ingredients = df[ingredients_column][lst]
-            cooking_instructions = df[instructions_column][lst]
-            image = df[image_column][lst]
-            category = df[category_column][lst]
-            recipe_source = df[source_column][lst]
-            recipe_credits = df[credits_column][lst]
+        for index, row in df.iterrows():
+            food_name = row['Recipe Name']
+            ingredients = row['Ingredients']
+            cooking_instructions = row['Instructions']
+            image = row['Image']
+            category = row['Category']
+            recipe_source = row['Recipe Source']
+            recipe_credits = row['Recipe Credits']
 
             try:
                 category_list = ast.literal_eval(category)
