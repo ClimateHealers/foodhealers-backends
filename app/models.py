@@ -105,14 +105,12 @@ class FoodEvent(models.Model):
     eventStartDate = models.DateTimeField(null=True, blank=True)
     eventEndDate = models.DateTimeField(null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
-    # category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.PROTECT)
     createdBy = models.ForeignKey(Volunteer, null=True, blank=True, related_name='food_event_organiser', on_delete=models.PROTECT)
     createdAt = models.DateTimeField(null=True, blank=True) 
     additionalInfo = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
     eventPhoto = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
-    # adminFeedback = models.TextField(blank=True, null=True)
 
 @receiver(post_save, sender=FoodEvent)
 def send_notification_on_change(sender, instance, created , **kwargs):
