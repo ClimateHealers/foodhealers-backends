@@ -1,4 +1,4 @@
-from .models import *
+from .models import Volunteer
 from app.authentication import create_access_token, create_refresh_token 
 
 import os
@@ -9,11 +9,11 @@ import re
 import json
 import csv
 
-def getAccessToken(id):
+def get_access_token(id):
     user = Volunteer.objects.get(id=id)
-    accessToken = create_access_token(user.id)
-    refreshToken = create_refresh_token(user.id)
-    print('Token {token}'.format(token=str(accessToken)))
+    volunteer_access_token = create_access_token(user.id)
+    volunteer_refresh_token = create_refresh_token(user.id)
+    print('Token {token}'.format(token=str(volunteer_access_token)))
 
 #   <-------------------------------------------------------------- From PCRM Website -------------------------------------------------------------->
 def extract_recipe_page(url):
@@ -88,36 +88,36 @@ def extract_recipe_data(url):
 
                     try:
                         recipe_credits = credits_source_data['name']
-                    except:
+                    except Exception as e:
                         recipe_credits = 'Credits not Available'
 
                     try:
                         recipe_source = credits_source_data['url']
-                    except:
+                    except Exception as e:
                         recipe_source = 'Source not Available'
 
                     # print(' Name ')
                     try:
                         recipe_name = graph_data['name']
-                    except:
+                    except Exception as e:
                         recipe_name = 'Name not Available'
 
                     # print(' Ingrediants ')
                     try:
                         ingredient_list = graph_data['recipeIngredient']
-                    except:
+                    except Exception as e:
                         ingredient_list = ['Ingrediants Not Available']
 
                     # print(' Instructions ')  
                     try: 
                         instruction_list =  graph_data['recipeInstructions']                
-                    except:
+                    except Exception as e:
                         instruction_list = ['Instructions Not Available']
 
                     # print(' Category ')  
                     try:
                         category_list = graph_data['recipeCategory']                  
-                    except:
+                    except Exception as e:
                         category_list = ['Category Not Available']
 
                     # print(' Image ')
@@ -131,7 +131,7 @@ def extract_recipe_data(url):
                         # # Download each image
                         # filename = os.path.join("images", f"{recipe_name}{extension}")
                         # urllib.request.urlretrieve(img_url, filename)
-                    except:
+                    except Exception as e:
                         img_url = 'Image Not Available'
                     
                     return {"Recipe Name": recipe_name, "Ingredients": ingredient_list, "Instructions": instruction_list, "Category": category_list, "Image":img_url, "Recipe Source": recipe_source, "Recipe Credits":recipe_credits }

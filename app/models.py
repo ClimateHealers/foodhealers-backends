@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
-from .geoutils import getFormattedAddressFromCoords
+from .geoutils import get_formatted_address_from_coords
 from django.db.models.signals import post_save
 from .validators import validate_file_size
 
@@ -67,10 +67,10 @@ class Address(models.Model):
     
 
 # @receiver(post_save, sender=Address)
-# def fetchFormattedAddressForCoordinates(sender, instance, created, **kwargs):
+# def fetch_formatted_address_for_coordinates(sender, instance, created, **kwargs):
 #     # convert coordinates to formatted-human-readable address
 #     if created is True:s
-#         response = getFormattedAddressFromCoords(instance.lat, instance.lng)
+#         response = get_formatted_address_from_coords(instance.lat, instance.lng)
 #         instance.streetAddress = response['formatted_address']
 #         instance.fullAddress = response['formatted_address']
 #         instance.city = response['city'] 

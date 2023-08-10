@@ -1,9 +1,9 @@
 import requests
 from django.conf import settings
 
-def getFormattedAddressFromCoords(latitude, longitude):
-  apiKey = settings.GOOGLE_MAPS_API_KEY
-  url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&key={apiKey}"
+def get_formatted_address_from_coords(latitude, longitude):
+  api_key = settings.GOOGLE_MAPS_API_KEY
+  url = f"https://maps.googleapis.com/maps/api/geocode/json?latlng={latitude},{longitude}&key={api_key}"
   response = requests.get(url)
   data = response.json()
   
