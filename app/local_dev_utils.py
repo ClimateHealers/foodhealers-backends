@@ -12,7 +12,6 @@ import csv
 def get_access_token(id):
     user = Volunteer.objects.get(id=id)
     volunteer_access_token = create_access_token(user.id)
-    volunteer_refresh_token = create_refresh_token(user.id)
     print('Token {token}'.format(token=str(volunteer_access_token)))
 
 #   <-------------------------------------------------------------- From PCRM Website -------------------------------------------------------------->
