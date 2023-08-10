@@ -22,6 +22,10 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from app import views
 
+# Define the constant for app.urls
+APP_URLS = 'app.urls'
+USER_URL = 'usermgmnt.urls'
+
 schema_view = get_schema_view(
     openapi.Info(
         title="API",
@@ -47,10 +51,10 @@ if settings.DEBUG :
         path('admin/', admin.site.urls),
         path('__debug__/', include('debug_toolbar.urls')),
 
-        re_path(r'^v1/api/', include('app.urls', namespace='v1')),
-        re_path(r'^v2/api/', include('app.urls', namespace='v2')),
-        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v1-user')),
-        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v2-user')),
+        re_path(r'^v1/api/', include(APP_URLS, namespace='v1')),
+        re_path(r'^v2/api/', include(APP_URLS, namespace='v2')),
+        re_path(r'^v1/user/', include(USER_URL, namespace='v1-user')),
+        re_path(r'^v2/user/', include(USER_URL, namespace='v2-user')),
     ]
 else:
     urlpatterns = [
@@ -61,8 +65,8 @@ else:
         path('admin/redoc/', schema_view.with_ui('redoc', cache_timeout=0),
             name='schema-redoc'),
         path('admin/', admin.site.urls),
-        re_path(r'^v1/api/', include('app.urls', namespace='v1')),
-        re_path(r'^v2/api/', include('app.urls', namespace='v2')),
-        re_path(r'^v1/user/', include('usermgmnt.urls', namespace='v1-user')),
-        re_path(r'^v2/user/', include('usermgmnt.urls', namespace='v2-user')),
+        re_path(r'^v1/api/', include(APP_URLS, namespace='v1')),
+        re_path(r'^v2/api/', include(APP_URLS, namespace='v2')),
+        re_path(r'^v1/user/', include(USER_URL, namespace='v1-user')),
+        re_path(r'^v2/user/', include(USER_URL, namespace='v2-user')),
     ]
