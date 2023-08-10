@@ -123,7 +123,7 @@ class VolunteerExpoPushToken(APIView):
                 },
             ),
         },
-        operation_description="Generating Access Token in API",
+        operation_description="Updating ExpoPushToken API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -175,7 +175,7 @@ class VolunteerExpoPushToken(APIView):
                 },
             ),
         },
-        operation_description="Updating ExpoPushToken API",
+        operation_description="Get ExpoPushToken API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -266,62 +266,54 @@ class SignUp(APIView):
     )
 
     # user onboarding API required firebase token and name
-    def post(self, request,  format=None):
+    def post(self, request, format=None):
+        data = request.data
 
-        if request.data.get('tokenId') != None:
-            token_id = request.data.get('tokenId')
-        else:
-            return Response({'success':False, 'message':'please enter valid token'})
-        
-        if request.data.get('name') != None:
-            name = request.data.get('name')
-        else:
-            return Response({'success':False, 'message':'please enter valid name'})
-        
-        if request.data.get('isVolunteer') != None:
-            is_volunteer = request.data.get('isVolunteer')
-        else:
-            return Response({'success':False, 'message':'please enter if Volunteer or not'})
-        
-        if request.data.get('ExpoPushToken') != None:
-            expo_push_token = request.data.get('expoPushToken')
-        else:
-            return Response({'success':False, 'message':'please enter valid Expo Push Token'})
-        
+        token_id = data.get('tokenId')
+        name = data.get('name')
+        is_volunteer = data.get('isVolunteer')
+        expo_push_token = data.get('ExpoPushToken')
+
+        if token_id == None or token_id == '' or token_id == " ":
+            return Response({'success': False, 'message': 'please enter valid token'})
+        if name == None or name == '' or name == " ":
+            return Response({'success': False, 'message': 'please enter valid name'})
+        if is_volunteer == None or is_volunteer == '' or is_volunteer == " ":
+            return Response({'success': False, 'message': 'please enter if Volunteer or not'})
+        if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
+            return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
+
         password = settings.VOLUNTEER_PASSWORD
 
         try:
-
-            if 'email' in request.session.keys() and request.session['email'] != None:
+            if 'email' in request.session.keys() and request.session['email']:
                 email = request.session['email']
             else:
                 try:
                     decoded_token = auth.verify_id_token(token_id)
-                    if 'email' in decoded_token:
-                        email = decoded_token['email']
-                    else:
-                        email = None
+                    email = decoded_token.get('email')
                 except Exception as e:
                     return Response({'success': False, 'error': str(e)})
-                
+
             random_number = str(uuid.uuid4())[:6]
             username = random_number + '@' + name
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 user_details = UserProfileSerializer(user).data
-                return Response({'success': True, 'message':'user already exists', 'userDetails': user_details})
-            else:
-                user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=is_volunteer, password=password)
-                user_details = UserProfileSerializer(user).data
-                access_token = create_access_token(user.id)
-                refresh_token = create_refresh_token(user.id)
-                token, _ = CustomToken.objects.get_or_create(user=user)
-                token.refreshToken = refresh_token
-                token.accessToken = access_token
-                token.expoPushToken = expo_push_token
-                token.save()
-                return Response({'success':True, 'message':'successfully created user', 'userDetails':user_details})
+                return Response({'success': True, 'message': 'user already exists', 'userDetails': user_details})
+
+            user = Volunteer.objects.create(name=name, email=email, username=username, isVolunteer=is_volunteer, password=password)
+            user_details = UserProfileSerializer(user).data
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
+            token, _ = CustomToken.objects.get_or_create(user=user)
+            token.refreshToken = refresh_token
+            token.accessToken = access_token
+            token.expoPushToken = expo_push_token
+            token.save()
+            return Response({'success': True, 'message': 'successfully created user', 'userDetails': user_details})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
@@ -355,59 +347,48 @@ class SignIn(APIView):
 
     # Login API requires Firebase token
     def post(self, request, format=None):
-        if request.data.get('tokenId') != None:
-            token_id = request.data.get('tokenId')
-        else:
-            return Response({'success':False, 'message':'please enter valid token'})
-        
         try:
-            if 'email' in request.session.keys() and request.session['email'] != None:
-                email = request.session['email']
-            else:
-                if token_id != None:
-                    try:
-                        decoded_token = auth.verify_id_token(token_id)
-                        if decoded_token != None:
-                            if 'email' in decoded_token:
-                                email = decoded_token['email']
-                            else:
-                                return Response({'success':False, 'message':'email Cannot be Empty'})         
-                        else:
-                            return Response({'success': False, 'message': 'unable to verify user'})
-                    except Exception as e:
-                        return Response({'success': False, 'error': str(e)})
-                else:
-                    return Response({'success': False, 'message': 'Please provide valid firebase token'})
+            token_id = request.data.get('tokenId')
+            if token_id is None:
+                return Response({'success': False, 'message': 'Please provide a valid token'})
 
-            if Volunteer.objects.filter(email=email).exists():
-                user = Volunteer.objects.get(email=email)
-                user_details = UserProfileSerializer(user).data
-                access_token = create_access_token(user.id)
-                refresh_token = create_refresh_token(user.id)
-            else:
-                return Response({'success': False, 'message':'user with email does not exist'})
+            decoded_token = None
+            try:
+                decoded_token = auth.verify_id_token(token_id)
+            except Exception as e:
+                return Response({'success': False, 'error': str(e)})
 
-            if CustomToken.objects.filter(user=user).exists():
-                token = CustomToken.objects.get(user=user)
-                token.refreshToken = refresh_token
-                token.accessToken = access_token
-                token.save()
-            else:
-                token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user)
+            email = decoded_token.get('email')
+            if not email:
+                return Response({'success': False, 'message': 'Email cannot be empty'})
+
+            user = Volunteer.objects.filter(email=email).first()
+            if not user:
+                return Response({'success': False, 'message': 'User with email does not exist'})
+
+            user_details = UserProfileSerializer(user).data
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
+
+            token, created = CustomToken.objects.get_or_create(user=user)
+            token.refreshToken = refresh_token
+            token.accessToken = access_token
+            token.save()
+
             return Response({
                 'success': True,
-                'message': 'successfully signed in',
+                'message': 'Successfully signed in',
                 'isAuthenticated': True,
                 'token': access_token,
-                'expiresIn': '2 minutes',
+                'expiresIn': '30 Days',
                 'refreshToken': refresh_token,
                 'user': user_details,
             })
-            
+
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
         
-# fetch All Food Events for food Seekers (POST METHOD)     
+# fetch All Food Events for food Seekers (GET METHOD)     
 class FindFood(APIView):
 
     # OpenApi specification and Swagger Documentation
@@ -440,86 +421,56 @@ class FindFood(APIView):
         # Address (latitude, longitude and altitude)
         # From and to date
         try:
-            if request.query_params.get('lat') != None and request.query_params.get('lat') != ' ' and request.query_params.get('lat') != '':
-                lat = float(request.query_params.get('lat'))
-            else:
+            data = request.query_params
+
+            if data.get('lat') == None or data.get('lat') == ' ' or data.get('lat') == '':
                 return Response({'success': False, 'message':'please enter valid latitude'})
             
-            if request.query_params.get('lng') != None and request.query_params.get('lng') != ' ' and request.query_params.get('lng') != '':
-                lng = float(request.query_params.get('lng'))
-            else:
+            if data.get('lng') == None or data.get('lng') == ' ' or data.get('lng') == '':
                 return Response({'success': False, 'message': 'please enter valid longitude'})
-
-            if request.query_params.get('fullAddress') != None and request.query_params.get('fullAddress') != ' ' and request.query_params.get('fullAddress') != '':
-                fullAddress = request.query_params.get('fullAddress')
-            else:
+            
+            if data.get('fullAddress') == None or data.get('fullAddress') == ' ' or data.get('fullAddress') == '':
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.query_params.get('postalCode') != None and request.query_params.get('postalCode') != ' ' and request.query_params.get('postalCode') != '':
-                postalCode = int(request.query_params.get('postalCode'))
-            else:
-                postalCode = 0
-            
-            if request.query_params.get('state') != None:
-                state = request.query_params.get('state')
-            else:
-                state = ''
-            
-            if request.query_params.get('city') != None:
-                city = request.query_params.get('city')
-            else:
-                city = ''
-
-            if request.query_params.get('eventStartDate') != None and request.query_params.get('eventStartDate') != ' ' and request.query_params.get('eventStartDate') != '':
-                fromDateEpochs = int(request.query_params.get('eventStartDate'))
-                fromDate = datetime.fromtimestamp(fromDateEpochs).astimezone(timezone.utc)
-            else:
+            if data.get('eventStartDate') == None or data.get('eventStartDate') == ' ' or data.get('eventStartDate') == '':
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
-            if request.query_params.get('eventEndDate') != None and request.query_params.get('eventEndDate') != ' ' and request.query_params.get('eventEndDate') != '':
-                toDateEpochs = int(request.query_params.get('eventEndDate'))
-                toDate = datetime.fromtimestamp(toDateEpochs).astimezone(timezone.utc)
+            if data.get('eventEndDate') != None and data.get('eventEndDate') != ' ' and data.get('eventEndDate') != '':
+                to_date_epochs = int(data.get('eventEndDate'))
+                to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
             else:
-                toDate = timezone.now()
+                to_date = timezone.now()
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+            postal_code = int(data.get('postalCode', 0))
+            state = data.get('state', '')
+            city = data.get('city', '')
 
-            # if start <= startDate && End >= endDate ------------> Today's Events -> NOT USING
-            # if (start >=startDate or start <=endDate ), End >= startDate ------------> Weekly Events -> NOT USING
+            lat = float(data.get('lat'))
+            lng = float(data.get('lng'))
+            full_address = data.get('fullAddress')
+            from_date_epochs = int(data.get('eventStartDate'))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
 
-            # ( (Eventstart >= fromDate & Eventstart <= toDate) Or (Eventstart <=fromDate & Eventend >= fromDate) city = city, status = approved )--------------> FIND FOOD API LOGIC
+            address, _ = Address.objects.get_or_create(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, defaults={'postalCode': postal_code, 'state': state, 'city': city})
 
-            foodEvents = []
+            final_food_events = []
             searched_xy = (lng, lat)
 
-            if FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).exists():
-                foodEventList = FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).order_by('-id')
+            if FoodEvent.objects.filter( Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) | Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)), status=EVENT_STATUS[0][0]).exists():
+                food_event_list = FoodEvent.objects.filter( Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) | Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)), status=EVENT_STATUS[0][0]).order_by('-id')
  
-                for fEvent in foodEventList:
-                    event_xy = (fEvent.address.lng, fEvent.address.lat)
-                    eventDistance = distance(lonlat(*searched_xy), lonlat(*event_xy)).km
+                for food_event in food_event_list:
+                    event_xy = (food_event.address.lng, food_event.address.lat)
+                    event_distance = distance(lonlat(*searched_xy), lonlat(*event_xy)).km
                                     
-                    if eventDistance <= 50: # If Events Location is Less Than 50 Km then Event will be Fetched.
-                        foodEvents.append(fEvent)
+                    if event_distance <= 50: # If Events Location is Less Than 50 Km then Event will be Fetched.
+                        final_food_events.append(food_event)
 
-                # <---------------------------- Depreceated Code ----------------------------------------------------->
-                
-                # if address.city == None or address.city == ' ' or address.city == '' :
-                #     if address.state == None or address.state == ' ' or address.state == '' :
-                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')[:50]              
-                #     else:
-                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__state=address.state, status=EVENT_STATUS[0][0])
-                # else:
-                #     foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
-                
                 paginator = PageNumberPagination()
-                paginated_foodEvents = paginator.paginate_queryset(foodEvents, request)
+                paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
-                foodEventsDetails = FoodEventSerializer(paginated_foodEvents, many=True).data  
-                return paginator.get_paginated_response({'success': True, 'foodEvents': foodEventsDetails})
+                food_events_details = FoodEventSerializer(paginated_food_events, many=True).data  
+                return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
