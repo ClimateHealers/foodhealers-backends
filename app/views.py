@@ -292,7 +292,7 @@ class SignUp(APIView):
 
         try:
 
-            if 'email' in request.session.keys() and request.session['email'] is not None:
+            if 'email' in request.session.keys() and request.session['email'] != None:
                 email = request.session['email']
             else:
                 try:
@@ -355,19 +355,19 @@ class SignIn(APIView):
 
     # Login API requires Firebase token
     def post(self, request, format=None):
-        if request.data.get('tokenId') is not None:
+        if request.data.get('tokenId') != None:
             token_id = request.data.get('tokenId')
         else:
             return Response({'success':False, 'message':'please enter valid token'})
         
         try:
-            if 'email' in request.session.keys() and request.session['email'] is not None:
+            if 'email' in request.session.keys() and request.session['email'] != None:
                 email = request.session['email']
             else:
-                if token_id is not None:
+                if token_id != None:
                     try:
                         decoded_token = auth.verify_id_token(token_id)
-                        if decoded_token is not None:
+                        if decoded_token != None:
                             if 'email' in decoded_token:
                                 email = decoded_token['email']
                             else:
@@ -440,43 +440,43 @@ class FindFood(APIView):
         # Address (latitude, longitude and altitude)
         # From and to date
         try:
-            if request.query_params.get('lat') is not None and request.query_params.get('lat') is not ' ' and request.query_params.get('lat') is not '':
+            if request.query_params.get('lat') != None and request.query_params.get('lat') != ' ' and request.query_params.get('lat') != '':
                 lat = float(request.query_params.get('lat'))
             else:
                 return Response({'success': False, 'message':'please enter valid latitude'})
             
-            if request.query_params.get('lng') is not None and request.query_params.get('lng') is not ' ' and request.query_params.get('lng') is not '':
+            if request.query_params.get('lng') != None and request.query_params.get('lng') != ' ' and request.query_params.get('lng') != '':
                 lng = float(request.query_params.get('lng'))
             else:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
 
-            if request.query_params.get('fullAddress') is not None and request.query_params.get('fullAddress') is not ' ' and request.query_params.get('fullAddress') is not '':
+            if request.query_params.get('fullAddress') != None and request.query_params.get('fullAddress') != ' ' and request.query_params.get('fullAddress') != '':
                 fullAddress = request.query_params.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.query_params.get('postalCode') is not None and request.query_params.get('postalCode') is not ' ' and request.query_params.get('postalCode') is not '':
+            if request.query_params.get('postalCode') != None and request.query_params.get('postalCode') != ' ' and request.query_params.get('postalCode') != '':
                 postalCode = int(request.query_params.get('postalCode'))
             else:
                 postalCode = 0
             
-            if request.query_params.get('state') is not None:
+            if request.query_params.get('state') != None:
                 state = request.query_params.get('state')
             else:
                 state = ''
             
-            if request.query_params.get('city') is not None:
+            if request.query_params.get('city') != None:
                 city = request.query_params.get('city')
             else:
                 city = ''
 
-            if request.query_params.get('eventStartDate') is not None and request.query_params.get('eventStartDate') is not ' ' and request.query_params.get('eventStartDate') is not '':
+            if request.query_params.get('eventStartDate') != None and request.query_params.get('eventStartDate') != ' ' and request.query_params.get('eventStartDate') != '':
                 fromDateEpochs = int(request.query_params.get('eventStartDate'))
                 fromDate = datetime.fromtimestamp(fromDateEpochs).astimezone(timezone.utc)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
-            if request.query_params.get('eventEndDate') is not None and request.query_params.get('eventEndDate') is not ' ' and request.query_params.get('eventEndDate') is not '':
+            if request.query_params.get('eventEndDate') != None and request.query_params.get('eventEndDate') != ' ' and request.query_params.get('eventEndDate') != '':
                 toDateEpochs = int(request.query_params.get('eventEndDate'))
                 toDate = datetime.fromtimestamp(toDateEpochs).astimezone(timezone.utc)
             else:
@@ -563,64 +563,64 @@ class Event(APIView):
 
     def post(self, request, format=None):
         try:
-            if request.data.get('eventName') is not None:
+            if request.data.get('eventName') != None:
                 eventName = request.data.get('eventName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Name'})
             
-            if request.data.get('lat') is not None:
+            if request.data.get('lat') != None:
                 lat = request.data.get('lat')
             else:
                 return Response({'success': False, 'message':'please enter valid latitude'})
             
-            if request.data.get('lng') is not None:
+            if request.data.get('lng') != None:
                 lng = request.data.get('lng')
             else:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
             
-            if request.data.get('alt') is not None:
+            if request.data.get('alt') != None:
                 alt = request.data.get('alt')
             else:
                 alt = None
 
-            if request.data.get('fullAddress') is not None:
+            if request.data.get('fullAddress') != None:
                 fullAddress = request.data.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.data.get('postalCode') is not None:
+            if request.data.get('postalCode') != None:
                 postalCode = request.data.get('postalCode')
             else:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
-            if request.data.get('state') is not None:
+            if request.data.get('state') != None:
                 state = request.data.get('state')
             else:
                 return Response({'success': False, 'message': 'please enter valid state'})
             
-            if request.data.get('city') is not None:
+            if request.data.get('city') != None:
                 city = request.data.get('city')
             else:
                 return Response({'success': False, 'message': 'please enter valid city'})
             
-            if request.data.get('eventStartDate') is not None:
+            if request.data.get('eventStartDate') != None:
                 eventStartDateEpochs = request.data.get('eventStartDate')
                 eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs)).astimezone(timezone.utc)
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Start Date'})
             
-            if request.data.get('eventEndDate') is not None:
+            if request.data.get('eventEndDate') != None:
                 eventEndDateEpochs = request.data.get('eventEndDate')
                 eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs)).astimezone(timezone.utc)
             else:
                 eventEndDate = None
             
-            if request.data.get('additionalInfo') is not None:
+            if request.data.get('additionalInfo') != None:
                 additionalInfo = request.data.get('additionalInfo')
             else:
                 return Response({'success': False, 'message': 'please enter valid Description'})
             
-            if request.FILES.get('files') is not None:
+            if request.FILES.get('files') != None:
                 eventPhoto = request.FILES.get('files')
 
                 # Read the contents of the InMemoryUploadedFile
@@ -761,7 +761,7 @@ class BookmarkEvent(APIView):
 
     def post(self, request, format=None):
         try:
-            if request.data.get('eventId') is not None:
+            if request.data.get('eventId') != None:
                 eventId = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
@@ -903,22 +903,22 @@ class FindFoodRecipe(APIView):
             if categoryId is None:
                 return Response({'success': False, 'message':'Please provide category Id'})
             
-            if request.data.get('foodName') is not None:
+            if request.data.get('foodName') != None:
                 foodName = request.data.get('foodName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Food Name'})
             
-            if request.data.get('ingredients') is not None:
+            if request.data.get('ingredients') != None:
                 ingredients = request.data.get('ingredients')
             else:
                 return Response({'success': False, 'message': 'please enter valid Ingredients'})
             
-            if request.data.get('cookingInstructions') is not None:
+            if request.data.get('cookingInstructions') != None:
                 cookingInstructions = request.data.get('cookingInstructions')
             else:
                 return Response({'success': False, 'message': 'please enter valid Cooking Instructions'})
             
-            if request.FILES.getlist('foodImage') is not None:
+            if request.FILES.getlist('foodImage') != None:
                 files = request.FILES.getlist('foodImage')
             else:
                 files=[]
@@ -1074,22 +1074,22 @@ class RequestFoodSupplies(APIView):
     def post(self, request, requestTypeId, format=None):
         try:
             
-            if request.data.get('itemTypeId') is not None:
+            if request.data.get('itemTypeId') != None:
                 itemTypeId = request.data.get('itemTypeId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Item Type'})
             
-            if request.data.get('itemName') is not None:
+            if request.data.get('itemName') != None:
                 itemName = request.data.get('itemName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Item Name'})
             
-            if request.data.get('requiredDate') is not None:
+            if request.data.get('requiredDate') != None:
                 requiredDate = request.data.get('requiredDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
-            if request.data.get('quantity') is not None:
+            if request.data.get('quantity') != None:
                 quantity = request.data.get('quantity')
             else:
                 return  Response({'success': False, 'message': 'please enter valid quantity'})
@@ -1168,52 +1168,52 @@ class RequestVolunteers(APIView):
 
     def post(self, request, requestTypeId, format=None):
         try:
-            if request.data.get('eventId') is not None:
+            if request.data.get('eventId') != None:
                 eventId = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            if request.data.get('lat') is not None:
+            if request.data.get('lat') != None:
                 lat = request.data.get('lat')
             else:
                 return Response({'success': False, 'message': 'please enter valid latitude'})
             
-            if request.data.get('lng') is not None:
+            if request.data.get('lng') != None:
                 lng = request.data.get('lng')
             else:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
             
-            if request.data.get('alt') is not None:
+            if request.data.get('alt') != None:
                 alt = request.data.get('alt')
             else:
                 alt = None
 
-            if request.data.get('fullAddress') is not None:
+            if request.data.get('fullAddress') != None:
                 fullAddress = request.data.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.data.get('postalCode') is not None:
+            if request.data.get('postalCode') != None:
                 postalCode = request.data.get('postalCode')
             else:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
-            if request.data.get('state') is not None:
+            if request.data.get('state') != None:
                 state = request.data.get('state')
             else:
                 return Response({'success': False, 'message': 'please enter valid state'})
             
-            if request.data.get('city') is not None:
+            if request.data.get('city') != None:
                 city = request.data.get('city')
             else:
                 return Response({'success': False, 'message': 'please enter valid city'})
             
-            if request.data.get('requiredDate') is not None:
+            if request.data.get('requiredDate') != None:
                 requiredDate = request.data.get('requiredDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
-            if request.data.get('numberOfVolunteers') is not None:
+            if request.data.get('numberOfVolunteers') != None:
                 numberOfVolunteers = request.data.get('numberOfVolunteers')
             else:
                 return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
@@ -1297,62 +1297,62 @@ class DonateFood(APIView):
     def post(self, request, format=None):
         try:
 
-            if request.data.get('itemTypeId') is not None:
+            if request.data.get('itemTypeId') != None:
                 itemTypeId = request.data.get('itemTypeId')
             else:
                 return Response({'success': False, 'message': 'please enter valid item Type Id'})
             
-            if request.data.get('foodName') is not None:
+            if request.data.get('foodName') != None:
                 foodName = request.data.get('foodName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Food Item'})
             
-            if request.data.get('quantity') is not None:
+            if request.data.get('quantity') != None:
                 quantity = request.data.get('quantity')
             else:
                 return Response({'success': False, 'message': 'please enter valid quantity'})
             
-            if request.data.get('pickupDate') is not None:
+            if request.data.get('pickupDate') != None:
                 pickupDate = request.data.get('pickupDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid pickup Date'})
          
-            if request.data.get('lat') is not None:
+            if request.data.get('lat') != None:
                 lat = request.data.get('lat')
             else:
                 return Response({'success': False, 'message': 'please enter valid latitude'})
             
-            if request.data.get('lng') is not None:
+            if request.data.get('lng') != None:
                 lng = request.data.get('lng')
             else:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
             
-            if request.data.get('alt') is not None:
+            if request.data.get('alt') != None:
                 alt = request.data.get('alt')
             else:
                 alt = None
 
-            if request.data.get('fullAddress') is not None:
+            if request.data.get('fullAddress') != None:
                 fullAddress = request.data.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.data.get('postalCode') is not None:
+            if request.data.get('postalCode') != None:
                 postalCode = request.data.get('postalCode')
             else:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
-            if request.data.get('state') is not None:
+            if request.data.get('state') != None:
                 state = request.data.get('state')
             else:
                 return Response({'success': False, 'message': 'please enter valid state'})
             
-            if request.data.get('city') is not None:
+            if request.data.get('city') != None:
                 city = request.data.get('city')
             else:
                 return Response({'success': False, 'message': 'please enter valid city'})
             
-            if request.data.get('phoneNumber') is not None:
+            if request.data.get('phoneNumber') != None:
                 phoneNumber = request.data.get('phoneNumber')
             else:
                 return Response({'success': False, 'message': 'please enter valid phone Number'})
@@ -1467,7 +1467,7 @@ class VolunteerProfile(APIView):
     # fetch volunteer Profile API
     def get(self, request,  format=None):
         try:
-            if request.user.id is not None:
+            if request.user.id != None:
                 userId= request.user.id
                 if Volunteer.objects.filter(id=userId).exists():
                     user = Volunteer.objects.get(id=userId)
@@ -1523,57 +1523,57 @@ class VolunteerProfile(APIView):
     # update Volunteer Profile API
     def put(self, request,  format=None):
 
-        if request.data.get('name') is not None:
+        if request.data.get('name') != None:
             name = request.data.get('name')
         else:
             return Response({'success':False, 'message':'Please enter valid name'})
         
-        if request.data.get('email') is not None:
+        if request.data.get('email') != None:
             email = request.data.get('email')
         else:
             return Response({'success':False, 'message':'Please enter valid email'})
         
-        if request.data.get('lat') is not None:
+        if request.data.get('lat') != None:
             lat = request.data.get('lat')
         else:
             return Response({'success':False, 'message':'Please enter valid latitude'})
         
-        if request.data.get('lng') is not None:
+        if request.data.get('lng') != None:
             lng = request.data.get('lng')
         else:
             return Response({'success':False, 'message':'Please enter valid longitude'})
         
-        if request.data.get('alt') is not None:
+        if request.data.get('alt') != None:
             alt = request.data.get('alt')
         else:
             alt = None
 
-        if request.data.get('fullAddress') is not None:
+        if request.data.get('fullAddress') != None:
             fullAddress = request.data.get('fullAddress')
         else:
             return Response({'success': False, 'message': 'please enter valid full address'})
         
-        if request.data.get('postalCode') is not None:
+        if request.data.get('postalCode') != None:
             postalCode = request.data.get('postalCode')
         else:
             return Response({'success': False, 'message': 'please enter valid postal code'})
         
-        if request.data.get('state') is not None:
+        if request.data.get('state') != None:
             state = request.data.get('state')
         else:
             return Response({'success': False, 'message': 'please enter valid state'})
         
-        if request.data.get('city') is not None:
+        if request.data.get('city') != None:
             city = request.data.get('city')
         else:
             return Response({'success': False, 'message': 'please enter valid city'})
 
-        if request.data.get('phoneNumber') is not None:
+        if request.data.get('phoneNumber') != None:
             phoneNumber = request.data.get('phoneNumber')
         else:
             return Response({'success':False, 'message':'Please enter valid phoneNumber'})
         
-        if request.data.get('volunteerType') is not None:
+        if request.data.get('volunteerType') != None:
             volunteerType = request.data.get('volunteerType')
         else:
             return Response({'success':False, 'message':'Please enter valid volunteer Type'})
@@ -1636,7 +1636,7 @@ class VolunteerProfile(APIView):
     # Delete Volunteer Object, Documents Object, Vehicle Object, Food Events Object, Donations Object, To be Implemented ---> [Requests Object (Volunteer, food/supplies/ pickup/drop)], 
     def delete(self, request,  format=None):
         try:            
-            if request.user.id is not None:
+            if request.user.id != None:
                 res = sendMailForConfirmDeletion(request.user.id)
                 if res['success'] == True:
                     return Response({'success':True, 'message':'E-Mail has been sent successfully'})
@@ -1759,27 +1759,27 @@ class VehicleOperations(APIView):
     def post(self, request, format=None):
         try:
             
-            if request.data.get('make') is not None:
+            if request.data.get('make') != None:
                 make = request.data.get('make')
             else:
                 return Response({'success': False, 'message': 'please enter valid make'})
             
-            if request.data.get('model') is not None:
+            if request.data.get('model') != None:
                 model = request.data.get('model')
             else:
                 return Response({'success': False, 'message':'please enter valid model'})
             
-            if request.data.get('vehicleColour') is not None:
+            if request.data.get('vehicleColour') != None:
                 vehicleColour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'please enter valid vehicle colour'})
             
-            if request.data.get('plateNumber') is not None:
+            if request.data.get('plateNumber') != None:
                 plateNumber = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'please enter valid plate number'})
             
-            if request.data.get('active') is not None:
+            if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
                 return Response({'success': False, 'message': 'please enter True if active and False if not active'})
@@ -1837,22 +1837,22 @@ class VehicleOperations(APIView):
 
     def put(self, request, format=None):
         try:
-            if request.data.get('vehicleId') is not None:
+            if request.data.get('vehicleId') != None:
                 vehicleId = request.data.get('vehicleId')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle Id'})
             
-            if request.data.get('vehicleColour') is not None:
+            if request.data.get('vehicleColour') != None:
                 vehicleColour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle colour'})
             
-            if request.data.get('plateNumber') is not None:
+            if request.data.get('plateNumber') != None:
                 plateNumber = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'Please enter valid plate number'})
             
-            if request.data.get('active') is not None:
+            if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
                 return Response({'success': False, 'message': 'Please enter True if active and False if not active'})
