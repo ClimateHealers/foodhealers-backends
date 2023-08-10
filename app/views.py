@@ -2197,8 +2197,8 @@ class VolunteerNotification(APIView):
 
             if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
                 notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
-                notificationDetails = NotificationSerializer(notification, many=True).data
-                return Response({'success': True, 'notifications': notificationDetails})
+                notification_details = NotificationSerializer(notification, many=True).data
+                return Response({'success': True, 'notifications': notification_details})
             else:
                 return Response({'success': True, 'notifications': []})
         except Exception as e:

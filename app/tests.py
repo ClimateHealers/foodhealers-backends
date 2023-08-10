@@ -2878,7 +2878,6 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.accessToken)
             url = reverse('app:volunteer-notification')
 
-            # user = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             Notification.objects.create(
                 user=self.user,
                 title='Event Rejected',
