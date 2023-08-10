@@ -10,9 +10,11 @@ import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication
-from .models import *
-from .serializers import *
+from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication 
+from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
+                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, EVENT_STATUS)
+from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -36,7 +38,7 @@ matplotlib.use('Agg')
 # from mixpanel import Mixpanel
 
 # get Django Access token for development testing. 
-# getAccessToken(2)
+# get_access_token(2)
 
 # To Extract Recipe From PCRM Website
 # extract_recipe_page("https://www.pcrm.org/good-nutrition/plant-based-diets/")

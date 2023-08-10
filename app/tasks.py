@@ -12,17 +12,17 @@ from exponent_server_sdk import PushClient, PushMessage
 logger = get_task_logger(__name__)
 app = Celery()
 
-def send_push_message(user, title, message, notificationType):
+def send_push_message(user, title, message, notification_type):
     try:
-        Notification.objects.create(user=user, title=title, message=message, notificationType=notificationType)
+        Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
         
         if CustomToken.objects.filter(user=user).exists():
-            customToken = CustomToken.objects.get(user=user)
+            custom_token = CustomToken.objects.get(user=user)
 
             try:
-                response = PushClient().publish(
+                PushClient().publish(
                     PushMessage(
-                        to=customToken.expoPushToken,
+                        to=custom_token.expoPushToken,
                         title=title,
                         body=message,
                     )

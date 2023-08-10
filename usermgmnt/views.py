@@ -1,6 +1,6 @@
 import firebase_admin.auth as auth
 from rest_framework.views import APIView
-from app.models import *
+from app.models import (Volunteer, CustomToken, Document, Vehicle, Donation, FoodEvent, FoodRecipe, Category, DOCUMENT_TYPE)
 from app.serializers import *
 from django.shortcuts import render
 import ast
