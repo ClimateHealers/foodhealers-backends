@@ -34,15 +34,6 @@ from datetime import timedelta
 import matplotlib
 matplotlib.use('Agg')
 
-# from .local_dev_utils import getAccessToken, extract_recipe_page
-# from mixpanel import Mixpanel
-
-# get Django Access token for development testing. 
-# get_access_token(2)
-
-# To Extract Recipe From PCRM Website
-# extract_recipe_page("https://www.pcrm.org/good-nutrition/plant-based-diets/")
-
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -72,23 +63,23 @@ class GetRefreshToken(APIView):
     # Generate Access Token Using Referesh Token
     def post(self, request, format=None):
         if request.data.get('refreshTokenId') is not None:
-            refreshTokenId = request.data.get('refreshTokenId')
+            refresh_token_id = request.data.get('refreshTokenId')
         else:
             return Response({'success':False, 'message':'please enter valid refresh token'})
         
         try:
-            if refreshTokenId is not None:
-                if CustomToken.objects.filter(refreshToken=refreshTokenId).exists():
-                    token = CustomToken.objects.get(refreshToken=refreshTokenId)
+            if refresh_token_id is not None:
+                if CustomToken.objects.filter(refreshToken=refresh_token_id).exists():
+                    token = CustomToken.objects.get(refreshToken=refresh_token_id)
                     email = token.user.email
 
                     if Volunteer.objects.filter(email=email).exists():
                         user = Volunteer.objects.get(email=email)
-                        userDetails = UserProfileSerializer(user).data
-                        accessToken = create_access_token(user.id)
-                        refreshToken = create_refresh_token(user.id)
-                        token.refreshToken = refreshToken
-                        token.accessToken = accessToken
+                        user_details = UserProfileSerializer(user).data
+                        access_token = create_access_token(user.id)
+                        refresh_token = create_refresh_token(user.id)
+                        token.refreshToken = refresh_token
+                        token.accessToken = access_token
                         token.save()
                     else:
                         return Response({'success': False, 'message':'user with email does not exist'})
@@ -101,10 +92,10 @@ class GetRefreshToken(APIView):
                 'success': True,
                 'message': 'successfully generated token',
                 'isAuthenticated': True,
-                'token': accessToken,
+                'token': access_token,
                 'expiresIn': '31 Days',
-                'refreshToken': refreshToken,
-                'user': userDetails,
+                'refreshToken': refresh_token,
+                'user': user_details,
             })
             
         except Exception as e:
@@ -147,9 +138,9 @@ class VolunteerExpoPushToken(APIView):
     def put(self, request, format=None):
 
         if request.data.get('expoPushToken') is not None:
-            expoPushToken = request.data.get('expoPushToken')
+            expo_push_token = request.data.get('expoPushToken')
         else:
-            return Response({'success':False, 'message':'please enter valid expoPushToken'})
+            return Response({'success':False, 'message':'please enter valid Expo Push Token'})
         
         try:
             if request.user is not None:
@@ -157,12 +148,12 @@ class VolunteerExpoPushToken(APIView):
 
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
-                    token.expoPushToken = expoPushToken
+                    token.expoPushToken = expo_push_token
                     token.save()
 
                     return Response({
                         'success': True, 
-                        'message': 'successfully updated expoPushToken', 
+                        'message': 'successfully updated Expo Push Token', 
                     })
                 
                 else:
@@ -293,9 +284,9 @@ class SignUp(APIView):
             return Response({'success':False, 'message':'please enter if Volunteer or not'})
         
         if request.data.get('ExpoPushToken') != None:
-            expoPushToken = request.data.get('expoPushToken')
+            expo_push_token = request.data.get('expoPushToken')
         else:
-            return Response({'success':False, 'message':'please enter valid expoPushToken'})
+            return Response({'success':False, 'message':'please enter valid Expo Push Token'})
         
         password = 'Admin123'
 
@@ -324,33 +315,33 @@ class SignUp(APIView):
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
-                userDetails = UserProfileSerializer(user).data
+                user_details = UserProfileSerializer(user).data
                 # mixpanel_token = settings.MIXPANEL_API_TOKEN
                 # mp = Mixpanel(mixpanel_token)
                 # mp.track(user.id, 'Sign-up',  {
                 #     'Signup Type': 'Volunteer'
                 # })
-                return Response({'success': True, 'message':'user already exists', 'userDetails': userDetails})
+                return Response({'success': True, 'message':'user already exists', 'userDetails': user_details})
             else:
                 user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
-                userDetails = UserProfileSerializer(user).data
-                accessToken = create_access_token(user.id)
-                refreshToken = create_refresh_token(user.id)
+                user_details = UserProfileSerializer(user).data
+                access_token = create_access_token(user.id)
+                refresh_token = create_refresh_token(user.id)
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
-                    token.refreshToken = refreshToken
-                    token.accessToken = accessToken
-                    token.expoPushToken = expoPushToken
+                    token.refreshToken = refresh_token
+                    token.accessToken = access_token
+                    token.expoPushToken = expo_push_token
                     token.save()
                 else:
-                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user, expoPushToken=expoPushToken)
+                    token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
                 
                 # mixpanel_token = settings.MIXPANEL_API_TOKEN
                 # mp = Mixpanel(mixpanel_token)
                 # mp.track(user.id, 'Sign-up',  {
                 #     'Signup Type': 'Volunteer'
                 # })
-                return Response({'success':True, 'message':'successfully created user', 'userDetails':userDetails})
+                return Response({'success':True, 'message':'successfully created user', 'userDetails':user_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
@@ -410,19 +401,19 @@ class SignIn(APIView):
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
-                userDetails = UserProfileSerializer(user).data
-                accessToken = create_access_token(user.id)
-                refreshToken = create_refresh_token(user.id)
+                user_details = UserProfileSerializer(user).data
+                access_token = create_access_token(user.id)
+                refresh_token = create_refresh_token(user.id)
             else:
                 return Response({'success': False, 'message':'user with email does not exist'})
 
             if CustomToken.objects.filter(user=user).exists():
                 token = CustomToken.objects.get(user=user)
-                token.refreshToken = refreshToken
-                token.accessToken = accessToken
+                token.refreshToken = refresh_token
+                token.accessToken = access_token
                 token.save()
             else:
-                token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
+                token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user)
             # mixpanel_token = settings.MIXPANEL_API_TOKEN
             # mp = Mixpanel(mixpanel_token)
             # mp.track(user.id, 'login',  {
@@ -432,10 +423,10 @@ class SignIn(APIView):
                 'success': True,
                 'message': 'successfully signed in',
                 'isAuthenticated': True,
-                'token': accessToken,
+                'token': access_token,
                 'expiresIn': '2 minutes',
-                'refreshToken': refreshToken,
-                'user': userDetails,
+                'refreshToken': refresh_token,
+                'user': user_details,
             })
             
         except Exception as e:
@@ -1505,8 +1496,8 @@ class VolunteerProfile(APIView):
                 userId= request.user.id
                 if Volunteer.objects.filter(id=userId).exists():
                     user = Volunteer.objects.get(id=userId)
-                    userDetails = UserProfileSerializer(user).data
-                    return Response({'success':True, 'userDetails':userDetails})
+                    user_details = UserProfileSerializer(user).data
+                    return Response({'success':True, 'userDetails':user_details})
                 else:
                     return Response({'success': False, 'message': 'user not found'})
             else :
@@ -1637,8 +1628,8 @@ class VolunteerProfile(APIView):
                     return Response({'success': False, 'message': 'Volunteer type does not exist'})
                 
                 user.save()
-                userDetails = UserProfileSerializer(user).data
-                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':userDetails})
+                user_details = UserProfileSerializer(user).data
+                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':user_details})
             else:
                 return Response({'success':False, 'message':'Volunteer with email does not exist'})
         except Exception as e:
@@ -2159,7 +2150,7 @@ def dashboard_view(request):
 
     # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
     users = Volunteer.objects.all().order_by('-id')
-    userDetails = UserProfileSerializer(users, many=True).data
+    user_details = UserProfileSerializer(users, many=True).data
 
     # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
     foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
@@ -2174,7 +2165,7 @@ def dashboard_view(request):
     # print(donationDetails)
 
     # Pass the graphic to the template context
-    context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
+    context = {"volunteerDetails" : user_details,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
     return render(request, 'dashboard.html', context)
 
 class VolunteerNotification(APIView):
