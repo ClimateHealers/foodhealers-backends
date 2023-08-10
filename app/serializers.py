@@ -1,5 +1,5 @@
 
-from .models import *
+from .models import Volunteer
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
 from django.core.files.storage import get_storage_class
