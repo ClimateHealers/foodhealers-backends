@@ -72,7 +72,7 @@ class UploadBulkRecipeView(APIView):
 def upload_recipes_action(request):
     template_name = 'BulkRecipeUpload.html'
     bulk_recipe_file = request.FILES.get('bulkRecipeFile')
-    
+
     try:
         df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
         required_columns = ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
@@ -80,24 +80,16 @@ def upload_recipes_action(request):
         if not all(col in df.columns for col in required_columns):
             return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
 
-        for index, row in df.iterrows():
-            food_name, ingredients, cooking_instructions, image, category, recipe_source, recipe_credits = row[
-                ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
-            ]
-
+        for _, row in df.iterrows():
             try:
-                category_list = ast.literal_eval(category)
-            except Exception:
-                category_list = [category]
+                food_name, ingredients, cooking_instructions, image, category, recipe_source, recipe_credits = row[required_columns]
+                category_list = ast.literal_eval(category) if category else []
 
-            if not FoodRecipe.objects.filter(foodName=food_name).exists():
-                try:
+                if not FoodRecipe.objects.filter(foodName=food_name).exists():
                     extension = os.path.splitext(image)[1]
                     filename = os.path.join("images", f"{food_name}{extension}")
-
                     if not os.path.exists("images"):
                         os.makedirs("images")
-
                     urllib.request.urlretrieve(image, filename)
 
                     recipe = FoodRecipe.objects.create(
@@ -117,20 +109,16 @@ def upload_recipes_action(request):
 
                     with open(filename, 'rb') as f:
                         recipe.foodImage.save(food_name + extension, File(f))
-                    recipe.save()
-
-                    recipe_docs = Document.objects.create(
-                        docType=DOCUMENT_TYPE[2][0],
-                        createdAt=timezone.now(),
-                        food=recipe
-                    )
-
-                    with open(filename, 'rb') as f:
+                        recipe_docs = Document.objects.create(
+                            docType=DOCUMENT_TYPE[2][0],
+                            createdAt=timezone.now(),
+                            food=recipe
+                        )
                         recipe_docs.document.save(food_name + extension, File(f))
-                    recipe_docs.save()
+                        recipe_docs.save()
 
-                except Exception:
-                    pass
+            except Exception:
+                pass
 
         return render(request, template_name, {'success': True, 'message': 'Recipes Uploaded Successfully'})
 
