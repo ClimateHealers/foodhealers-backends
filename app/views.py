@@ -86,7 +86,7 @@ class GetRefreshToken(APIView):
                 else:
                     return Response({'success': False, 'message':'Custom Token Object does not exist'})
             else:
-                return Response({'success': False, 'message': 'Please provide valid id token'})
+                return Response({'success': False, 'message': 'Please provide valid refresh token'})
             
             return Response({
                 'success': True,
@@ -234,8 +234,8 @@ class ChoicesView(APIView):
     def get(self, request, format=None):
         try:
             return Response({'success': True, 'VOLUNTEER_TYPE': VOLUNTEER_TYPE, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
-        except:
-            return Response({'success': False})
+        except Exception as e:
+            return Response({'success': False, 'error' : str(e)})
         
 # Sign Up API  
 class SignUp(APIView):
@@ -269,7 +269,7 @@ class SignUp(APIView):
     def post(self, request,  format=None):
 
         if request.data.get('tokenId') is not None:
-            tokenId = request.data.get('tokenId')
+            token_id = request.data.get('tokenId')
         else:
             return Response({'success':False, 'message':'please enter valid token'})
         
@@ -279,7 +279,7 @@ class SignUp(APIView):
             return Response({'success':False, 'message':'please enter valid name'})
         
         if request.data.get('isVolunteer') is not None:
-            isVolunteer = request.data.get('isVolunteer')
+            is_volunteer = request.data.get('isVolunteer')
         else:
             return Response({'success':False, 'message':'please enter if Volunteer or not'})
         
@@ -295,9 +295,9 @@ class SignUp(APIView):
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
             else:
-                if tokenId is not None:
+                if token_id is not None:
                     try:
-                        decoded_token = auth.verify_id_token(tokenId)
+                        decoded_token = auth.verify_id_token(token_id)
                         if decoded_token is not None:
                             if 'email' in decoded_token:
                                 email = decoded_token['email']
@@ -308,22 +308,17 @@ class SignUp(APIView):
                     except Exception as e:
                         return Response({'success': False, 'error': str(e)})
                 else:
-                    return Response({'success': False, 'message': 'Please provide valid id token'})
+                    return Response({'success': False, 'message': 'Please provide valid firebase token'})
                 
-            randomNumber = str(uuid.uuid4())[:6]
-            username = randomNumber + '@' + name
+            random_number = str(uuid.uuid4())[:6]
+            username = random_number + '@' + name
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 user_details = UserProfileSerializer(user).data
-                # mixpanel_token = settings.MIXPANEL_API_TOKEN
-                # mp = Mixpanel(mixpanel_token)
-                # mp.track(user.id, 'Sign-up',  {
-                #     'Signup Type': 'Volunteer'
-                # })
                 return Response({'success': True, 'message':'user already exists', 'userDetails': user_details})
             else:
-                user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
+                user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=is_volunteer, password=password)
                 user_details = UserProfileSerializer(user).data
                 access_token = create_access_token(user.id)
                 refresh_token = create_refresh_token(user.id)
@@ -335,12 +330,6 @@ class SignUp(APIView):
                     token.save()
                 else:
                     token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
-                
-                # mixpanel_token = settings.MIXPANEL_API_TOKEN
-                # mp = Mixpanel(mixpanel_token)
-                # mp.track(user.id, 'Sign-up',  {
-                #     'Signup Type': 'Volunteer'
-                # })
                 return Response({'success':True, 'message':'successfully created user', 'userDetails':user_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -376,7 +365,7 @@ class SignIn(APIView):
     # Login API requires Firebase token
     def post(self, request, format=None):
         if request.data.get('tokenId') is not None:
-            tokenId = request.data.get('tokenId')
+            token_id = request.data.get('tokenId')
         else:
             return Response({'success':False, 'message':'please enter valid token'})
         
@@ -384,9 +373,9 @@ class SignIn(APIView):
             if 'email' in request.session.keys() and request.session['email'] is not None:
                 email = request.session['email']
             else:
-                if tokenId is not None:
+                if token_id is not None:
                     try:
-                        decoded_token = auth.verify_id_token(tokenId)
+                        decoded_token = auth.verify_id_token(token_id)
                         if decoded_token is not None:
                             if 'email' in decoded_token:
                                 email = decoded_token['email']
@@ -397,7 +386,7 @@ class SignIn(APIView):
                     except Exception as e:
                         return Response({'success': False, 'error': str(e)})
                 else:
-                    return Response({'success': False, 'message': 'Please provide valid id token'})
+                    return Response({'success': False, 'message': 'Please provide valid firebase token'})
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
@@ -414,11 +403,6 @@ class SignIn(APIView):
                 token.save()
             else:
                 token = CustomToken.objects.create(accessToken=access_token, refreshToken=refresh_token, user=user)
-            # mixpanel_token = settings.MIXPANEL_API_TOKEN
-            # mp = Mixpanel(mixpanel_token)
-            # mp.track(user.id, 'login',  {
-            #     'login Type': 'Volunteer'
-            # })
             return Response({
                 'success': True,
                 'message': 'successfully signed in',
