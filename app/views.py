@@ -288,7 +288,7 @@ class SignUp(APIView):
         else:
             return Response({'success':False, 'message':'please enter valid Expo Push Token'})
         
-        password = 'Admin123'
+        password = settings.VOLUNTEER_PASSWORD
 
         try:
 
@@ -2059,114 +2059,107 @@ def get_last_12_months(current_date):
         
     return last_12_months[::-1]
 
-def plot_view(request):
+class PlotView(APIView):
+    def get(self, request):
 
-    # Get the current month and year
-    current_date = datetime.now()
+        # Get the current month and year
+        current_date = datetime.now()
 
-    # function to get the list of last 12 months of the current year
-    last_12_monthList = get_last_12_months(current_date)
+        # function to get the list of last 12 months of the current year
+        last_12_monthList = get_last_12_months(current_date)
 
+        # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+        data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
-    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
-    data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-    # print('data=============>>>>>',data)
+        for da in data:
+            print(da['month'].strftime("%B %Y"))
 
-    for da in data:
-        print(da['month'].strftime("%B %Y"))
+        # Extract the x and y values from the data
+        x = [entry['month'].strftime('%B-%Y') for entry in data]
+        y = [entry['count'] for entry in data]
 
-    # Extract the x and y values from the data
-    x = [entry['month'].strftime('%B-%Y') for entry in data]
-    y = [entry['count'] for entry in data]
-
-    # print(x,'******************************************',y)
-
-    # call the create bar graph function
-    bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    line_img_png = Create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    scatter_img_png = Create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    pie_img_png = Create_pie_graph(y, x, 'Number of Users Joined')
+        # call the create bar graph function
+        bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        line_img_png = Create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        scatter_img_png = Create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        pie_img_png = Create_pie_graph(y, x, 'Number of Users Joined')
 
 
-    # Encode the image in base64 for embedding in HTML
-    bar_volunteerGraphic = urllib.parse.quote(base64.b64encode(bar_img_png))
-    line_volunteerGraphic = urllib.parse.quote(base64.b64encode(line_img_png))
-    scatter_volunteerGraphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
-    pie_volunteerGraphic = urllib.parse.quote(base64.b64encode(pie_img_png))
+        # Encode the image in base64 for embedding in HTML
+        bar_volunteerGraphic = urllib.parse.quote(base64.b64encode(bar_img_png))
+        line_volunteerGraphic = urllib.parse.quote(base64.b64encode(line_img_png))
+        scatter_volunteerGraphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
+        pie_volunteerGraphic = urllib.parse.quote(base64.b64encode(pie_img_png))
 
-    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-    foodEvents = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+        # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+        foodEvents = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
-    # Extract the x and y values from the data
-    a = [foodEventEntry['month'].strftime('%B-%Y') for foodEventEntry in foodEvents]
-    b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
+        # Extract the x and y values from the data
+        a = [foodEventEntry['month'].strftime('%B-%Y') for foodEventEntry in foodEvents]
+        b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
 
-    # call the create bar graph function
-    bar_foodEventImage_png = Create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    line_foodEventImage_png = Create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    scatter_foodEventImage_png = Create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    pie_foodEventImage_png = Create_pie_graph(b, a, 'Food Events',)
+        # call the create bar graph function
+        bar_foodEventImage_png = Create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        line_foodEventImage_png = Create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        scatter_foodEventImage_png = Create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        pie_foodEventImage_png = Create_pie_graph(b, a, 'Food Events',)
 
-    # Encode the image in base64 for embedding in HTML
-    bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
-    line_foodEventGraphic = urllib.parse.quote(base64.b64encode(line_foodEventImage_png))
-    scatter_foodEventGraphic = urllib.parse.quote(base64.b64encode(scatter_foodEventImage_png))
-    pie_foodEventGraphic = urllib.parse.quote(base64.b64encode(pie_foodEventImage_png))
+        # Encode the image in base64 for embedding in HTML
+        bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
+        line_foodEventGraphic = urllib.parse.quote(base64.b64encode(line_foodEventImage_png))
+        scatter_foodEventGraphic = urllib.parse.quote(base64.b64encode(scatter_foodEventImage_png))
+        pie_foodEventGraphic = urllib.parse.quote(base64.b64encode(pie_foodEventImage_png))
 
-    # ---------------DONATIONS CREATED ON GRAPH -----------------
-    foodDonation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+        # ---------------DONATIONS CREATED ON GRAPH -----------------
+        foodDonation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
-    # Extract the x and y values from the data
-    a = [foodDonationEntry['month'].strftime('%B-%Y') for foodDonationEntry in foodDonation]
-    b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
+        # Extract the x and y values from the data
+        a = [foodDonationEntry['month'].strftime('%B-%Y') for foodDonationEntry in foodDonation]
+        b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
 
-    # call the create bar graph function
-    bar_foodDonationImage_png = Create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    line_foodDonationImage_png = Create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    scatter_foodDonationImage_png = Create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    pie_foodDonationImage_png = Create_pie_graph(b, a, 'Food Donations',)
+        # call the create bar graph function
+        bar_foodDonationImage_png = Create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        line_foodDonationImage_png = Create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        scatter_foodDonationImage_png = Create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        pie_foodDonationImage_png = Create_pie_graph(b, a, 'Food Donations',)
 
-    # Encode the image in base64 for embedding in HTML
-    bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
-    line_foodDonationGraphic = urllib.parse.quote(base64.b64encode(line_foodDonationImage_png))
-    scatter_foodDonationGraphic = urllib.parse.quote(base64.b64encode(scatter_foodDonationImage_png))
-    pie_foodDonationGraphic = urllib.parse.quote(base64.b64encode(pie_foodDonationImage_png))
+        # Encode the image in base64 for embedding in HTML
+        bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
+        line_foodDonationGraphic = urllib.parse.quote(base64.b64encode(line_foodDonationImage_png))
+        scatter_foodDonationGraphic = urllib.parse.quote(base64.b64encode(scatter_foodDonationImage_png))
+        pie_foodDonationGraphic = urllib.parse.quote(base64.b64encode(pie_foodDonationImage_png))
 
-    #---------------   -----------------
-    bar_graphData = {'bar_volunteerGraphic':bar_volunteerGraphic,'bar_foodEventGraphic':bar_foodEventGraphic, 'bar_foodDonationGraphic':bar_foodDonationGraphic}
-    line_graphData = {'line_volunteerGraphic':line_volunteerGraphic,'line_foodEventGraphic':line_foodEventGraphic, 'line_foodDonationGraphic':line_foodDonationGraphic}
-    scatter_graphData = {'scatter_volunteerGraphic':scatter_volunteerGraphic,'scatter_foodEventGraphic':scatter_foodEventGraphic, 'scatter_foodDonationGraphic':scatter_foodDonationGraphic}
-    pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
+        #---------------   -----------------
+        bar_graphData = {'bar_volunteerGraphic':bar_volunteerGraphic,'bar_foodEventGraphic':bar_foodEventGraphic, 'bar_foodDonationGraphic':bar_foodDonationGraphic}
+        line_graphData = {'line_volunteerGraphic':line_volunteerGraphic,'line_foodEventGraphic':line_foodEventGraphic, 'line_foodDonationGraphic':line_foodDonationGraphic}
+        scatter_graphData = {'scatter_volunteerGraphic':scatter_volunteerGraphic,'scatter_foodEventGraphic':scatter_foodEventGraphic, 'scatter_foodDonationGraphic':scatter_foodDonationGraphic}
+        pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
 
-    # Pass the graphic to the template context
-    context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData, 'updatedTime':0}
-    return render(request, 'base.html', context)
+        # Pass the graphic to the template context
+        context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData, 'updatedTime':0}
+        return render(request, 'base.html', context)
 
-def dashboard_view(request):
+class AdminDashboardView(APIView):
+    def get(self,request):
 
-    # Get the current month and year
-    current_date = datetime.now()
+        # Get the current month and year
+        current_date = datetime.now()
 
+        # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+        users = Volunteer.objects.all().order_by('-id')
+        user_details = UserProfileSerializer(users, many=True).data
 
-    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
-    users = Volunteer.objects.all().order_by('-id')
-    user_details = UserProfileSerializer(users, many=True).data
+        # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+        foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
+        eventDetails = FoodEventSerializer(foodEvents, many=True).data
 
-    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-    foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
-    eventDetails = FoodEventSerializer(foodEvents, many=True).data
+        # ---------------DONATIONS CREATED ON GRAPH -----------------
+        foodDonations = Donation.objects.all().order_by('-id')
+        donationDetails = DonationSerializer(foodDonations, many=True).data
 
-    # print(eventDetails)
-
-    # ---------------DONATIONS CREATED ON GRAPH -----------------
-    foodDonations = Donation.objects.all().order_by('-id')
-    donationDetails = DonationSerializer(foodDonations, many=True).data
-
-    # print(donationDetails)
-
-    # Pass the graphic to the template context
-    context = {"volunteerDetails" : user_details,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
-    return render(request, 'dashboard.html', context)
+        # Pass the graphic to the template context
+        context = {"volunteerDetails" : user_details,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
+        return render(request, 'dashboard.html', context)
 
 class VolunteerNotification(APIView):
     authentication_classes = [VolunteerTokenAuthentication]

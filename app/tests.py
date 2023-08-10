@@ -8,7 +8,7 @@ from .models import ( ItemType, Category, Address, Volunteer,
                       Vehicle, FoodEvent, Document, FoodItem,
                       FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, 
-                      Request, EventBookmark, Notification )
+                      Request, EventBookmark, Notification, VOLUNTEER_TYPE)
 import json
 from app.authentication import create_access_token, create_refresh_token
 from rest_framework.test import force_authenticate
