@@ -423,23 +423,12 @@ class FindFood(APIView):
         try:
             data = request.query_params
 
-            if data.get('lat') == None or data.get('lat') == ' ' or data.get('lat') == '':
-                return Response({'success': False, 'message':'please enter valid latitude'})
+            for param in ['lat', 'lng', 'fullAddress', 'eventStartDate']:
+                if not data.get(param, '').strip():
+                    return Response({'success': False, 'message': f'please enter valid {param}'})
             
-            if data.get('lng') == None or data.get('lng') == ' ' or data.get('lng') == '':
-                return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if data.get('fullAddress') == None or data.get('fullAddress') == ' ' or data.get('fullAddress') == '':
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if data.get('eventStartDate') == None or data.get('eventStartDate') == ' ' or data.get('eventStartDate') == '':
-                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
-            
-            if data.get('eventEndDate') != None and data.get('eventEndDate') != ' ' and data.get('eventEndDate') != '':
-                to_date_epochs = int(data.get('eventEndDate'))
-                to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
-            else:
-                to_date = timezone.now()
+            to_date_epochs = int(data.get('eventEndDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
 
             postal_code = int(data.get('postalCode', 0))
             state = data.get('state', '')
@@ -451,28 +440,28 @@ class FindFood(APIView):
             from_date_epochs = int(data.get('eventStartDate'))
             from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
 
-            address, _ = Address.objects.get_or_create(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, defaults={'postalCode': postal_code, 'state': state, 'city': city})
+            address, _ = Address.objects.get_or_create(lat=lat, lng=lng, streetAddress=full_address, 
+                fullAddress=full_address, defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )
 
-            final_food_events = []
             searched_xy = (lng, lat)
+            events_qs = FoodEvent.objects.filter(
+                Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) |
+                Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)),
+                status=EVENT_STATUS[0][0]
+            ).order_by('-id')
 
-            if FoodEvent.objects.filter( Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) | Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)), status=EVENT_STATUS[0][0]).exists():
-                food_event_list = FoodEvent.objects.filter( Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) | Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)), status=EVENT_STATUS[0][0]).order_by('-id')
- 
-                for food_event in food_event_list:
-                    event_xy = (food_event.address.lng, food_event.address.lat)
-                    event_distance = distance(lonlat(*searched_xy), lonlat(*event_xy)).km
-                                    
-                    if event_distance <= 50: # If Events Location is Less Than 50 Km then Event will be Fetched.
-                        final_food_events.append(food_event)
+            final_food_events = [
+                event for event in events_qs if
+                distance(lonlat(*searched_xy), lonlat(*(event.address.lng, event.address.lat))).km <= 50
+            ]
 
-                paginator = PageNumberPagination()
-                paginated_food_events = paginator.paginate_queryset(final_food_events, request)
+            paginator = PageNumberPagination()
+            paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
-                food_events_details = FoodEventSerializer(paginated_food_events, many=True).data  
-                return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
-            else:
-                return Response({'success': True, 'foodEvents': []})
+            food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
+            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
@@ -514,128 +503,76 @@ class Event(APIView):
 
     def post(self, request, format=None):
         try:
-            if request.data.get('eventName') != None:
-                eventName = request.data.get('eventName')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Name'})
+            required_fields = [
+                'eventName', 'lat', 'lng', 'fullAddress', 'postalCode',
+                'state', 'city', 'eventStartDate', 'eventEndDate', 'additionalInfo'
+            ]
+            for field in required_fields:
+                if field not in request.data:
+                    return Response({'success': False, 'message': f'Please enter valid {field.replace("event", "Event ").capitalize()}'})
+                
+            eventName = request.data['eventName']
+            lat = request.data['lat']
+            lng = request.data['lng']
+            fullAddress = request.data['fullAddress']
+            postalCode = request.data['postalCode']
+            state = request.data['state']
+            city = request.data['city']
             
-            if request.data.get('lat') != None:
-                lat = request.data.get('lat')
-            else:
-                return Response({'success': False, 'message':'please enter valid latitude'})
-            
-            if request.data.get('lng') != None:
-                lng = request.data.get('lng')
-            else:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') != None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
+            eventStartDate = datetime.fromtimestamp(int(request.data['eventStartDate'])).astimezone(timezone.utc)
+            eventEndDate = datetime.fromtimestamp(int(request.data['eventEndDate'])).astimezone(timezone.utc)
+            additionalInfo = request.data['additionalInfo']
 
-            if request.data.get('fullAddress') != None:
-                fullAddress = request.data.get('fullAddress')
-            else:
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if request.data.get('postalCode') != None:
-                postalCode = request.data.get('postalCode')
-            else:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
-            
-            if request.data.get('state') != None:
-                state = request.data.get('state')
-            else:
-                return Response({'success': False, 'message': 'please enter valid state'})
-            
-            if request.data.get('city') != None:
-                city = request.data.get('city')
-            else:
-                return Response({'success': False, 'message': 'please enter valid city'})
-            
-            if request.data.get('eventStartDate') != None:
-                eventStartDateEpochs = request.data.get('eventStartDate')
-                eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs)).astimezone(timezone.utc)
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
-            
-            if request.data.get('eventEndDate') != None:
-                eventEndDateEpochs = request.data.get('eventEndDate')
-                eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs)).astimezone(timezone.utc)
-            else:
-                eventEndDate = None
-            
-            if request.data.get('additionalInfo') != None:
-                additionalInfo = request.data.get('additionalInfo')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Description'})
-            
-            if request.FILES.get('files') != None:
-                eventPhoto = request.FILES.get('files')
+            eventPhoto = request.FILES.get('files')
+            temp_file = None
 
-                # Read the contents of the InMemoryUploadedFile
+            if eventPhoto:
                 file_contents = eventPhoto.read()
-                # Create a temporary file
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
-
                 try:
-                    # Write the contents to the temporary file
                     temp_file.write(file_contents)
                     temp_file.close()
-
                 except Exception as e:
-                    # If an exception occurs, make sure to close the temporary file
                     temp_file.close()
                     return Response({'success': False, 'message': str(e)})
-            else:
-                temp_file = None
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+            address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress,
+                defaults={'alt': None, 'postalCode': postalCode, 'state': state, 'city': city}
+            )
 
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
-    
-            if FoodEvent.objects.filter(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
-                foodEvent = FoodEvent.objects.get(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer)
-                foodEventDetaills = FoodEventSerializer(foodEvent).data
-                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
-            else:
-                createdAt = timezone.now()
-                foodEvent = FoodEvent.objects.create(
-                    name = eventName,
-                    address=address, 
-                    eventStartDate=eventStartDate, 
-                    eventEndDate=eventEndDate, 
-                    createdBy=organizer, 
-                    organizerPhoneNumber=organizer.phoneNumber, 
-                    createdAt=createdAt, 
-                    additionalInfo=additionalInfo,
-                    active=True 
+
+            foodEvent, created = FoodEvent.objects.get_or_create(
+                name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer,
+                defaults={
+                    'organizerPhoneNumber': organizer.phoneNumber, 'createdAt': timezone.now(),
+                    'additionalInfo': additionalInfo, 'active': True
+                }
+            )
+
+            if not created:
+                foodEventDetails = FoodEventSerializer(foodEvent).data
+                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': foodEventDetails})
+
+            if temp_file:
+                with open(temp_file.name, 'rb') as f:
+                    foodEvent.eventPhoto.save(eventPhoto.name, File(f))
+                foodEvent.save()
+                f.close()
+
+                doc = Document.objects.create(
+                    docType=DOCUMENT_TYPE[1][0], createdAt=foodEvent.createdAt, event=foodEvent
                 )
 
-                if temp_file != None:
+                with open(temp_file.name, 'rb') as f:
+                    doc.document.save(eventPhoto.name, File(f))
 
-                    with open(temp_file.name, 'rb') as f:
-                        foodEvent.eventPhoto.save(eventPhoto.name, File(f))
-                    foodEvent.save()
-                    f.close()
+                doc.save()
+                f.close()
 
-                    doc = Document.objects.create(
-                        docType=DOCUMENT_TYPE[1][0], 
-                        createdAt=createdAt, 
-                        event=foodEvent
-                    )
+            return Response({'success': True, 'message': 'Event Posted Successfully'})
 
-                    with open(temp_file.name, 'rb') as f:
-                        doc.document.save(eventPhoto.name, File(f))
-
-                    doc.save()
-                    f.close()
-
-                return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
