@@ -1281,9 +1281,9 @@ class VolunteerProfile(APIView):
     def get(self, request,  format=None):
         try:
             if request.user.id != None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
+                user_id= request.user.id
+                if Volunteer.objects.filter(id=user_id).exists():
+                    user = Volunteer.objects.get(id=user_id)
                     user_details = UserProfileSerializer(user).data
                     return Response({'success':True, 'userDetails':user_details})
                 else:
@@ -1462,10 +1462,10 @@ class VolunteerProfile(APIView):
             return Response({'success': False, 'message': str(e)})
 
 
-def send_mail_for_confirm_deletion(userId):
+def send_mail_for_confirm_deletion(user_id):
     try:
-        if Volunteer.objects.filter(id=userId).exists():
-            user = Volunteer.objects.get(id=userId)
+        if Volunteer.objects.filter(id=user_id).exists():
+            user = Volunteer.objects.get(id=user_id)
 
             subject = f'Confirmation E-Mail To Delete your Account'
             email_from = settings.DEFAULT_SENDER
@@ -1853,13 +1853,11 @@ class PlotView(APIView):
         current_date = datetime.now()
 
         # function to get the list of last 12 months of the current year
-        last_year_monthList = get_last_12_months(current_date)
+        last_year_month_list = get_last_12_months(current_date)
+        print(last_year_month_list)
 
         # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
         data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-
-        for da in data:
-            print(da['month'].strftime("%B %Y"))
 
         # Extract the x and y values from the data
         x = [entry['month'].strftime('%B-%Y') for entry in data]
@@ -1885,11 +1883,15 @@ class PlotView(APIView):
         a = [food_event_entry['month'].strftime('%B-%Y') for food_event_entry in food_events]
         b = [food_event_entry['count'] for food_event_entry in food_events]
 
+        graph_title = 'Food Events'
+        x_axis_label = 'Created Month'
+        y_axis_label = 'Number of Events Created'
+        
         # call the create bar graph function
-        bar_food_event_image_png = create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        line_food_event_image_png = create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        scatter_food_event_image_png = create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        pie_food_event_image_png = create_pie_graph(b, a, 'Food Events',)
+        bar_food_event_image_png = create_bar_graph(a, b, graph_title, x_axis_label, y_axis_label)
+        line_food_event_image_png = create_line_graph(a, b, graph_title, x_axis_label, y_axis_label)
+        scatter_food_event_image_png = create_scatter_graph(a, b, graph_title, x_axis_label, y_axis_label)
+        pie_food_event_image_png = create_pie_graph(b, a, graph_title,)
 
         # Encode the image in base64 for embedding in HTML
         bar_food_event_graphic = urllib.parse.quote(base64.b64encode(bar_food_event_image_png))
