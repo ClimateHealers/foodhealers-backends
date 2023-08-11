@@ -58,8 +58,8 @@ if settings.DEBUG :
     ]
 else:
     urlpatterns = [
-        path('admin/dashboard/', views.dashboard_view, name='dashboard'),
-        path('admin/analytics/', views.plot_view, name='plot'),
+        path('admin/dashboard/', views.AdminDashboardView.as_view(), name='dashboard'),
+        path('admin/analytics/', views.PlotView.as_view(), name='plot'),
         path('admin/docs/', schema_view.with_ui('swagger', cache_timeout=0),
             name='schema-swagger-ui'),
         path('admin/redoc/', schema_view.with_ui('redoc', cache_timeout=0),

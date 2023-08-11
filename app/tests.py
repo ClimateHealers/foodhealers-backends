@@ -29,12 +29,12 @@ class UserOperations(APITestCase):
             Category.objects.get_or_create(name='Lunch', createdAt=datetime.now(), active=True)
             Category.objects.get_or_create(name='Dinner', createdAt=datetime.now(), active=True)
             
-            foodRequestType, created = RequestType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
+            food_request_type, created = RequestType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
             RequestType.objects.get_or_create(name='Supplies', createdAt=datetime.now(), active=True)
-            volunteerRequestType, created = RequestType.objects.get_or_create(name='Volunteer', createdAt=datetime.now(), active=True) 
-            pickupRequestType, created = RequestType.objects.get_or_create(name='Pickup', createdAt=datetime.now(), active=True)
+            volunteer_request_type, created = RequestType.objects.get_or_create(name='Volunteer', createdAt=datetime.now(), active=True) 
+            pickup_request_type, created = RequestType.objects.get_or_create(name='Pickup', createdAt=datetime.now(), active=True)
 
-            foodItemType, created = ItemType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
+            food_Item_type, created = ItemType.objects.get_or_create(name='Food', createdAt=datetime.now(), active=True)
             ItemType.objects.get_or_create(name='Supplies', createdAt=datetime.now(), active=True)
 
             user, created = Volunteer.objects.get_or_create(
@@ -59,22 +59,30 @@ class UserOperations(APITestCase):
             )
 
             from app.authentication import create_access_token, create_refresh_token
-            accessToken = create_access_token(user.id)
-            refreshToken = create_refresh_token(user.id)
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
+            expo_push_token = 'ExponentPushToken[NYM-Q0OmkFj9TUUAV2UPW7]'
 
             token, created = CustomToken.objects.get_or_create(
-                accessToken=accessToken, refreshToken=refreshToken, user=user)
+                accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
 
             self.token = token
-            self.accessToken = 'Token '+accessToken
+            self.access_token = 'Token '+access_token
+            self.expo_push_token = expo_push_token
             self.user = user
             self.category = category
-            self.foodRequestType = foodRequestType
-            self.volunteerRequestType = volunteerRequestType
-            self.pickupRequestType = pickupRequestType 
-            self.foodItemType = foodItemType
+            self.food_request_type = food_request_type
+            self.volunteer_request_type = volunteer_request_type
+            self.pickup_request_type = pickup_request_type 
+            self.food_Item_type = food_Item_type
             self.vehicle = vehicle
             self.test_email = 'user@example.com'
+
+            self.onboarding_url = 'app:user-signup'
+            self.login_url = 'app:user-login'
+            self.find_food_url = 'app:find-food'
+            self.food_event_url = 'app:food-event'
+
             print('<<<----------------- Start Test Cases ----------------------->>>')
 
 
@@ -87,12 +95,13 @@ class UserOperations(APITestCase):
         session['email'] = self.test_email
         session.save()
 
-        url = reverse('app:user-signup')
+        url = reverse(self.onboarding_url)
         data = {
             'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
             'name': self.user.name,
             'email': self.test_email,
-            'isVolunteer': True
+            'isVolunteer': True,
+            'ExpoPushToken':self.expo_push_token
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -124,11 +133,12 @@ class UserOperations(APITestCase):
         session['email'] = self.test_email
         session.save()
 
-        url = reverse('app:user-signup')
+        url = reverse(self.onboarding_url)
         data = {
-            'name': 'Test User ',
+            'name': self.user.name,
             'email': self.test_email,
-            'isVolunteer': True
+            'isVolunteer': True,
+            'ExpoPushToken':self.expo_push_token
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -151,11 +161,12 @@ class UserOperations(APITestCase):
         session['email'] = self.test_email
         session.save()
 
-        url = reverse('app:user-signup')
+        url = reverse(self.onboarding_url)
         data = {
             'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
             'email': self.test_email,
-            'isVolunteer': True
+            'isVolunteer': True,
+            'ExpoPushToken':self.expo_push_token
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -177,11 +188,12 @@ class UserOperations(APITestCase):
         session = self.client.session
         session.save()
 
-        url = reverse('app:user-signup')
+        url = reverse(self.onboarding_url)
         data = {
             'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
-            'name': 'Test User ',
-            'isVolunteer': True
+            'name': self.user.name,
+            'isVolunteer': True,
+            'ExpoPushToken':self.expo_push_token
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -202,11 +214,12 @@ class UserOperations(APITestCase):
         session['email'] = self.test_email
         session.save()
 
-        url = reverse('app:user-signup')
+        url = reverse(self.onboarding_url)
         data = {
             'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
-            'name': 'Test User ',
+            'name': self.user.name,
             'email': self.test_email,
+            'ExpoPushToken':self.expo_push_token
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -230,7 +243,7 @@ class UserOperations(APITestCase):
         session['email'] = self.user.email
         session.save()
 
-        url = reverse('app:user-login')
+        url = reverse(self.login_url)
         data = {
             'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
         }
@@ -268,7 +281,7 @@ class UserOperations(APITestCase):
         session['email'] = self.test_email
         session.save()
         
-        url = reverse('app:user-login')
+        url = reverse(self.login_url)
         data = {}
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -277,7 +290,7 @@ class UserOperations(APITestCase):
         self.assertIn('success', result)
         self.assertIn('message', result)
         self.assertEqual(result['success'], False)
-        self.assertEqual(result['message'], 'please enter valid token')
+        self.assertEqual(result['message'], 'Please provide a valid token')
 
         print('7) ------ test case response for  : test_user_login_with_missing_token_id ------',result)
         
@@ -291,7 +304,7 @@ class UserOperations(APITestCase):
         session['email'] = ""
         session.save()
 
-        url = reverse('app:user-login')
+        url = reverse(self.login_url)
         data = {
             'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
         }
@@ -313,8 +326,8 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodEvents_valid_data(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '23.5777',
@@ -340,8 +353,8 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodEvent_valid_data_with_eventsExist(self):
 
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
@@ -382,8 +395,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_lat(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lng': '52.5777',
@@ -407,8 +420,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_lng(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
@@ -432,8 +445,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_alt(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
@@ -457,8 +470,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_eventStartDate(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
@@ -482,8 +495,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_eventEndDate(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
@@ -507,8 +520,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_postFoodEvents_with_missing_additionalInfo(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             data = {
                 'eventName':'Test event',
                 'lat': '22.5777',
@@ -532,8 +545,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getFoodEvents(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
@@ -562,8 +575,8 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getFoodEvents_with_noEvents(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:food-event')
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.food_event_url)
             response = self.client.get(url, format='json')
             result = json.loads(response.content)
             print('------ test case response for  : test_volunteer_getFoodEvents_with_noEvents ------',result)
@@ -580,8 +593,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_valid_data(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
@@ -619,8 +632,8 @@ class UserOperations(APITestCase):
     def test_user_findfood_valid_data_with_noEvents(self):
         
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lat': '22.5777',
                 'lng': '52.5777',
@@ -644,8 +657,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_lat(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lng': '52.5777',
                 'alt': '54777',
@@ -667,8 +680,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_lng(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lat': '22.5777',
                 'alt': '54777',
@@ -690,8 +703,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_alt(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lat': '22.5777',
                 'lng': '52.5777',
@@ -713,8 +726,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_eventStartDate(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lat': '22.5777',
                 'lng': '52.5777',
@@ -736,8 +749,8 @@ class UserOperations(APITestCase):
 
     def test_user_findfood_with_missing_eventEndDate(self):
         try:
-            # self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:find-food')
+            # self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse(self.find_food_url)
             data = {
                 'lat': '22.5777',
                 'lng': '52.5777',
@@ -761,7 +774,7 @@ class UserOperations(APITestCase):
 
     def test_user_fetch_category(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:fetch-category',)
             
             response = self.client.get(url, format='json')
@@ -780,7 +793,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_fetch_requestType(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:fetch-requestType',)
             
             response = self.client.get(url, format='json')
@@ -799,7 +812,7 @@ class UserOperations(APITestCase):
     
     def test_user_postBookmark_valid_data(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             
             foodEvent = FoodEvent.objects.create(
@@ -833,7 +846,7 @@ class UserOperations(APITestCase):
     def test_user_addBookmark_valid_data_with_noEvents(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             
             foodEvent = FoodEvent.objects.create(
@@ -865,7 +878,7 @@ class UserOperations(APITestCase):
 
     def test_user_addBookmark_with_missing_eventId(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             data = { }
             response = self.client.post(url, data, format='json')
@@ -884,7 +897,7 @@ class UserOperations(APITestCase):
     def test_user_addBookmark_with_bookmark_exist(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             
             foodEvent = FoodEvent.objects.create(
@@ -916,7 +929,7 @@ class UserOperations(APITestCase):
     
     def test_user_getBookmark_valid_data(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             
             foodEvent = FoodEvent.objects.create(
@@ -948,7 +961,7 @@ class UserOperations(APITestCase):
     def test_user_getBookmark_valid_data_with_noBookmark(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:bookmark-event')
             
             response = self.client.get(url, format='json')
@@ -968,7 +981,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_valid_data(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
             data = {
                 'foodName':'Test event',
@@ -991,7 +1004,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_valid_data_with_category_notExist(self):
 
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
 
             url = reverse('app:food-recipe', kwargs={'categoryId': 0})
             data = {
@@ -1018,7 +1031,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_with_recipe_alreadyExist(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
 
             FoodRecipe.objects.create(
@@ -1051,7 +1064,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_with_missing_foodname(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
             
             data = {
@@ -1076,7 +1089,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_with_missing_ingredients(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
             
             data = {
@@ -1101,7 +1114,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postFoodRecipe_with_missing_cookingInstructions(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
             
             data = {
@@ -1126,7 +1139,7 @@ class UserOperations(APITestCase):
     # def test_volunteer_postFoodRecipe_with_missing_categoryId(self):
         
     #     try:
-    #         self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
     #         url = reverse('app:food-recipe')
             
     #         data = {
@@ -1151,7 +1164,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getFoodRecipes(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
 
             FoodRecipe.objects.create(
@@ -1176,7 +1189,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getFoodRecipes_noRecipes(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': self.category.id})
     
             response = self.client.get(url, format='json')
@@ -1194,7 +1207,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getFoodRecipes_category_notExist(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:food-recipe', kwargs={'categoryId': 0})
 
             FoodRecipe.objects.create(
@@ -1221,11 +1234,11 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_valid_data(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
                 'quantity': '54 Kg',
@@ -1247,8 +1260,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_invalid_itemTypeId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             
             data = {
                 'itemTypeId':0,
@@ -1273,11 +1286,11 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_invalid_requestTypeId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:request-food', kwargs={'requestTypeId': 0})
             
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
                 'quantity': '54 Kg',
@@ -1299,8 +1312,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_missing_itemTypeId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             data = {
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
@@ -1324,10 +1337,10 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_missing_itemName(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'requiredDate': '2023-6-6',
                 'quantity': '54 Kg',
             }
@@ -1349,10 +1362,10 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_missing_requiredDate(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'itemName': 'Food item name',
                 'quantity': '54 Kg',
             }
@@ -1374,10 +1387,10 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_missing_quantity(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
             }
@@ -1399,18 +1412,18 @@ class UserOperations(APITestCase):
     def test_volunteer_requestFoodSupplies_with_existing_request(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-food', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-food', kwargs={'requestTypeId': self.food_request_type.id})
 
             foodItem = FoodItem.objects.create(
                 itemName='Food item name', 
-                itemType=self.foodItemType, 
+                itemType=self.food_Item_type, 
                 addedBy=self.user, 
                 createdAt=datetime.now()
             )
 
             Request.objects.create(
-                type=self.foodRequestType, 
+                type=self.food_request_type, 
                 createdBy=self.user,
                 requiredDate='2023-6-6',
                 active=True, 
@@ -1420,7 +1433,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'itemTypeId':self.foodItemType.id,
+                'itemTypeId':self.food_Item_type.id,
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
                 'quantity': '5 kg'
@@ -1444,8 +1457,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteer_valid_data(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1483,8 +1496,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_invalid_eventId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             data = {
                 'eventId': 0,
@@ -1511,7 +1524,7 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteer_invalid_requestTypeId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:request-volunteers', kwargs={'requestTypeId': 0})
             
             foodEvent = FoodEvent.objects.create(
@@ -1551,8 +1564,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_eventId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             data = {
                 'lat': '12.916540',
@@ -1579,8 +1592,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_lat(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1618,8 +1631,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_lng(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1657,8 +1670,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_alt(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1696,8 +1709,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_requiredDate(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1735,8 +1748,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_missing_numberOfVolunteers(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
             
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1774,8 +1787,8 @@ class UserOperations(APITestCase):
     def test_volunteer_requestVolunteers_with_existing_request(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
-            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.foodRequestType.id})
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+            url = reverse('app:request-volunteers', kwargs={'requestTypeId': self.food_request_type.id})
 
             foodEvent = FoodEvent.objects.create(
                 name='Test Event',
@@ -1789,7 +1802,7 @@ class UserOperations(APITestCase):
             )
 
             Request.objects.create(
-                type=self.foodRequestType, 
+                type=self.food_request_type, 
                 createdBy=self.user,
                 requiredDate='2023-05-05',
                 active=True, 
@@ -1824,7 +1837,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_valid_data(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -1853,7 +1866,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_ItemTypeId_notExist(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': 0,
@@ -1881,14 +1894,14 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_donation_alreadyPresent(self):
 
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
 
             pickupAddress = Address.objects.create(lat=12.916540, lng=77.651950, alt=4500)
             foodItem = FoodItem.objects.create(
                 itemName='foodName',
                 addedBy=self.user, 
-                itemType= self.foodItemType, 
+                itemType= self.food_Item_type, 
                 createdAt=datetime.now()
             )
             deliveryDetails = DeliveryDetail.objects.create(
@@ -1896,7 +1909,7 @@ class UserOperations(APITestCase):
                 pickupDate='2023-05-05'
             )
             donation = Donation.objects.create(
-                donationType= self.foodItemType,
+                donationType= self.food_Item_type,
                 foodItem=foodItem,
                 quantity='15 kg',
                 donatedBy=self.user,
@@ -1930,7 +1943,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_itemTypeId(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'foodName': "foodName",
@@ -1957,7 +1970,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_foodName(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -1984,7 +1997,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_quantity(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2011,7 +2024,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_pickupDate(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2038,7 +2051,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_lat(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2065,7 +2078,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_lng(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2092,7 +2105,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_alt(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2119,7 +2132,7 @@ class UserOperations(APITestCase):
     def test_volunteer_postDonateFood_missing_phoneNumber(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
             data = {
                 'itemTypeId': '1',
@@ -2146,13 +2159,13 @@ class UserOperations(APITestCase):
     def test_volunteer_getDonateFoodHistory_with_donationPresent(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
 
             foodItem = FoodItem.objects.create(
                 itemName='foodName', 
                 addedBy=self.user, 
-                itemType=self.foodItemType, 
+                itemType=self.food_Item_type, 
                 createdAt=datetime.now()
             )
 
@@ -2165,7 +2178,7 @@ class UserOperations(APITestCase):
             )
 
             donation = Donation.objects.create(
-                donationType=self.foodItemType,
+                donationType=self.food_Item_type,
                 foodItem=foodItem,
                 quantity='50 kg',
                 donatedBy=self.user,
@@ -2189,7 +2202,7 @@ class UserOperations(APITestCase):
     def test_volunteer_getDonateFoodHistory_with_noDonationPresent(self):
         
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:donate-food')
 
             response = self.client.get(url, format='json')
@@ -2210,7 +2223,7 @@ class UserOperations(APITestCase):
         
         try:
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.get(url, format='json')
@@ -2239,7 +2252,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2268,7 +2281,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2296,7 +2309,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2324,7 +2337,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2352,7 +2365,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2380,7 +2393,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2408,7 +2421,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2436,7 +2449,7 @@ class UserOperations(APITestCase):
                 'volunteerType':VOLUNTEER_TYPE[3][0],
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2464,7 +2477,7 @@ class UserOperations(APITestCase):
                 'phoneNumber':9178626772,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-profile')
             
             response = self.client.put(url, data, format='json')
@@ -2485,7 +2498,7 @@ class UserOperations(APITestCase):
         
         try:
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.get(url, format='json')
@@ -2506,9 +2519,9 @@ class UserOperations(APITestCase):
         try:
             
             volunteer = Volunteer.objects.create(name = 'UserTestVolunteer')
-            accessToken = create_access_token(volunteer.id)
+            access_token = create_access_token(volunteer.id)
 
-            self.client.credentials(HTTP_AUTHORIZATION='Token ' + accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION='Token ' + access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.get(url, format='json')
@@ -2536,7 +2549,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2564,7 +2577,7 @@ class UserOperations(APITestCase):
                 'active':True,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2591,7 +2604,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2618,7 +2631,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2645,7 +2658,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2672,7 +2685,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2699,7 +2712,7 @@ class UserOperations(APITestCase):
                 'plateNumber':'AB77C7777',
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.post(url, data, format='json')
@@ -2726,7 +2739,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2753,7 +2766,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2779,7 +2792,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2805,7 +2818,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2831,7 +2844,7 @@ class UserOperations(APITestCase):
                 'active':False,
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2857,7 +2870,7 @@ class UserOperations(APITestCase):
                 'plateNumber':'AB77C7777',
             }
 
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-vehicle')
             
             response = self.client.put(url, data, format='json')
@@ -2876,7 +2889,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getNotification(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-notification')
 
             Notification.objects.create(
@@ -2901,7 +2914,7 @@ class UserOperations(APITestCase):
 
     def test_volunteer_getNotification_with_noNotification(self):
         try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.accessToken)
+            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse('app:volunteer-notification')
             response = self.client.get(url, format='json')
             result = json.loads(response.content)
