@@ -935,26 +935,23 @@ class RequestFoodSupplies(APIView):
     def post(self, request, request_type_id, format=None):
         try:
             
-            if request.data.get('itemTypeId') != None:
-                item_type_id = request.data.get('itemTypeId')
-            else:
+            if request.data.get('itemTypeId') == None:
                 return Response({'success': False, 'message': 'please enter valid Item Type'})
             
-            if request.data.get('itemName') != None:
-                item_name = request.data.get('itemName')
-            else:
+            if request.data.get('itemName') == None:
                 return Response({'success': False, 'message': 'please enter valid Item Name'})
             
-            if request.data.get('requiredDate') != None:
-                required_date = request.data.get('requiredDate')
-            else:
+            if request.data.get('requiredDate') == None:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
-            if request.data.get('quantity') != None:
-                quantity = request.data.get('quantity')
-            else:
+            if request.data.get('quantity') == None:                
                 return  Response({'success': False, 'message': 'please enter valid quantity'})
             
+            item_type_id = request.data.get('itemTypeId')
+            item_name = request.data.get('itemName')
+            required_date = request.data.get('requiredDate')
+            quantity = request.data.get('quantity')
+
             user = request.user
 
             if ItemType.objects.filter(id=item_type_id).exists():
@@ -1084,7 +1081,6 @@ class DonateFood(APIView):
                 'pickupDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
@@ -1115,82 +1111,62 @@ class DonateFood(APIView):
     def post(self, request, format=None):
         try:
 
-            if request.data.get('itemTypeId') != None:
-                item_type_id = request.data.get('itemTypeId')
-            else:
+            if request.data.get('itemTypeId') == None:
                 return Response({'success': False, 'message': 'please enter valid item Type Id'})
             
-            if request.data.get('foodName') != None:
-                food_name = request.data.get('foodName')
-            else:
+            if request.data.get('foodName') == None:
                 return Response({'success': False, 'message': 'please enter valid Food Item'})
             
-            if request.data.get('quantity') != None:
-                quantity = request.data.get('quantity')
-            else:
+            if request.data.get('quantity') == None:
                 return Response({'success': False, 'message': 'please enter valid quantity'})
             
-            if request.data.get('pickupDate') != None:
-                pick_up_date = request.data.get('pickupDate')
-            else:
+            if request.data.get('pickupDate') == None:
                 return Response({'success': False, 'message': 'please enter valid pickup Date'})
          
-            if request.data.get('lat') != None:
-                lat = request.data.get('lat')
-            else:
+            if request.data.get('lat') == None:
                 return Response({'success': False, 'message': 'please enter valid latitude'})
             
-            if request.data.get('lng') != None:
-                lng = request.data.get('lng')
-            else:
+            if request.data.get('lng') == None:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') != None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
 
-            if request.data.get('fullAddress') != None:
-                full_address = request.data.get('fullAddress')
-            else:
+            if request.data.get('fullAddress') == None:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.data.get('postalCode') != None:
-                postal_code = request.data.get('postalCode')
-            else:
+            if request.data.get('postalCode') == None:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
-            if request.data.get('state') != None:
-                state = request.data.get('state')
-            else:
+            if request.data.get('state') == None:
                 return Response({'success': False, 'message': 'please enter valid state'})
             
-            if request.data.get('city') != None:
-                city = request.data.get('city')
-            else:
+            if request.data.get('city') == None:
                 return Response({'success': False, 'message': 'please enter valid city'})
 
             user = request.user
-            
+
+            item_type_id = request.data.get('itemTypeId')
+            food_name = request.data.get('foodName')
+            quantity = request.data.get('quantity')
+            pick_up_date = request.data.get('pickupDate')
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
+            full_address = request.data.get('fullAddress')
+            postal_code = request.data.get('postalCode')
+            state = request.data.get('state')
+            city = request.data.get('city')
+
             if ItemType.objects.filter(id=item_type_id).exists():
                 item_type = ItemType.objects.get(id=item_type_id)
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address).exists():
-                pickup_address = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
-            else:
-                pickup_address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)
+            pickup_address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )  
 
-            if FoodItem.objects.filter(itemName=food_name).exists():
-                food_item = FoodItem.objects.get(itemName=food_name, addedBy=user, itemType=item_type)
-            else:
-                food_item = FoodItem.objects.create(itemName=food_name, addedBy=user, itemType=item_type, createdAt=timezone.now())
+            food_item = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
 
-            if DeliveryDetail.objects.filter(pickupAddress=pickup_address, pickupDate=pick_up_date).exists():
-                delivery_details = DeliveryDetail.objects.get(pickupAddress=pickup_address, pickupDate=pick_up_date)
-            else:
-                delivery_details = DeliveryDetail.objects.create(pickupAddress=pickup_address, pickupDate=pick_up_date)
+            delivery_details, _ = DeliveryDetail.objects.get_or_create(pickupAddress=pickup_address, pickupDate=pick_up_date)
 
             if Donation.objects.filter(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user).exists(): 
                 donation = Donation.objects.get(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user)
@@ -1361,9 +1337,6 @@ class VolunteerProfile(APIView):
 
         if request.data.get('phoneNumber') == None:
             return Response({'success':False, 'message':'Please enter valid phoneNumber'})
-        
-        if request.data.get('volunteerType') == None:
-            return Response({'success':False, 'message':'Please enter valid volunteer Type'}) 
 
         name = request.data.get('name')
         email = request.data.get('email')
@@ -1374,7 +1347,6 @@ class VolunteerProfile(APIView):
         state = request.data.get('state')
         city = request.data.get('city')
         phone_number = request.data.get('phoneNumber')
-        volunteer_type = request.data.get('volunteerType')
 
         try:
             address, _ = Address.objects.get_or_create(
@@ -1387,17 +1359,6 @@ class VolunteerProfile(APIView):
                 user.name = name
                 user.phoneNumber = phone_number
                 user.address = address
-
-                if volunteer_type == VOLUNTEER_TYPE[0][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[0][0]
-                elif volunteer_type == VOLUNTEER_TYPE[1][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[1][0]
-                elif volunteer_type == VOLUNTEER_TYPE[2][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[2][0]
-                elif volunteer_type == VOLUNTEER_TYPE[3][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[3][0]
-                else:
-                    return Response({'success': False, 'message': 'Volunteer type does not exist'})
                 
                 user.save()
                 user_details = UserProfileSerializer(user).data
