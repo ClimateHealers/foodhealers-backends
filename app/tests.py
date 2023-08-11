@@ -63,10 +63,10 @@ class UserOperations(APITestCase):
             refresh_token = create_refresh_token(user.id)
             expo_push_token = 'ExponentPushToken[NYM-Q0OmkFj9TUUAV2UPW7]'
 
-            token, created = CustomToken.objects.get_or_create(
+            custom_token, created = CustomToken.objects.get_or_create(
                 accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
 
-            self.token = token
+            self.custom_token = custom_token
             self.access_token = 'Token '+access_token
             self.expo_push_token = expo_push_token
             self.user = user
@@ -76,7 +76,11 @@ class UserOperations(APITestCase):
             self.pickup_request_type = pickup_request_type 
             self.food_item_type = food_item_type
             self.vehicle = vehicle
+
             self.test_email = 'user@example.com'
+            self.firebase_token = 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q'
+            self.test_event_name = 'Test event'
+            self.event_additional_info = 'Free vegan Meals'
 
             # Test Cases Urls
             self.onboarding_url = 'app:user-signup'
@@ -109,7 +113,7 @@ class UserOperations(APITestCase):
 
         url = reverse(self.onboarding_url)
         data = {
-            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'tokenId': self.firebase_token,
             'name': self.user.name,
             'email': self.test_email,
             'isVolunteer': True,
@@ -175,7 +179,7 @@ class UserOperations(APITestCase):
 
         url = reverse(self.onboarding_url)
         data = {
-            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'tokenId': self.firebase_token,
             'email': self.test_email,
             'isVolunteer': True,
             'ExpoPushToken':self.expo_push_token
@@ -202,7 +206,7 @@ class UserOperations(APITestCase):
 
         url = reverse(self.onboarding_url)
         data = {
-            'tokenId': 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q',
+            'tokenId': self.firebase_token,
             'name': self.user.name,
             'isVolunteer': True,
             'ExpoPushToken':self.expo_push_token
@@ -341,13 +345,13 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '23.5777',
                 'lng': '72.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-6-6',
                 'eventEndDate': '2023-6-6',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -370,24 +374,24 @@ class UserOperations(APITestCase):
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
-                name='Test event',
+                name=self.test_event_name,
                 address=address,
                 eventStartDate='2023-6-6',
                 eventEndDate='2023-6-6', 
                 createdAt=datetime.now(),
                 createdBy=self.user,
-                additionalInfo='Free vegan Meals',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
     
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '23.5777',
                 'lng': '72.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-6-6',
                 'eventEndDate': '2023-6-6',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
 
             response = self.client.post(url, data, format='json')
@@ -410,12 +414,12 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -435,12 +439,12 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '22.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -460,12 +464,12 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'eventStartDate': '2023-06-06',
                 'eventEndDate': '2023-06-06',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -485,12 +489,12 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventEndDate': '2023-06-06',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -510,12 +514,12 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
                 'eventStartDate': '2023-06-06',
-                'additionalInfo':'Free vegan Meals',
+                'additionalInfo':self.event_additional_info,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -535,7 +539,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.food_event_url)
             data = {
-                'eventName':'Test event',
+                'eventName':self.test_event_name,
                 'lat': '22.5777',
                 'lng': '52.5777',
                 'alt': '54777',
@@ -562,13 +566,13 @@ class UserOperations(APITestCase):
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
-                name='Test event',
+                name=self.test_event_name,
                 address=address,
                 eventStartDate='2023-6-6',
                 eventEndDate='2023-6-6', 
                 createdAt=datetime.now(),
                 createdBy=self.user,
-                additionalInfo='Free vegan Meals',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
     
@@ -610,13 +614,13 @@ class UserOperations(APITestCase):
 
             address = Address.objects.create(lat=23.5777, lng=72.5777, alt=54777)
             FoodEvent.objects.create(
-                name='Test event',
+                name=self.test_event_name,
                 address=address,
                 eventStartDate='2023-6-6',
                 eventEndDate='2023-6-6', 
                 createdAt=datetime.now(),
                 createdBy=self.user,
-                additionalInfo='Free vegan Meals',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
 
@@ -827,7 +831,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.bookmark_url)
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
@@ -838,7 +842,7 @@ class UserOperations(APITestCase):
             )
             
             data = {
-                'eventId': foodEvent.id,
+                'eventId': food_event.id,
             }
 
             response = self.client.post(url, data, format='json')
@@ -861,7 +865,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.bookmark_url)
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
@@ -872,7 +876,7 @@ class UserOperations(APITestCase):
             )
             
             data = {
-                'eventId': foodEvent.id,
+                'eventId': food_event.id,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -912,7 +916,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.bookmark_url)
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
@@ -922,8 +926,8 @@ class UserOperations(APITestCase):
                 active=True
             )
 
-            EventBookmark.objects.create(user=self.user, event=foodEvent, createdAt=datetime.now())
-            data = {'eventId': foodEvent.id}
+            EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
+            data = {'eventId': food_event.id}
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
             print('------ test case response for  : test_user_addBookmark_with_bookmark_exist ------',result)
@@ -944,7 +948,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.bookmark_url)
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
@@ -954,7 +958,7 @@ class UserOperations(APITestCase):
                 active=True
             )
 
-            EventBookmark.objects.create(user=self.user, event=foodEvent, createdAt=datetime.now())
+            EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
 
             response = self.client.get(url, format='json')
             result = json.loads(response.content)
@@ -996,7 +1000,7 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
             data = {
-                'foodName':'Test event',
+                'foodName':'test Food',
                 'ingredients': 'water, Salt, Rice',
                 'cookingInstructions': 'Boil for 5 mins',
             }
@@ -1020,7 +1024,7 @@ class UserOperations(APITestCase):
 
             url = reverse(self.get_recipe_url, kwargs={'category_id': 0})
             data = {
-                'foodName':'Test event',
+                'foodName':'Test Food',
                 'ingredients': 'water, Salt, Rice',
                 'cookingInstructions': 'Boil for 5 mins',
             }
@@ -1247,7 +1251,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             
             data = {
                 'itemTypeId':self.food_item_type.id,
@@ -1273,7 +1277,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             
             data = {
                 'itemTypeId':0,
@@ -1299,7 +1303,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': 0})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': 0})
             
             data = {
                 'itemTypeId':self.food_item_type.id,
@@ -1325,7 +1329,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemName': 'Food item name',
                 'requiredDate': '2023-6-6',
@@ -1350,7 +1354,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemTypeId':self.food_item_type.id,
                 'requiredDate': '2023-6-6',
@@ -1375,7 +1379,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemTypeId':self.food_item_type.id,
                 'itemName': 'Food item name',
@@ -1400,7 +1404,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemTypeId':self.food_item_type.id,
                 'itemName': 'Food item name',
@@ -1425,9 +1429,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-food', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
 
-            foodItem = FoodItem.objects.create(
+            food_item = FoodItem.objects.create(
                 itemName='Food item name', 
                 itemType=self.food_item_type, 
                 addedBy=self.user, 
@@ -1440,7 +1444,7 @@ class UserOperations(APITestCase):
                 requiredDate='2023-6-6',
                 active=True, 
                 quantity='5 kg', 
-                foodItem=foodItem, 
+                foodItem=food_item, 
                 createdAt=datetime.now()
             )
 
@@ -1470,9 +1474,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1484,7 +1488,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'alt': '4500',
@@ -1509,7 +1513,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             data = {
                 'eventId': 0,
@@ -1537,9 +1541,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': 0})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': 0})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1551,7 +1555,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'alt': '4500',
@@ -1577,7 +1581,7 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             data = {
                 'lat': '12.916540',
@@ -1605,9 +1609,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1619,7 +1623,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lng': '77.651950',
                 'alt': '4500',
                 'requiredDate': '2023-05-05',
@@ -1644,9 +1648,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1658,7 +1662,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'alt': '4500',
                 'requiredDate': '2023-05-05',
@@ -1683,9 +1687,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1697,7 +1701,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'requiredDate': '2023-05-05',
@@ -1722,9 +1726,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1736,7 +1740,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'alt': '4500',
@@ -1761,9 +1765,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1775,7 +1779,7 @@ class UserOperations(APITestCase):
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'alt': '4500',
@@ -1800,9 +1804,9 @@ class UserOperations(APITestCase):
         
         try:
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse('app:request-volunteers', kwargs={'request_type_id': self.food_request_type.id})
+            url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
 
-            foodEvent = FoodEvent.objects.create(
+            food_event = FoodEvent.objects.create(
                 name='Test Event',
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
@@ -1819,12 +1823,12 @@ class UserOperations(APITestCase):
                 requiredDate='2023-05-05',
                 active=True, 
                 quantity='15', 
-                foodEvent=foodEvent, 
+                foodEvent=food_event, 
                 createdAt=datetime.now()
             )
 
             data = {
-                'eventId':foodEvent.id,
+                'eventId':food_event.id,
                 'lat': '12.916540',
                 'lng': '77.651950',
                 'alt': '4500',
@@ -1909,24 +1913,24 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.donate_food_url)
 
-            pickupAddress = Address.objects.create(lat=12.916540, lng=77.651950, alt=4500)
-            foodItem = FoodItem.objects.create(
+            pickup_address = Address.objects.create(lat=12.916540, lng=77.651950, alt=4500)
+            food_item = FoodItem.objects.create(
                 itemName='foodName',
                 addedBy=self.user, 
                 itemType= self.food_item_type, 
                 createdAt=datetime.now()
             )
-            deliveryDetails = DeliveryDetail.objects.create(
-                pickupAddress=pickupAddress, 
+            delivery_details = DeliveryDetail.objects.create(
+                pickupAddress=pickup_address, 
                 pickupDate='2023-05-05'
             )
-            donation = Donation.objects.create(
+            Donation.objects.create(
                 donationType= self.food_item_type,
-                foodItem=foodItem,
+                foodItem=food_item,
                 quantity='15 kg',
                 donatedBy=self.user,
                 needsPickup=True,
-                delivery=deliveryDetails,
+                delivery=delivery_details,
             )
 
             data = {
@@ -2174,28 +2178,28 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.donate_food_url)
 
-            foodItem = FoodItem.objects.create(
+            food_item = FoodItem.objects.create(
                 itemName='foodName', 
                 addedBy=self.user, 
                 itemType=self.food_item_type, 
                 createdAt=datetime.now()
             )
 
-            pickupAddress = Address.objects.create(
+            pickup_address = Address.objects.create(
                 lat=12.916540, lng=77.651950, alt=4500
             )
 
-            deliveryDetails = DeliveryDetail.objects.create(
-                pickupAddress=pickupAddress, pickupDate='2023-05-05'
+            delivery_details = DeliveryDetail.objects.create(
+                pickupAddress=pickup_address, pickupDate='2023-05-05'
             )
 
             donation = Donation.objects.create(
                 donationType=self.food_item_type,
-                foodItem=foodItem,
+                foodItem=food_item,
                 quantity='50 kg',
                 donatedBy=self.user,
                 needsPickup=True,
-                delivery=deliveryDetails,
+                delivery=delivery_details,
             )  
 
             response = self.client.get(url, format='json')
