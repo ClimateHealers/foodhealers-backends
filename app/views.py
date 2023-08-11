@@ -794,8 +794,6 @@ class FindFoodRecipe(APIView):
             if cooking_instructions is None:
                 return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
 
-            user = request.user
-
             try:
                 category = Category.objects.get(id=category_id)
             except Category.DoesNotExist:
@@ -841,9 +839,7 @@ class FindFoodRecipe(APIView):
     )
 
     def get(self, request, category_id, format=None):
-        try:
-            user = request.user
-            
+        try:            
             if Category.objects.filter(id=category_id).exists():
                 category = Category.objects.get(id=category_id)
             else:
@@ -890,9 +886,7 @@ class RequestTypes(APIView):
     )
     
     def get(self, request, format=None):
-        try:
-            user = request.user
-            
+        try:            
             request_type = RequestType.objects.all()
             request_type_list = RequestTypeSerializer(request_type, many=True).data
             return Response({'success': True, 'requestTypeList': request_type_list})
@@ -998,16 +992,9 @@ class RequestVolunteers(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['eventId', 'lat', 'lng', 'alt', 'requiredDate', 'numberOfVolunteers'], 
+            required=['eventId', 'requiredDate', 'numberOfVolunteers'], 
             properties={
                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
-                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
-                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
-                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
-                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
-                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
                 'numberOfVolunteers': openapi.Schema(type=openapi.TYPE_NUMBER, example='15'),
             }
@@ -1039,41 +1026,6 @@ class RequestVolunteers(APIView):
                 event_id = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
-            
-            if request.data.get('lat') != None:
-                lat = request.data.get('lat')
-            else:
-                return Response({'success': False, 'message': 'please enter valid latitude'})
-            
-            if request.data.get('lng') != None:
-                lng = request.data.get('lng')
-            else:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') != None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
-
-            if request.data.get('fullAddress') != None:
-                full_address = request.data.get('fullAddress')
-            else:
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if request.data.get('postalCode') != None:
-                postal_code = request.data.get('postalCode')
-            else:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
-            
-            if request.data.get('state') != None:
-                state = request.data.get('state')
-            else:
-                return Response({'success': False, 'message': 'please enter valid state'})
-            
-            if request.data.get('city') != None:
-                city = request.data.get('city')
-            else:
-                return Response({'success': False, 'message': 'please enter valid city'})
             
             if request.data.get('requiredDate') != None:
                 required_date = request.data.get('requiredDate')
@@ -1124,7 +1076,7 @@ class DonateFood(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'phoneNumber'], 
+            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city'], 
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
@@ -1137,7 +1089,6 @@ class DonateFood(APIView):
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
                 'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
-                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='99802732'),
             }
         ),
         responses={
@@ -1165,12 +1116,12 @@ class DonateFood(APIView):
         try:
 
             if request.data.get('itemTypeId') != None:
-                itemTypeId = request.data.get('itemTypeId')
+                item_type_id = request.data.get('itemTypeId')
             else:
                 return Response({'success': False, 'message': 'please enter valid item Type Id'})
             
             if request.data.get('foodName') != None:
-                foodName = request.data.get('foodName')
+                food_name = request.data.get('foodName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Food Item'})
             
@@ -1180,7 +1131,7 @@ class DonateFood(APIView):
                 return Response({'success': False, 'message': 'please enter valid quantity'})
             
             if request.data.get('pickupDate') != None:
-                pickupDate = request.data.get('pickupDate')
+                pick_up_date = request.data.get('pickupDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid pickup Date'})
          
@@ -1218,49 +1169,44 @@ class DonateFood(APIView):
                 city = request.data.get('city')
             else:
                 return Response({'success': False, 'message': 'please enter valid city'})
-            
-            if request.data.get('phoneNumber') != None:
-                phoneNumber = request.data.get('phoneNumber')
-            else:
-                return Response({'success': False, 'message': 'please enter valid phone Number'})
 
             user = request.user
             
-            if ItemType.objects.filter(id=itemTypeId).exists():
-                itemType = ItemType.objects.get(id=itemTypeId)
+            if ItemType.objects.filter(id=item_type_id).exists():
+                item_type = ItemType.objects.get(id=item_type_id)
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
             if Address.objects.filter(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address).exists():
-                pickupAddress = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
+                pickup_address = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
             else:
-                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)
+                pickup_address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)
 
-            if FoodItem.objects.filter(itemName=foodName).exists():
-                foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
+            if FoodItem.objects.filter(itemName=food_name).exists():
+                food_item = FoodItem.objects.get(itemName=food_name, addedBy=user, itemType=item_type)
             else:
-                foodItem = FoodItem.objects.create(itemName=foodName, addedBy=user, itemType=itemType, createdAt=timezone.now())
+                food_item = FoodItem.objects.create(itemName=food_name, addedBy=user, itemType=item_type, createdAt=timezone.now())
 
-            if DeliveryDetail.objects.filter(pickupAddress=pickupAddress, pickupDate=pickupDate).exists():
-                deliveryDetails = DeliveryDetail.objects.get(pickupAddress=pickupAddress, pickupDate=pickupDate)
+            if DeliveryDetail.objects.filter(pickupAddress=pickup_address, pickupDate=pick_up_date).exists():
+                delivery_details = DeliveryDetail.objects.get(pickupAddress=pickup_address, pickupDate=pick_up_date)
             else:
-                deliveryDetails = DeliveryDetail.objects.create(pickupAddress=pickupAddress, pickupDate=pickupDate)
+                delivery_details = DeliveryDetail.objects.create(pickupAddress=pickup_address, pickupDate=pick_up_date)
 
-            if Donation.objects.filter(donationType=itemType, foodItem=foodItem, quantity=quantity, donatedBy=user).exists(): 
-                donation = Donation.objects.get(donationType=itemType, foodItem=foodItem, quantity=quantity, donatedBy=user)
-                donationDetails = DonationSerializer(donation).data
-                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donationDetails})     
+            if Donation.objects.filter(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user).exists(): 
+                donation = Donation.objects.get(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user)
+                donation_details = DonationSerializer(donation).data
+                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donation_details})     
             else:
                 donation = Donation.objects.create(
-                    donationType=itemType,
-                    foodItem=foodItem,
+                    donationType=item_type,
+                    foodItem=food_item,
                     quantity=quantity,
                     donatedBy=user,
                     needsPickup=True,
-                    delivery=deliveryDetails,
+                    delivery=delivery_details,
                 )  
-                donationDetails = DonationSerializer(donation).data
-                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donationDetails})     
+                donation_details = DonationSerializer(donation).data
+                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donation_details})     
     
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -1294,8 +1240,8 @@ class DonateFood(APIView):
 
             if Donation.objects.filter(donatedBy=user).exists(): 
                 donation = Donation.objects.filter(donatedBy=user)
-                donationDetails = DonationSerializer(donation, many=True).data
-                return Response({'success': True, 'donationList':donationDetails})    
+                donation_details = DonationSerializer(donation, many=True).data
+                return Response({'success': True, 'donationList':donation_details})    
              
             else:
                 return Response({'success': True,'donationList':[]})     
@@ -1436,12 +1382,12 @@ class VolunteerProfile(APIView):
             return Response({'success': False, 'message': 'please enter valid city'})
 
         if request.data.get('phoneNumber') != None:
-            phoneNumber = request.data.get('phoneNumber')
+            phone_number = request.data.get('phoneNumber')
         else:
             return Response({'success':False, 'message':'Please enter valid phoneNumber'})
         
         if request.data.get('volunteerType') != None:
-            volunteerType = request.data.get('volunteerType')
+            volunteer_type = request.data.get('volunteerType')
         else:
             return Response({'success':False, 'message':'Please enter valid volunteer Type'})
         
@@ -1455,16 +1401,16 @@ class VolunteerProfile(APIView):
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 user.name = name
-                user.phoneNumber = phoneNumber
+                user.phoneNumber = phone_number
                 user.address = address
 
-                if volunteerType == VOLUNTEER_TYPE[0][0]:
+                if volunteer_type == VOLUNTEER_TYPE[0][0]:
                     user.volunteerType = VOLUNTEER_TYPE[0][0]
-                elif volunteerType == VOLUNTEER_TYPE[1][0]:
+                elif volunteer_type == VOLUNTEER_TYPE[1][0]:
                     user.volunteerType = VOLUNTEER_TYPE[1][0]
-                elif volunteerType == VOLUNTEER_TYPE[2][0]:
+                elif volunteer_type == VOLUNTEER_TYPE[2][0]:
                     user.volunteerType = VOLUNTEER_TYPE[2][0]
-                elif volunteerType == VOLUNTEER_TYPE[3][0]:
+                elif volunteer_type == VOLUNTEER_TYPE[3][0]:
                     user.volunteerType = VOLUNTEER_TYPE[3][0]
                 else:
                     return Response({'success': False, 'message': 'Volunteer type does not exist'})
@@ -1581,8 +1527,8 @@ class VehicleOperations(APIView):
             user = request.user 
             if Vehicle.objects.filter(owner=user).exists():
                 vehicle = Vehicle.objects.filter(owner=user)
-                vehicleDetails = VehicleSerializer(vehicle, many=True).data
-                return Response({'success': True, 'vehicleDetails': vehicleDetails})
+                vehicle_details = VehicleSerializer(vehicle, many=True).data
+                return Response({'success': True, 'vehicleDetails': vehicle_details})
             else:
                 return Response({'success': True, 'message': f'No vehicle found for user {user.name}', 'vehicleDetails': []})
             
@@ -1637,12 +1583,12 @@ class VehicleOperations(APIView):
                 return Response({'success': False, 'message':'please enter valid model'})
             
             if request.data.get('vehicleColour') != None:
-                vehicleColour = request.data.get('vehicleColour')
+                vehicle_colour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'please enter valid vehicle colour'})
             
             if request.data.get('plateNumber') != None:
-                plateNumber = request.data.get('plateNumber')
+                plate_number = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'please enter valid plate number'})
             
@@ -1653,19 +1599,19 @@ class VehicleOperations(APIView):
             
             user = request.user
 
-            if Vehicle.objects.filter(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour).exists():
-                vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour)
-                vehicleDetails = VehicleSerializer(vehicle).data
-                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicleDetails})
+            if Vehicle.objects.filter(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour).exists():
+                vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour)
+                vehicle_details = VehicleSerializer(vehicle).data
+                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details})
             else:
-                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour, active=active, createdAt=timezone.now())
-                vehicleDetails = VehicleSerializer(vehicle).data
+                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour, active=active, createdAt=timezone.now())
+                vehicle_details = VehicleSerializer(vehicle).data
 
                 # updating isDriver Field of Volunteer model when the user Adds a vehicle.
                 user.isDriver = True
                 user.save()
 
-                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicleDetails})
+                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicle_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})    
     
@@ -1705,17 +1651,17 @@ class VehicleOperations(APIView):
     def put(self, request, format=None):
         try:
             if request.data.get('vehicleId') != None:
-                vehicleId = request.data.get('vehicleId')
+                vehicle_id = request.data.get('vehicleId')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle Id'})
             
             if request.data.get('vehicleColour') != None:
-                vehicleColour = request.data.get('vehicleColour')
+                vehicle_colour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle colour'})
             
             if request.data.get('plateNumber') != None:
-                plateNumber = request.data.get('plateNumber')
+                plate_number = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'Please enter valid plate number'})
             
@@ -1726,16 +1672,16 @@ class VehicleOperations(APIView):
             
             user = request.user
 
-            if Vehicle.objects.filter(id=vehicleId, owner=user).exists():
-                vehicle = Vehicle.objects.get(id=vehicleId, owner=user)
-                vehicle.vehicleColour = vehicleColour
-                vehicle.plateNumber = plateNumber
+            if Vehicle.objects.filter(id=vehicle_id, owner=user).exists():
+                vehicle = Vehicle.objects.get(id=vehicle_id, owner=user)
+                vehicle.vehicleColour = vehicle_colour
+                vehicle.plateNumber = plate_number
                 vehicle.active = active
                 vehicle.save()
-                vehicleDetails = VehicleSerializer(vehicle).data
-                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicleDetails})
+                vehicle_details = VehicleSerializer(vehicle).data
+                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicle_details})
             else:
-                return Response({'success': False, 'message': f'Vehicle with id {vehicleId} not found'})
+                return Response({'success': False, 'message': f'Vehicle with id {vehicle_id} not found'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
  
@@ -1768,12 +1714,12 @@ class AllEvents(APIView):
 
     def get(self, request, format=None):
         try:
-            todayDate = timezone.now()
+            today_date = timezone.now()
 
-            if FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate)).exists():
-                foodEvents = FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate))
-                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
-                return Response({'success': True, 'foodEvents': foodEventsDetails})
+            if FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date)).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date))
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
@@ -1907,7 +1853,7 @@ class PlotView(APIView):
         current_date = datetime.now()
 
         # function to get the list of last 12 months of the current year
-        last_12_monthList = get_last_12_months(current_date)
+        last_year_monthList = get_last_12_months(current_date)
 
         # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
         data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
@@ -1927,79 +1873,76 @@ class PlotView(APIView):
 
 
         # Encode the image in base64 for embedding in HTML
-        bar_volunteerGraphic = urllib.parse.quote(base64.b64encode(bar_img_png))
-        line_volunteerGraphic = urllib.parse.quote(base64.b64encode(line_img_png))
-        scatter_volunteerGraphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
-        pie_volunteerGraphic = urllib.parse.quote(base64.b64encode(pie_img_png))
+        bar_volunteer_graphic = urllib.parse.quote(base64.b64encode(bar_img_png))
+        line_volunteer_graphic = urllib.parse.quote(base64.b64encode(line_img_png))
+        scatter_volunteer_graphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
+        pie_volunteer_graphic = urllib.parse.quote(base64.b64encode(pie_img_png))
 
         # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-        foodEvents = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+        food_events = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
         # Extract the x and y values from the data
-        a = [foodEventEntry['month'].strftime('%B-%Y') for foodEventEntry in foodEvents]
-        b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
+        a = [food_event_entry['month'].strftime('%B-%Y') for food_event_entry in food_events]
+        b = [food_event_entry['count'] for food_event_entry in food_events]
 
         # call the create bar graph function
-        bar_foodEventImage_png = create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        line_foodEventImage_png = create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        scatter_foodEventImage_png = create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        pie_foodEventImage_png = create_pie_graph(b, a, 'Food Events',)
+        bar_food_event_image_png = create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        line_food_event_image_png = create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        scatter_food_event_image_png = create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        pie_food_event_image_png = create_pie_graph(b, a, 'Food Events',)
 
         # Encode the image in base64 for embedding in HTML
-        bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
-        line_foodEventGraphic = urllib.parse.quote(base64.b64encode(line_foodEventImage_png))
-        scatter_foodEventGraphic = urllib.parse.quote(base64.b64encode(scatter_foodEventImage_png))
-        pie_foodEventGraphic = urllib.parse.quote(base64.b64encode(pie_foodEventImage_png))
+        bar_food_event_graphic = urllib.parse.quote(base64.b64encode(bar_food_event_image_png))
+        line_food_event_graphic = urllib.parse.quote(base64.b64encode(line_food_event_image_png))
+        scatter_food_event_graphic = urllib.parse.quote(base64.b64encode(scatter_food_event_image_png))
+        pie_food_event_graphic = urllib.parse.quote(base64.b64encode(pie_food_event_image_png))
 
         # ---------------DONATIONS CREATED ON GRAPH -----------------
-        foodDonation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+        food_donation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
         # Extract the x and y values from the data
-        a = [foodDonationEntry['month'].strftime('%B-%Y') for foodDonationEntry in foodDonation]
-        b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
+        a = [food_donation_entry['month'].strftime('%B-%Y') for food_donation_entry in food_donation]
+        b = [food_donation_entry['count'] for food_donation_entry in food_donation]
 
         # call the create bar graph function
-        bar_foodDonationImage_png = create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        line_foodDonationImage_png = create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        scatter_foodDonationImage_png = create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        pie_foodDonationImage_png = create_pie_graph(b, a, 'Food Donations',)
+        bar_food_donation_image_png = create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        line_food_donation_image_png = create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        scatter_food_donation_image_png = create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        pie_food_donation_image_png = create_pie_graph(b, a, 'Food Donations',)
 
         # Encode the image in base64 for embedding in HTML
-        bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
-        line_foodDonationGraphic = urllib.parse.quote(base64.b64encode(line_foodDonationImage_png))
-        scatter_foodDonationGraphic = urllib.parse.quote(base64.b64encode(scatter_foodDonationImage_png))
-        pie_foodDonationGraphic = urllib.parse.quote(base64.b64encode(pie_foodDonationImage_png))
+        bar_food_donation_graphic = urllib.parse.quote(base64.b64encode(bar_food_donation_image_png))
+        line_food_donation_graphic = urllib.parse.quote(base64.b64encode(line_food_donation_image_png))
+        scatter_food_donation_graphic = urllib.parse.quote(base64.b64encode(scatter_food_donation_image_png))
+        pie_food_donation_graphic = urllib.parse.quote(base64.b64encode(pie_food_donation_image_png))
 
         #---------------   -----------------
-        bar_graphData = {'bar_volunteerGraphic':bar_volunteerGraphic,'bar_foodEventGraphic':bar_foodEventGraphic, 'bar_foodDonationGraphic':bar_foodDonationGraphic}
-        line_graphData = {'line_volunteerGraphic':line_volunteerGraphic,'line_foodEventGraphic':line_foodEventGraphic, 'line_foodDonationGraphic':line_foodDonationGraphic}
-        scatter_graphData = {'scatter_volunteerGraphic':scatter_volunteerGraphic,'scatter_foodEventGraphic':scatter_foodEventGraphic, 'scatter_foodDonationGraphic':scatter_foodDonationGraphic}
-        pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
+        bar_graph_data = {'bar_volunteerGraphic':bar_volunteer_graphic,'bar_foodEventGraphic':bar_food_event_graphic, 'bar_foodDonationGraphic':bar_food_donation_graphic}
+        line_graph_data = {'line_volunteerGraphic':line_volunteer_graphic,'line_foodEventGraphic':line_food_event_graphic, 'line_foodDonationGraphic':line_food_donation_graphic}
+        scatter_graph_data = {'scatter_volunteerGraphic':scatter_volunteer_graphic,'scatter_foodEventGraphic':scatter_food_event_graphic, 'scatter_foodDonationGraphic':scatter_food_donation_graphic}
+        pie_graph_data = {'pie_volunteerGraphic':pie_volunteer_graphic, 'pie_foodEventGraphic':pie_food_event_graphic, 'pie_foodDonationGraphic':pie_food_donation_graphic}
 
         # Pass the graphic to the template context
-        context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData, 'updatedTime':0}
+        context = {'bar_graphData':bar_graph_data, 'line_graphData':line_graph_data, 'scatter_graphData':scatter_graph_data, 'pie_graphData':pie_graph_data, 'updatedTime':0}
         return render(request, 'base.html', context)
 
 class AdminDashboardView(APIView):
     def get(self,request):
-
-        # Get the current month and year
-        current_date = datetime.now()
 
         # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
         users = Volunteer.objects.all().order_by('-id')
         user_details = UserProfileSerializer(users, many=True).data
 
         # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-        foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
-        eventDetails = FoodEventSerializer(foodEvents, many=True).data
+        food_events = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
+        event_details = FoodEventSerializer(food_events, many=True).data
 
         # ---------------DONATIONS CREATED ON GRAPH -----------------
-        foodDonations = Donation.objects.all().order_by('-id')
-        donationDetails = DonationSerializer(foodDonations, many=True).data
+        food_donations = Donation.objects.all().order_by('-id')
+        donation_details = DonationSerializer(food_donations, many=True).data
 
         # Pass the graphic to the template context
-        context = {"volunteerDetails" : user_details,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
+        context = {"volunteerDetails" : user_details,'eventDetails':event_details, 'donationDetails':donation_details,  'updatedTime':0}
         return render(request, 'dashboard.html', context)
 
 class VolunteerNotification(APIView):
