@@ -232,7 +232,7 @@ class UserOperations(APITestCase):
 
         url = reverse(self.onboarding_url)
         data = {
-            'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
+            'tokenId': self.firebase_token,
             'name': self.user.name,
             'email': self.test_email,
             'ExpoPushToken':self.expo_push_token
@@ -261,7 +261,7 @@ class UserOperations(APITestCase):
 
         url = reverse(self.login_url)
         data = {
-            'tokenId': 'eyJhbGciO1Qid-hmd3L_DjrVMgIPIa-7Ztj209vo-bavQTUm_InW9vLCT=YTRkYz_06V-lnHXaf_c1bb6cQauj-U48q_C2sgW5t-UdabrwgD56Pw',
+            'tokenId': self.firebase_token,
         }
         response = self.client.post(url, data, format='json')
         result = json.loads(response.content)
@@ -832,12 +832,12 @@ class UserOperations(APITestCase):
             url = reverse(self.bookmark_url)
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
                 eventEndDate=datetime.now(), 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
             
@@ -866,12 +866,12 @@ class UserOperations(APITestCase):
             url = reverse(self.bookmark_url)
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
                 eventEndDate=datetime.now(), 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
             
@@ -917,12 +917,12 @@ class UserOperations(APITestCase):
             url = reverse(self.bookmark_url)
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
                 eventEndDate=datetime.now(), 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
 
@@ -949,12 +949,12 @@ class UserOperations(APITestCase):
             url = reverse(self.bookmark_url)
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate=datetime.now(),
                 eventEndDate=datetime.now(), 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True
             )
 
@@ -1477,12 +1477,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1544,12 +1544,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': 0})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1612,12 +1612,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1651,12 +1651,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1690,12 +1690,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1729,12 +1729,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1768,12 +1768,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
             
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -1807,12 +1807,12 @@ class UserOperations(APITestCase):
             url = reverse(self.request_volunteer_url, kwargs={'request_type_id': self.food_request_type.id})
 
             food_event = FoodEvent.objects.create(
-                name='Test Event',
+                name=self.test_event_name,
                 organizerPhoneNumber=997263, 
                 eventStartDate='2023-05-05',
                 eventEndDate='2023-05-05', 
                 createdAt=datetime.now(),
-                additionalInfo='vegan food',
+                additionalInfo=self.event_additional_info,
                 active=True,
                 createdBy=self.user,
             )
@@ -2193,7 +2193,7 @@ class UserOperations(APITestCase):
                 pickupAddress=pickup_address, pickupDate='2023-05-05'
             )
 
-            donation = Donation.objects.create(
+            Donation.objects.create(
                 donationType=self.food_item_type,
                 foodItem=food_item,
                 quantity='50 kg',
