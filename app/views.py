@@ -511,23 +511,23 @@ class Event(APIView):
                 if field not in request.data:
                     return Response({'success': False, 'message': f'Please enter valid {field.replace("event", "Event ").capitalize()}'})
                 
-            eventName = request.data['eventName']
+            event_name = request.data['eventName']
             lat = request.data['lat']
             lng = request.data['lng']
-            fullAddress = request.data['fullAddress']
-            postalCode = request.data['postalCode']
+            full_address = request.data['fullAddress']
+            postal_code = request.data['postalCode']
             state = request.data['state']
             city = request.data['city']
             
-            eventStartDate = datetime.fromtimestamp(int(request.data['eventStartDate'])).astimezone(timezone.utc)
-            eventEndDate = datetime.fromtimestamp(int(request.data['eventEndDate'])).astimezone(timezone.utc)
-            additionalInfo = request.data['additionalInfo']
+            event_start_date = datetime.fromtimestamp(int(request.data['eventStartDate'])).astimezone(timezone.utc)
+            event_end_date = datetime.fromtimestamp(int(request.data['eventEndDate'])).astimezone(timezone.utc)
+            additional_info = request.data['additionalInfo']
 
-            eventPhoto = request.FILES.get('files')
+            event_photo = request.FILES.get('files')
             temp_file = None
 
-            if eventPhoto:
-                file_contents = eventPhoto.read()
+            if event_photo:
+                file_contents = event_photo.read()
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 try:
                     temp_file.write(file_contents)
@@ -537,36 +537,36 @@ class Event(APIView):
                     return Response({'success': False, 'message': str(e)})
 
             address, _ = Address.objects.get_or_create(
-                lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress,
-                defaults={'alt': None, 'postalCode': postalCode, 'state': state, 'city': city}
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address,
+                defaults={'alt': None, 'postalCode': postal_code, 'state': state, 'city': city}
             )
 
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
 
-            foodEvent, created = FoodEvent.objects.get_or_create(
-                name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer,
+            food_event, created = FoodEvent.objects.get_or_create(
+                name=event_name, address=address, eventStartDate=event_start_date, eventEndDate=event_end_date, createdBy=organizer,
                 defaults={
                     'organizerPhoneNumber': organizer.phoneNumber, 'createdAt': timezone.now(),
-                    'additionalInfo': additionalInfo, 'active': True
+                    'additionalInfo': additional_info, 'active': True
                 }
             )
 
             if not created:
-                foodEventDetails = FoodEventSerializer(foodEvent).data
-                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': foodEventDetails})
+                food_event_details = FoodEventSerializer(food_event).data
+                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': food_event_details})
 
             if temp_file:
                 with open(temp_file.name, 'rb') as f:
-                    foodEvent.eventPhoto.save(eventPhoto.name, File(f))
-                foodEvent.save()
+                    food_event.eventPhoto.save(event_photo.name, File(f))
+                food_event.save()
                 f.close()
 
                 doc = Document.objects.create(
-                    docType=DOCUMENT_TYPE[1][0], createdAt=foodEvent.createdAt, event=foodEvent
+                    docType=DOCUMENT_TYPE[1][0], createdAt=food_event.createdAt, event=food_event
                 )
 
                 with open(temp_file.name, 'rb') as f:
-                    doc.document.save(eventPhoto.name, File(f))
+                    doc.document.save(event_photo.name, File(f))
 
                 doc.save()
                 f.close()
@@ -604,9 +604,9 @@ class Event(APIView):
             user = request.user
 
             if FoodEvent.objects.filter(createdBy=user).exists():
-                foodEvents = FoodEvent.objects.filter(createdBy=user)
-                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
-                return Response({'success': True, 'foodEvents': foodEventsDetails})
+                food_events = FoodEvent.objects.filter(createdBy=user)
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
@@ -650,19 +650,19 @@ class BookmarkEvent(APIView):
     def post(self, request, format=None):
         try:
             if request.data.get('eventId') != None:
-                eventId = request.data.get('eventId')
+                event_id = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
             user = request.user
 
-            if FoodEvent.objects.filter(id=eventId).exists():
-                foodEvent = FoodEvent.objects.get(id=eventId)
-                if EventBookmark.objects.filter(user=user, event=foodEvent).exists():
+            if FoodEvent.objects.filter(id=event_id).exists():
+                food_event = FoodEvent.objects.get(id=event_id)
+                if EventBookmark.objects.filter(user=user, event=food_event).exists():
                     return Response({'success':False, 'message': 'Bookmark already exists'})
                 else:
-                    createdAt = timezone.now()
-                    EventBookmark.objects.create(user=user, event=foodEvent, createdAt=createdAt)
+                    created_at = timezone.now()
+                    EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
             else:
@@ -699,9 +699,9 @@ class BookmarkEvent(APIView):
             user = request.user
 
             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
-                bookmarkedEvents = EventBookmark.objects.filter(user=user, isDeleted=False)
-                bookmarkedEventDetails = BookmarkedEventSerializer(bookmarkedEvents, many=True).data
-                return Response({'success':True, 'bookmarkedEventDetails': bookmarkedEventDetails})
+                bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
+                bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
+                return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
             else:
                 return Response({'success': True, 'bookmarkedEventDetails': []})
             
@@ -727,21 +727,13 @@ class Categories(APIView):
         },
         
         operation_description="Get Food Events Posted by volunteer API",
-        # manual_parameters=[
-        #     openapi.Parameter(
-        #         name='Authorization',
-        #         in_=openapi.IN_HEADER,
-        #         type=openapi.TYPE_STRING,
-        #         description='Token',
-        #     ),
-        # ],
     )
     
     def get(self, request, format=None):
         try:            
             category = Category.objects.all()
-            categoryList = CategorySerializer(category, many=True).data
-            return Response({'success': True, 'categoriesList': categoryList})
+            category_list = CategorySerializer(category, many=True).data
+            return Response({'success': True, 'categoriesList': category_list})
 
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -785,58 +777,43 @@ class FindFoodRecipe(APIView):
         ],
     )
 
-    def post(self, request, categoryId, format=None):
+    def post(self, request, category_id, format=None):
         try:
+            if category_id is None:
+                return Response({'success': False, 'message': 'Please provide category Id'})
 
-            if categoryId is None:
-                return Response({'success': False, 'message':'Please provide category Id'})
-            
-            if request.data.get('foodName') != None:
-                foodName = request.data.get('foodName')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Food Name'})
-            
-            if request.data.get('ingredients') != None:
-                ingredients = request.data.get('ingredients')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Ingredients'})
-            
-            if request.data.get('cookingInstructions') != None:
-                cookingInstructions = request.data.get('cookingInstructions')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Cooking Instructions'})
-            
-            if request.FILES.getlist('foodImage') != None:
-                files = request.FILES.getlist('foodImage')
-            else:
-                files=[]
-                return  files
-            
-            # Slugs and tags to  be modified later
+            food_name = request.data.get('foodName')
+            ingredients = request.data.get('ingredients')
+            cooking_instructions = request.data.get('cookingInstructions')
+            files = request.FILES.getlist('foodImage', [])
+
+            if food_name is None:
+                return Response({'success': False, 'message': 'Please enter valid Food Name'})
+            if ingredients is None:
+                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
+            if cooking_instructions is None:
+                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
 
             user = request.user
-            
-            if Category.objects.filter(id=categoryId).exists():
-                category = Category.objects.get(id=categoryId)
-            else:
+
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
                 return Response({'success': False, 'message': 'Category with id does not exist'})
-            
-            if FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category).exists():
-                recipe = FoodRecipe.objects.get(foodName=foodName, ingredients=ingredients, category=category)
-                return Response({'success': True, 'message': 'Food Recipe already exists','recipe':recipe.id})
-            else:
-                recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, category=category, cookingInstructions=cookingInstructions)
-                createdAt = timezone.now()
+
+            try:
+                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
+                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
+            except FoodRecipe.DoesNotExist:
+                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
+                                                cookingInstructions=cooking_instructions)
+                created_at = timezone.now()
                 for file in files:
-                    doc = Document.objects.create(
-                        docType=DOCUMENT_TYPE[2][0], 
-                        document=file, 
-                        createdAt=createdAt, 
-                    )
+                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
                     recipe.foodImage.add(doc)
                 recipe.save()
                 return Response({'success': True, 'message': 'Food Recipe successfully created'})
-            
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
@@ -863,19 +840,21 @@ class FindFoodRecipe(APIView):
         ],
     )
 
-    def get(self, request, categoryId, format=None):
+    def get(self, request, category_id, format=None):
         try:
             user = request.user
             
-            if Category.objects.filter(id=categoryId).exists():
-                category = Category.objects.get(id=categoryId)
+            if Category.objects.filter(id=category_id).exists():
+                category = Category.objects.get(id=category_id)
             else:
                 return Response({'success': False, 'message': 'Category with id does not exist'})
 
             if FoodRecipe.objects.filter(category=category).exists():
                 recipes = FoodRecipe.objects.filter(category=category)
-                recipeList = FoodRecipeSerializer(recipes, many=True).data
-                return Response({'success':True, 'recipeList': recipeList})
+                paginator = PageNumberPagination()
+                paginated_recipes = paginator.paginate_queryset(recipes, request)
+                recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
             else:
                 return Response({'success': True, 'recipeList': []})
             

@@ -328,13 +328,15 @@ class FoodRecipeSerializer(Serializer):
         
     def get_category(self, obj):
         if obj.category is not None:
-            return obj.category.name
+            return CategorySerializer(obj.category.all(), many=True).data
         else:
             return 'Category name not specified'
         
     def get_foodImage(self, obj):
         if obj.foodImage is not None:
-            return DocumentSerializer(obj.foodImage.all(), many=True).data
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=obj.foodImage.name)
+            return document_url
         else:
             return 'Food image not specified'
         
