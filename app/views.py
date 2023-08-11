@@ -893,9 +893,9 @@ class RequestTypes(APIView):
         try:
             user = request.user
             
-            requestType = RequestType.objects.all()
-            requestTypeList = RequestTypeSerializer(requestType, many=True).data
-            return Response({'success': True, 'requestTypeList': requestTypeList})
+            request_type = RequestType.objects.all()
+            request_type_list = RequestTypeSerializer(request_type, many=True).data
+            return Response({'success': True, 'requestTypeList': request_type_list})
 
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -938,21 +938,21 @@ class RequestFoodSupplies(APIView):
         ],
     )
 
-    def post(self, request, requestTypeId, format=None):
+    def post(self, request, request_type_id, format=None):
         try:
             
             if request.data.get('itemTypeId') != None:
-                itemTypeId = request.data.get('itemTypeId')
+                item_type_id = request.data.get('itemTypeId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Item Type'})
             
             if request.data.get('itemName') != None:
-                itemName = request.data.get('itemName')
+                item_name = request.data.get('itemName')
             else:
                 return Response({'success': False, 'message': 'please enter valid Item Name'})
             
             if request.data.get('requiredDate') != None:
-                requiredDate = request.data.get('requiredDate')
+                required_date = request.data.get('requiredDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
@@ -963,27 +963,27 @@ class RequestFoodSupplies(APIView):
             
             user = request.user
 
-            if ItemType.objects.filter(id=itemTypeId).exists():
-                itemType = ItemType.objects.get(id=itemTypeId)
+            if ItemType.objects.filter(id=item_type_id).exists():
+                item_type = ItemType.objects.get(id=item_type_id)
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if FoodItem.objects.filter(itemName=itemName, itemType=itemType).exists():
-                foodItem = FoodItem.objects.get(itemName=itemName, itemType=itemType)
+            if FoodItem.objects.filter(itemName=item_name, itemType=item_type).exists():
+                food_item = FoodItem.objects.get(itemName=item_name, itemType=item_type)
             else:
-                foodItem = FoodItem.objects.create(itemName=itemName, itemType=itemType, addedBy=user, createdAt=timezone.now())
+                food_item = FoodItem.objects.create(itemName=item_name, itemType=item_type, addedBy=user, createdAt=timezone.now())
             
-            if RequestType.objects.filter(id=requestTypeId).exists():
-                requestType = RequestType.objects.get(id=requestTypeId)
+            if RequestType.objects.filter(id=request_type_id).exists():
+                request_type = RequestType.objects.get(id=request_type_id)
             else:
                 return Response({'success': False, 'message': 'Request Type with id does not exist'})
             
-            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem).exists():
-                itemRequest = Request.objects.get(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem)
-                return Response({'success': True, 'message': 'Request already exists','itemRequest':itemRequest.id})
+            if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item).exists():
+                item_request = Request.objects.get(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item)
+                return Response({'success': True, 'message': 'Request already exists','itemRequest':item_request.id})
             else:
-                createdAt = timezone.now()
-                itemRequest = Request.objects.create(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem, createdAt=createdAt)
+                created_at = timezone.now()
+                item_request = Request.objects.create(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item, createdAt=created_at)
                 return Response({'success': True, 'message': 'Successfully requested items'})
             
         except Exception as e:
@@ -1033,10 +1033,10 @@ class RequestVolunteers(APIView):
         ],
     )
 
-    def post(self, request, requestTypeId, format=None):
+    def post(self, request, request_type_id, format=None):
         try:
             if request.data.get('eventId') != None:
-                eventId = request.data.get('eventId')
+                event_id = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
@@ -1056,12 +1056,12 @@ class RequestVolunteers(APIView):
                 alt = None
 
             if request.data.get('fullAddress') != None:
-                fullAddress = request.data.get('fullAddress')
+                full_address = request.data.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
             if request.data.get('postalCode') != None:
-                postalCode = request.data.get('postalCode')
+                postal_code = request.data.get('postalCode')
             else:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
@@ -1076,40 +1076,40 @@ class RequestVolunteers(APIView):
                 return Response({'success': False, 'message': 'please enter valid city'})
             
             if request.data.get('requiredDate') != None:
-                requiredDate = request.data.get('requiredDate')
+                required_date = request.data.get('requiredDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
             if request.data.get('numberOfVolunteers') != None:
-                numberOfVolunteers = request.data.get('numberOfVolunteers')
+                number_of_volunteers = request.data.get('numberOfVolunteers')
             else:
                 return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
 
             user = request.user            
 
-            if FoodEvent.objects.filter(id=eventId, createdBy=user).exists():
-                foodEvent = FoodEvent.objects.get(id=eventId, createdBy=user)
+            if FoodEvent.objects.filter(id=event_id, createdBy=user).exists():
+                food_event = FoodEvent.objects.get(id=event_id, createdBy=user)
             else:
                 return Response({'success': False, 'message': 'Food event with id does not exist'})
 
-            if RequestType.objects.filter(id=requestTypeId, active=True).exists():
-                requestType = RequestType.objects.get(id=requestTypeId, active=True)
+            if RequestType.objects.filter(id=request_type_id, active=True).exists():
+                request_type = RequestType.objects.get(id=request_type_id, active=True)
             else:
                 return Response({'success':False, 'message':'Request Type with id does not exist'})
             
             
-            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers,foodEvent=foodEvent).exists():
-                request = Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers, foodEvent=foodEvent)
+            if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers,foodEvent=food_event).exists():
+                request = Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers, foodEvent=food_event)
                 return Response({'success':False, 'message':'Request Already Exists for this particular Event'})
             else:
                 Request.objects.create(
-                    type=requestType, 
+                    type=request_type, 
                     createdBy=user, 
-                    requiredDate=requiredDate,
+                    requiredDate=required_date,
                     active=True,
                     createdAt=timezone.now(),
-                    quantity=numberOfVolunteers,
-                    foodEvent=foodEvent
+                    quantity=number_of_volunteers,
+                    foodEvent=food_event
                 )
                 return Response({'success':True, 'message':'Volunteers Request successfully created'})
         except Exception as e:
@@ -1200,12 +1200,12 @@ class DonateFood(APIView):
                 alt = None
 
             if request.data.get('fullAddress') != None:
-                fullAddress = request.data.get('fullAddress')
+                full_address = request.data.get('fullAddress')
             else:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
             if request.data.get('postalCode') != None:
-                postalCode = request.data.get('postalCode')
+                postal_code = request.data.get('postalCode')
             else:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
@@ -1231,10 +1231,10 @@ class DonateFood(APIView):
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                pickupAddress = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address).exists():
+                pickupAddress = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
             else:
-                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)
 
             if FoodItem.objects.filter(itemName=foodName).exists():
                 foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
@@ -1416,12 +1416,12 @@ class VolunteerProfile(APIView):
             alt = None
 
         if request.data.get('fullAddress') != None:
-            fullAddress = request.data.get('fullAddress')
+            full_address = request.data.get('fullAddress')
         else:
             return Response({'success': False, 'message': 'please enter valid full address'})
         
         if request.data.get('postalCode') != None:
-            postalCode = request.data.get('postalCode')
+            postal_code = request.data.get('postalCode')
         else:
             return Response({'success': False, 'message': 'please enter valid postal code'})
         
@@ -1447,10 +1447,10 @@ class VolunteerProfile(APIView):
         
         try:
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
+            if Address.objects.filter(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address).exists():
+                address = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
             else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
+                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)           
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
@@ -1504,7 +1504,7 @@ class VolunteerProfile(APIView):
     def delete(self, request,  format=None):
         try:            
             if request.user.id != None:
-                res = sendMailForConfirmDeletion(request.user.id)
+                res = send_mail_for_confirm_deletion(request.user.id)
                 if res['success'] == True:
                     return Response({'success':True, 'message':'E-Mail has been sent successfully'})
                 else:
@@ -1516,7 +1516,7 @@ class VolunteerProfile(APIView):
             return Response({'success': False, 'message': str(e)})
 
 
-def sendMailForConfirmDeletion(userId):
+def send_mail_for_confirm_deletion(userId):
     try:
         if Volunteer.objects.filter(id=userId).exists():
             user = Volunteer.objects.get(id=userId)
@@ -1768,7 +1768,6 @@ class AllEvents(APIView):
 
     def get(self, request, format=None):
         try:
-            # user = request.user
             todayDate = timezone.now()
 
             if FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate)).exists():
@@ -1781,7 +1780,7 @@ class AllEvents(APIView):
             return Response({'success': False, 'message': str(e)})
 
 # <-------------------------------- Pie Graph -------------------------------->
-def Create_pie_graph(x_data, y_data, title):
+def create_pie_graph(x_data, y_data, title):
     
     fig, ax = plt.subplots()
     ax.pie(x_data, labels=y_data, autopct='%1.0f%%')
@@ -1800,7 +1799,7 @@ def Create_pie_graph(x_data, y_data, title):
     return image_png
 
 # <-------------------------------- Bar Graph -------------------------------->
-def Create_bar_graph(x_data, y_data, title, x_label, y_label):
+def create_bar_graph(x_data, y_data, title, x_label, y_label):
 
     fig, ax = plt.subplots()
     bars = ax.bar(x_data, y_data)
@@ -1827,7 +1826,7 @@ def Create_bar_graph(x_data, y_data, title, x_label, y_label):
     return image_png
 
 # <-------------------------------- Line Graph -------------------------------->
-def Create_line_graph(x_data, y_data, title, x_label, y_label):
+def create_line_graph(x_data, y_data, title, x_label, y_label):
     
     fig, ax = plt.subplots()
     ax.plot(x_data, y_data)
@@ -1848,7 +1847,7 @@ def Create_line_graph(x_data, y_data, title, x_label, y_label):
     return image_png
 
 # <-------------------------------- Scatter Graph -------------------------------->
-def Create_scatter_graph(x_data, y_data, title, x_label, y_label):
+def create_scatter_graph(x_data, y_data, title, x_label, y_label):
     
     fig, ax = plt.subplots()
     ax.scatter(x_data, y_data)
@@ -1921,10 +1920,10 @@ class PlotView(APIView):
         y = [entry['count'] for entry in data]
 
         # call the create bar graph function
-        bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        line_img_png = Create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        scatter_img_png = Create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        pie_img_png = Create_pie_graph(y, x, 'Number of Users Joined')
+        bar_img_png = create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        line_img_png = create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        scatter_img_png = create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
+        pie_img_png = create_pie_graph(y, x, 'Number of Users Joined')
 
 
         # Encode the image in base64 for embedding in HTML
@@ -1941,10 +1940,10 @@ class PlotView(APIView):
         b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
 
         # call the create bar graph function
-        bar_foodEventImage_png = Create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        line_foodEventImage_png = Create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        scatter_foodEventImage_png = Create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-        pie_foodEventImage_png = Create_pie_graph(b, a, 'Food Events',)
+        bar_foodEventImage_png = create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        line_foodEventImage_png = create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        scatter_foodEventImage_png = create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
+        pie_foodEventImage_png = create_pie_graph(b, a, 'Food Events',)
 
         # Encode the image in base64 for embedding in HTML
         bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
@@ -1960,10 +1959,10 @@ class PlotView(APIView):
         b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
 
         # call the create bar graph function
-        bar_foodDonationImage_png = Create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        line_foodDonationImage_png = Create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        scatter_foodDonationImage_png = Create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        pie_foodDonationImage_png = Create_pie_graph(b, a, 'Food Donations',)
+        bar_foodDonationImage_png = create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        line_foodDonationImage_png = create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        scatter_foodDonationImage_png = create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
+        pie_foodDonationImage_png = create_pie_graph(b, a, 'Food Donations',)
 
         # Encode the image in base64 for embedding in HTML
         bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
