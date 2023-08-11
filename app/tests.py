@@ -84,6 +84,8 @@ class UserOperations(APITestCase):
             self.test_food_name = 'test Food'
             self.test_ingredients = 'water, Salt, Rice'
             self.test_cooking_instruction = 'Boil for 5 mins'
+            self.test_quantity = '54 Kg'
+            self.test_item_name = 'Food item name'
 
             # Test Cases Urls
             self.onboarding_url = 'app:user-signup'
@@ -1258,9 +1260,9 @@ class UserOperations(APITestCase):
             
             data = {
                 'itemTypeId':self.food_item_type.id,
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
-                'quantity': '54 Kg',
+                'quantity': self.test_quantity,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -1284,9 +1286,9 @@ class UserOperations(APITestCase):
             
             data = {
                 'itemTypeId':0,
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
-                'quantity': '54 Kg',
+                'quantity': self.test_quantity,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -1310,9 +1312,9 @@ class UserOperations(APITestCase):
             
             data = {
                 'itemTypeId':self.food_item_type.id,
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
-                'quantity': '54 Kg',
+                'quantity': self.test_quantity,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -1334,9 +1336,9 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
-                'quantity': '54 Kg',
+                'quantity': self.test_quantity,
             }
 
             response = self.client.post(url, data, format='json')
@@ -1361,7 +1363,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId':self.food_item_type.id,
                 'requiredDate': '2023-6-6',
-                'quantity': '54 Kg',
+                'quantity': self.test_quantity,
             }
 
             response = self.client.post(url, data, format='json')
@@ -1385,8 +1387,8 @@ class UserOperations(APITestCase):
             url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemTypeId':self.food_item_type.id,
-                'itemName': 'Food item name',
-                'quantity': '54 Kg',
+                'itemName': self.test_item_name,
+                'quantity': self.test_quantity,
             }
 
             response = self.client.post(url, data, format='json')
@@ -1410,7 +1412,7 @@ class UserOperations(APITestCase):
             url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
             data = {
                 'itemTypeId':self.food_item_type.id,
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
             }
 
@@ -1435,7 +1437,7 @@ class UserOperations(APITestCase):
             url = reverse(self.request_food_url, kwargs={'request_type_id': self.food_request_type.id})
 
             food_item = FoodItem.objects.create(
-                itemName='Food item name', 
+                itemName=self.test_item_name, 
                 itemType=self.food_item_type, 
                 addedBy=self.user, 
                 createdAt=datetime.now()
@@ -1453,7 +1455,7 @@ class UserOperations(APITestCase):
 
             data = {
                 'itemTypeId':self.food_item_type.id,
-                'itemName': 'Food item name',
+                'itemName': self.test_item_name,
                 'requiredDate': '2023-6-6',
                 'quantity': '5 kg'
             }
@@ -1861,7 +1863,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -1890,7 +1892,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': 0,
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -1930,7 +1932,7 @@ class UserOperations(APITestCase):
             Donation.objects.create(
                 donationType= self.food_item_type,
                 foodItem=food_item,
-                quantity='15 kg',
+                quantity=self.test_quantity,
                 donatedBy=self.user,
                 needsPickup=True,
                 delivery=delivery_details,
@@ -1939,7 +1941,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -1966,7 +1968,7 @@ class UserOperations(APITestCase):
             url = reverse(self.donate_food_url)
             data = {
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -1993,7 +1995,7 @@ class UserOperations(APITestCase):
             url = reverse(self.donate_food_url)
             data = {
                 'itemTypeId': '1',
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -2048,7 +2050,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'lat': 12.916540,
                 'lng': 77.651950,
                 'alt': 4500,
@@ -2075,7 +2077,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lng': 77.651950,
                 'alt': 4500,
@@ -2102,7 +2104,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'alt': 4500,
@@ -2129,7 +2131,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,
@@ -2156,7 +2158,7 @@ class UserOperations(APITestCase):
             data = {
                 'itemTypeId': '1',
                 'foodName': "foodName",
-                'quantity': '15 kg ',
+                'quantity': self.test_quantity,
                 'pickupDate': '2023-05-05',
                 'lat': 12.916540,
                 'lng': 77.651950,

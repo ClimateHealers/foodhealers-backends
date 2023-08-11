@@ -1863,11 +1863,15 @@ class PlotView(APIView):
         x = [entry['month'].strftime('%B-%Y') for entry in data]
         y = [entry['count'] for entry in data]
 
+        user_graph_title = 'User Growth'
+        user_x_axis_label = 'Joined Month'
+        user_y_axis_label = 'Number of Users Joined'
+
         # call the create bar graph function
-        bar_img_png = create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        line_img_png = create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        scatter_img_png = create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-        pie_img_png = create_pie_graph(y, x, 'Number of Users Joined')
+        bar_img_png = create_bar_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        line_img_png = create_line_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        scatter_img_png = create_scatter_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        pie_img_png = create_pie_graph(y, x, user_graph_title)
 
 
         # Encode the image in base64 for embedding in HTML
@@ -1883,15 +1887,15 @@ class PlotView(APIView):
         a = [food_event_entry['month'].strftime('%B-%Y') for food_event_entry in food_events]
         b = [food_event_entry['count'] for food_event_entry in food_events]
 
-        graph_title = 'Food Events'
+        event_graph_title = 'Food Events'
         x_axis_label = 'Created Month'
-        y_axis_label = 'Number of Events Created'
-        
+        event_y_axis_label = 'Number of Events Created'
+
         # call the create bar graph function
-        bar_food_event_image_png = create_bar_graph(a, b, graph_title, x_axis_label, y_axis_label)
-        line_food_event_image_png = create_line_graph(a, b, graph_title, x_axis_label, y_axis_label)
-        scatter_food_event_image_png = create_scatter_graph(a, b, graph_title, x_axis_label, y_axis_label)
-        pie_food_event_image_png = create_pie_graph(b, a, graph_title,)
+        bar_food_event_image_png = create_bar_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        line_food_event_image_png = create_line_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        scatter_food_event_image_png = create_scatter_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        pie_food_event_image_png = create_pie_graph(b, a, event_graph_title,)
 
         # Encode the image in base64 for embedding in HTML
         bar_food_event_graphic = urllib.parse.quote(base64.b64encode(bar_food_event_image_png))
@@ -1906,11 +1910,14 @@ class PlotView(APIView):
         a = [food_donation_entry['month'].strftime('%B-%Y') for food_donation_entry in food_donation]
         b = [food_donation_entry['count'] for food_donation_entry in food_donation]
 
+        donation_graph_title = 'Food Donations'
+        donation_y_axis_label = 'Number of Donations Created'
+
         # call the create bar graph function
-        bar_food_donation_image_png = create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        line_food_donation_image_png = create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        scatter_food_donation_image_png = create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-        pie_food_donation_image_png = create_pie_graph(b, a, 'Food Donations',)
+        bar_food_donation_image_png = create_bar_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        line_food_donation_image_png = create_line_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        scatter_food_donation_image_png = create_scatter_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        pie_food_donation_image_png = create_pie_graph(b, a, donation_graph_title,)
 
         # Encode the image in base64 for embedding in HTML
         bar_food_donation_graphic = urllib.parse.quote(base64.b64encode(bar_food_donation_image_png))
