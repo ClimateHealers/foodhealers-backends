@@ -81,6 +81,9 @@ class UserOperations(APITestCase):
             self.firebase_token = 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q'
             self.test_event_name = 'Test event'
             self.event_additional_info = 'Free vegan Meals'
+            self.test_food_name = 'test Food'
+            self.test_ingredients = 'water, Salt, Rice'
+            self.test_cooking_instruction = 'Boil for 5 mins'
 
             # Test Cases Urls
             self.onboarding_url = 'app:user-signup'
@@ -1000,9 +1003,9 @@ class UserOperations(APITestCase):
             self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
             data = {
-                'foodName':'test Food',
-                'ingredients': 'water, Salt, Rice',
-                'cookingInstructions': 'Boil for 5 mins',
+                'foodName':self.test_food_name,
+                'ingredients': self.test_ingredients,
+                'cookingInstructions': self.test_cooking_instruction,
             }
             response = self.client.post(url, data, format='json')
             result = json.loads(response.content)
@@ -1024,9 +1027,9 @@ class UserOperations(APITestCase):
 
             url = reverse(self.get_recipe_url, kwargs={'category_id': 0})
             data = {
-                'foodName':'Test Food',
-                'ingredients': 'water, Salt, Rice',
-                'cookingInstructions': 'Boil for 5 mins',
+                'foodName':self.test_food_name,
+                'ingredients': self.test_ingredients,
+                'cookingInstructions': self.test_cooking_instruction,
             }
 
             response = self.client.post(url, data, format='json')
@@ -1051,16 +1054,16 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
 
             FoodRecipe.objects.create(
-                foodName='Test food', 
-                ingredients='water, Salt, Rice', 
-                cookingInstructions='Boil for 5 mins', 
+                foodName=self.test_food_name, 
+                ingredients=self.test_ingredients, 
+                cookingInstructions=self.test_cooking_instruction, 
                 category=self.category
             )
 
             data = {
-                'foodName':'Test food',
-                'ingredients': 'water, Salt, Rice',
-                'cookingInstructions': 'Boil for 5 mins',
+                'foodName':self.test_food_name,
+                'ingredients': self.test_ingredients,
+                'cookingInstructions': self.test_cooking_instruction,
             }
 
             response = self.client.post(url, data, format='json')
@@ -1084,8 +1087,8 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
             
             data = {
-                'ingredients': 'water, Salt, Rice',
-                'cookingInstructions': 'Boil for 5 mins',
+                'ingredients': self.test_ingredients,
+                'cookingInstructions': self.test_cooking_instruction,
             }
             
             response = self.client.post(url, data, format='json')
@@ -1109,8 +1112,8 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
             
             data = {
-                'foodName': 'test Food',
-                'cookingInstructions': 'Boil for 5 mins',
+                'foodName': self.test_food_name,
+                'cookingInstructions': self.test_cooking_instruction,
             }
             
             response = self.client.post(url, data, format='json')
@@ -1134,8 +1137,8 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
             
             data = {
-                'foodName': 'test Food',
-                'ingredients': 'water, Salt, Rice',
+                'foodName': self.test_food_name,
+                'ingredients': self.test_ingredients,
             }
             
             response = self.client.post(url, data, format='json')
@@ -1159,9 +1162,9 @@ class UserOperations(APITestCase):
     #         url = reverse(self.get_recipe_url)
             
     #         data = {
-    #             'foodName': 'test Food',
-    #             'ingredients': 'water, Salt, Rice',
-    #             'cookingInstructions': 'Boil for 5 mins',
+    #             'foodName': self.test_food_name,
+    #             'ingredients': self.test_ingredients,
+    #             'cookingInstructions': self.test_cooking_instruction,
     #         }
             
     #         response = self.client.post(url, data, format='json')
@@ -1184,9 +1187,9 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': self.category.id})
 
             FoodRecipe.objects.create(
-                foodName='Test food', 
-                ingredients='water, Salt, Rice', 
-                cookingInstructions='Boil for 5 mins', 
+                foodName=self.test_food_name, 
+                ingredients=self.test_ingredients, 
+                cookingInstructions=self.test_cooking_instruction, 
                 category=self.category
             )
     
@@ -1227,9 +1230,9 @@ class UserOperations(APITestCase):
             url = reverse(self.get_recipe_url, kwargs={'category_id': 0})
 
             FoodRecipe.objects.create(
-                foodName='Test food', 
-                ingredients='water, Salt, Rice', 
-                cookingInstructions='Boil for 5 mins', 
+                foodName=self.test_food_name, 
+                ingredients=self.test_ingredients, 
+                cookingInstructions=self.test_cooking_instruction, 
                 category=self.category
             )
     
