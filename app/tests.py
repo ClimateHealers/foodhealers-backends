@@ -22,7 +22,7 @@ class UserOperations(APITestCase):
     ]
 
     @classmethod
-    def setUpTestData(self):
+    def setUpTestData(cls):
         with transaction.atomic():
 
             category, created = Category.objects.get_or_create(name='Breakfast', createdAt=datetime.now(), active=True)
@@ -66,43 +66,43 @@ class UserOperations(APITestCase):
             custom_token, created = CustomToken.objects.get_or_create(
                 accessToken=access_token, refreshToken=refresh_token, user=user, expoPushToken=expo_push_token)
 
-            self.custom_token = custom_token
-            self.access_token = 'Token '+access_token
-            self.expo_push_token = expo_push_token
-            self.user = user
-            self.category = category
-            self.food_request_type = food_request_type
-            self.volunteer_request_type = volunteer_request_type
-            self.pickup_request_type = pickup_request_type 
-            self.food_item_type = food_item_type
-            self.vehicle = vehicle
+            cls.custom_token = custom_token
+            cls.access_token = 'Token '+access_token
+            cls.expo_push_token = expo_push_token
+            cls.user = user
+            cls.category = category
+            cls.food_request_type = food_request_type
+            cls.volunteer_request_type = volunteer_request_type
+            cls.pickup_request_type = pickup_request_type 
+            cls.food_item_type = food_item_type
+            cls.vehicle = vehicle
 
-            self.test_email = 'user@example.com'
-            self.firebase_token = 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q'
-            self.test_event_name = 'Test event'
-            self.event_additional_info = 'Free vegan Meals'
-            self.test_food_name = 'test Food'
-            self.test_ingredients = 'water, Salt, Rice'
-            self.test_cooking_instruction = 'Boil for 5 mins'
-            self.test_quantity = '54 Kg'
-            self.test_item_name = 'Food item name'
+            cls.test_email = 'user@example.com'
+            cls.firebase_token = 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImE1MWJiNGJkMWQwYzYxNDc2ZWIxYjcwYzNhNDdjMzE2ZDVmODkzMmIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXVkIjoiZm9vZC1oZWFsZXJzLWI2YWI4IiwiYXV0aF90aW1lIjoxNjg5MTQxMjA1LCJ1c2VyX2lkIjoiS1BGZEJkWEVrdE8xeTR3bVFCMmR4dmYwSld6MSIsInN1YiI6IktQRmRCZFhFa3RPMXk0d21RQjJkeHZmMEpXejEiLCJpYXQiOjE2ODkxNDEyMDUsImV4cCI6MTY4OTE0NDgwNSwiZW1haWwiOiJtYWxpazkwMDBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJmaXJlYmFzZSI6eyJpZGVudGl0aWVzIjp7ImVtYWlsIjpbIm1hbGlrOTAwMEBnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJwYXNzd29yZCJ9fQ.MB5KylTs6GqQ0y_D67qH_Y8zbPe3OlFD2O2jgjfz8VYxb8tjzj2XFCLhG--2mySiSF10TSwFUpeQza4FnpfPfstRHgl2P7hogNenGFRzqblK-Dt_2bpnQy3FN5Y2gTIQXC89rhSjRZ8SMJusNvId0SVM1YvdfiuSFxyPYm2ZHeu9EE7b9Yvg-HvgBCpZWEmQO1QJnvU0xc24eUeaYWLQsZ0KB_iSTcqZVec6uUB6h33lt7oV3PuagvP241hCJL_knPKn-TQe4Lr1in_rydQb2M-GrXpk5BLT6K0T9kDi0HJy-fXLGPZpOFKvXSyqJ9JTB79A4x6xcAfeiIzkUOr15Q'
+            cls.test_event_name = 'Test event'
+            cls.event_additional_info = 'Free vegan Meals'
+            cls.test_food_name = 'test Food'
+            cls.test_ingredients = 'water, Salt, Rice'
+            cls.test_cooking_instruction = 'Boil for 5 mins'
+            cls.test_quantity = '54 Kg'
+            cls.test_item_name = 'Food item name'
 
             # Test Cases Urls
-            self.onboarding_url = 'app:user-signup'
-            self.login_url = 'app:user-login'
-            self.find_food_url = 'app:find-food'
-            self.food_event_url = 'app:food-event'
-            self.bookmark_url = 'app:bookmark-event'
-            self.category_url = 'app:fetch-category'
-            self.get_recipe_url = 'app:food-recipe'
-            self.request_type_url = 'app:fetch-requestType'
-            self.request_food_url = 'app:request-food'
-            self.request_volunteer_url = 'app:request-volunteers'
-            self.donate_food_url = 'app:donate-food'
-            self.volunteer_profile_url = 'app:volunteer-profile'
-            self.volunteer_vehicle_url = 'app:volunteer-vehicle'
-            self.get_volunteer_notification_url = 'app:volunteer-notification'
-            self.volunteer_expotoken_url = 'app:volunteer-expo-push-token'
+            cls.onboarding_url = 'app:user-signup'
+            cls.login_url = 'app:user-login'
+            cls.find_food_url = 'app:find-food'
+            cls.food_event_url = 'app:food-event'
+            cls.bookmark_url = 'app:bookmark-event'
+            cls.category_url = 'app:fetch-category'
+            cls.get_recipe_url = 'app:food-recipe'
+            cls.request_type_url = 'app:fetch-requestType'
+            cls.request_food_url = 'app:request-food'
+            cls.request_volunteer_url = 'app:request-volunteers'
+            cls.donate_food_url = 'app:donate-food'
+            cls.volunteer_profile_url = 'app:volunteer-profile'
+            cls.volunteer_vehicle_url = 'app:volunteer-vehicle'
+            cls.get_volunteer_notification_url = 'app:volunteer-notification'
+            cls.volunteer_expotoken_url = 'app:volunteer-expo-push-token'
 
             print('<<<----------------- Start Test Cases ----------------------->>>')
 
@@ -2293,7 +2293,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':'noemail@example.com',
                 'lat':22.5777,
                 'lng':52.5777,
@@ -2350,7 +2350,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'lat':22.5777,
                 'lng':52.5777,
                 'alt':54777,
@@ -2378,7 +2378,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':self.user.email,
                 'lng':52.5777,
                 'alt':54777,
@@ -2406,7 +2406,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':self.user.email,
                 'lat':22.5777,
                 'alt':54777,
@@ -2434,7 +2434,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':self.user.email,
                 'lat':22.5777,
                 'lng':52.5777,
@@ -2462,7 +2462,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':self.user.email,
                 'lat':22.5777,
                 'lng':52.5777,
@@ -2490,7 +2490,7 @@ class UserOperations(APITestCase):
         
         try:
             data = {
-                'name':'update User',
+                'name':self.user.name,
                 'email':self.user.email,
                 'lat':22.5777,
                 'lng':52.5777,

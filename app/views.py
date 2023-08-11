@@ -1305,7 +1305,6 @@ class VolunteerProfile(APIView):
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example=4500),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
@@ -1336,67 +1335,52 @@ class VolunteerProfile(APIView):
     # update Volunteer Profile API
     def put(self, request,  format=None):
 
-        if request.data.get('name') != None:
-            name = request.data.get('name')
-        else:
+        if request.data.get('name') == None:
             return Response({'success':False, 'message':'Please enter valid name'})
         
-        if request.data.get('email') != None:
-            email = request.data.get('email')
-        else:
+        if request.data.get('email') == None:
             return Response({'success':False, 'message':'Please enter valid email'})
         
-        if request.data.get('lat') != None:
-            lat = request.data.get('lat')
-        else:
+        if request.data.get('lat') == None:
             return Response({'success':False, 'message':'Please enter valid latitude'})
         
-        if request.data.get('lng') != None:
-            lng = request.data.get('lng')
-        else:
+        if request.data.get('lng') == None:
             return Response({'success':False, 'message':'Please enter valid longitude'})
-        
-        if request.data.get('alt') != None:
-            alt = request.data.get('alt')
-        else:
-            alt = None
 
-        if request.data.get('fullAddress') != None:
-            full_address = request.data.get('fullAddress')
-        else:
+        if request.data.get('fullAddress') == None:
             return Response({'success': False, 'message': 'please enter valid full address'})
         
-        if request.data.get('postalCode') != None:
-            postal_code = request.data.get('postalCode')
-        else:
+        if request.data.get('postalCode') == None:
             return Response({'success': False, 'message': 'please enter valid postal code'})
         
-        if request.data.get('state') != None:
-            state = request.data.get('state')
-        else:
+        if request.data.get('state') == None:
             return Response({'success': False, 'message': 'please enter valid state'})
         
-        if request.data.get('city') != None:
-            city = request.data.get('city')
-        else:
+        if request.data.get('city') == None:
             return Response({'success': False, 'message': 'please enter valid city'})
 
-        if request.data.get('phoneNumber') != None:
-            phone_number = request.data.get('phoneNumber')
-        else:
+        if request.data.get('phoneNumber') == None:
             return Response({'success':False, 'message':'Please enter valid phoneNumber'})
         
-        if request.data.get('volunteerType') != None:
-            volunteer_type = request.data.get('volunteerType')
-        else:
-            return Response({'success':False, 'message':'Please enter valid volunteer Type'})
-        
-        try:
+        if request.data.get('volunteerType') == None:
+            return Response({'success':False, 'message':'Please enter valid volunteer Type'}) 
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=full_address, streetAddress=full_address, postalCode=postal_code, state=state, city=city)           
+        name = request.data.get('name')
+        email = request.data.get('email')
+        lat = request.data.get('lat')
+        lng = request.data.get('lng')
+        full_address = request.data.get('fullAddress')
+        postal_code = request.data.get('postalCode')
+        state = request.data.get('state')
+        city = request.data.get('city')
+        phone_number = request.data.get('phoneNumber')
+        volunteer_type = request.data.get('volunteerType')
+
+        try:
+            address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )          
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
@@ -1859,8 +1843,9 @@ class PlotView(APIView):
         # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
         data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
+        formatted_month = '%B-%Y'
         # Extract the x and y values from the data
-        x = [entry['month'].strftime('%B-%Y') for entry in data]
+        x = [entry['month'].strftime(formatted_month) for entry in data]
         y = [entry['count'] for entry in data]
 
         user_graph_title = 'User Growth'
@@ -1884,7 +1869,7 @@ class PlotView(APIView):
         food_events = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
         # Extract the x and y values from the data
-        a = [food_event_entry['month'].strftime('%B-%Y') for food_event_entry in food_events]
+        a = [food_event_entry['month'].strftime(formatted_month) for food_event_entry in food_events]
         b = [food_event_entry['count'] for food_event_entry in food_events]
 
         event_graph_title = 'Food Events'
@@ -1907,7 +1892,7 @@ class PlotView(APIView):
         food_donation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
         # Extract the x and y values from the data
-        a = [food_donation_entry['month'].strftime('%B-%Y') for food_donation_entry in food_donation]
+        a = [food_donation_entry['month'].strftime(formatted_month) for food_donation_entry in food_donation]
         b = [food_donation_entry['count'] for food_donation_entry in food_donation]
 
         donation_graph_title = 'Food Donations'
