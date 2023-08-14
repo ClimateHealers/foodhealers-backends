@@ -13,7 +13,7 @@ urlpatterns = [
     # POST (Update AccessToken)
     re_path(r'refresh-token/', views.GetRefreshToken.as_view()),
     # GET (to fetch expoPushToken), PUT (Update expoPushToken)
-    re_path(r'expoPush-token/', views.VolunteerExpoPushToken.as_view(), name='volunteer-expoPushToken'),
+    re_path(r'expo-push-token/', views.VolunteerExpoPushToken.as_view(), name='volunteer-expo-push-token'),
     # GET (CHOICES)
     re_path(r'choices/', views.ChoicesView.as_view()),
     # POST (user Signup)
@@ -31,13 +31,13 @@ urlpatterns = [
     # GET (to fetch categories fo recipies)
     re_path(r'categories/', views.Categories.as_view(), name='fetch-category'),
     # GET (to View recipes) and POST (to Add recipes)
-    re_path(r'recipe/(?P<categoryId>[-\w]*)/', views.FindFoodRecipe.as_view(), name='food-recipe'),
+    re_path(r'recipe/(?P<category_id>[-\w]*)/', views.FindFoodRecipe.as_view(), name='food-recipe'),
     # GET (to fetch requestTypes for Request API)
     re_path(r'request-types/', views.RequestTypes.as_view(), name='fetch-requestType'),
     # GET (to View food/Supplies Request) and POST (to Add food/Supplies Request)
-    re_path(r'request-food/(?P<requestTypeId>[-\w]*)/', views.RequestFoodSupplies.as_view(), name='request-food'),  
+    re_path(r'request-food/(?P<request_type_id>[-\w]*)/', views.RequestFoodSupplies.as_view(), name='request-food'),  
     # GET (to View volunteers Request) and POST (to Add volunteers Request)
-    re_path(r'request-volunteers/(?P<requestTypeId>[-\w]*)/', views.RequestVolunteers.as_view(), name='request-volunteers'), 
+    re_path(r'request-volunteers/(?P<request_type_id>[-\w]*)/', views.RequestVolunteers.as_view(), name='request-volunteers'), 
     # GET (to View History Donated Food) and POST (to Add donate Food)
     re_path(r'donate-food/', views.DonateFood.as_view(), name='donate-food'),
     # GET (to View Volunteer profile) and PUT (to Update Volunteer Profile)

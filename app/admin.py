@@ -1,7 +1,11 @@
 # Register your models here.
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import *
+from .models import ( ItemType, Category, Address, Volunteer,
+                      Vehicle, FoodEvent, Document, FoodItem,
+                      FoodRecipe, DeliveryDetail, RequestType, 
+                      Donation, EventVolunteer, CustomToken, 
+                      Request, EventBookmark, Notification )
 
 from django.contrib.admin.widgets import AdminFileWidget
 from django.utils.html import format_html

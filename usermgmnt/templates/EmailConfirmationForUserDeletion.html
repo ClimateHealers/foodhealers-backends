@@ -17,7 +17,7 @@
     <div class='container-fluid' style="background-color:rgb(0, 75, 36)">
       <div class="d-flex flex-row text-white  justify-content-center align-items-center">
         <div>
-          <img src="{% static 'CH-LOG-MEDIA-STATIC.png' %}"  height='40' width='40'>
+          <img src="{% static 'CH-LOG-MEDIA-STATIC.png' %}"  height='40' width='40' alt="Climate Healers Logo">
         </div>
         <div class="mx-auto">
           <h1 >Climate Healers</h1>
@@ -60,7 +60,7 @@
         Click on the Delete Account button to confirm your account deletion
       </span>
 
-      <form method="post" action="{% url 'usermgmnt:delete-account-action' uniqueID %}">
+      <form method="post" action="{% url 'usermgmnt:delete-account-action' unique_id %}">
         {% csrf_token %}
         <button type="submit" class="btn btn-warning bold" style="margin-top: 10px">
           <span>Delete Account</span>
