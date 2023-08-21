@@ -2,7 +2,7 @@ name: Build
 on:
   push:
     branches:
-      - quality-check/code-fix #test branch to test sbackend python code
+      - develop #test branch to test sbackend python code
 jobs:
   build:
     name: Build
