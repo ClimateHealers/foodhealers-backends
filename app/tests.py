@@ -92,7 +92,7 @@ class UserOperations(APITestCase):
             cls.login_url = 'app:user-login'
             cls.find_food_url = 'app:find-food'
             cls.food_event_url = 'app:food-event'
-            cls.bookmark_url = 'app:bookmark-event'
+            # cls.bookmark_url = 'app:bookmark-event'
             cls.category_url = 'app:fetch-category'
             cls.get_recipe_url = 'app:food-recipe'
             cls.request_type_url = 'app:fetch-requestType'
@@ -825,175 +825,177 @@ class UserOperations(APITestCase):
             return result
         except Exception as e:
             return str(e)
-        
+# <<--------------------- Commenting Out as We are not using this --------------------------------->>
     # User Bookmark Events test cases
     '''
     Test case to test Add Bookmark Event with valid data
     '''
     
-    def test_user_postBookmark_valid_data(self):
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
+    # def test_user_postBookmark_valid_data(self):
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
             
-            food_event = FoodEvent.objects.create(
-                name=self.test_event_name,
-                organizerPhoneNumber=997263, 
-                eventStartDate=datetime.now(),
-                eventEndDate=datetime.now(), 
-                createdAt=datetime.now(),
-                additionalInfo=self.event_additional_info,
-                active=True
-            )
+    #         food_event = FoodEvent.objects.create(
+    #             name=self.test_event_name,
+    #             organizerPhoneNumber=997263, 
+    #             eventStartDate=datetime.now(),
+    #             eventEndDate=datetime.now(), 
+    #             createdAt=datetime.now(),
+    #             additionalInfo=self.event_additional_info,
+    #             active=True
+    #         )
             
-            data = {
-                'eventId': food_event.id,
-            }
+    #         data = {
+    #             'eventId': food_event.id,
+    #         }
 
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_postBookmark_valid_data ------',result)
+    #         response = self.client.post(url, data, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_postBookmark_valid_data ------',result)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
     
-    '''
-        Test case to test Add Bookmark Event with No Events present
-    '''
+    # '''
+    #     Test case to test Add Bookmark Event with No Events present
+    # '''
 
-    def test_user_addBookmark_valid_data_with_noEvents(self):
+    # def test_user_addBookmark_valid_data_with_noEvents(self):
         
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
             
-            food_event = FoodEvent.objects.create(
-                name=self.test_event_name,
-                organizerPhoneNumber=997263, 
-                eventStartDate=datetime.now(),
-                eventEndDate=datetime.now(), 
-                createdAt=datetime.now(),
-                additionalInfo=self.event_additional_info,
-                active=True
-            )
+    #         food_event = FoodEvent.objects.create(
+    #             name=self.test_event_name,
+    #             organizerPhoneNumber=997263, 
+    #             eventStartDate=datetime.now(),
+    #             eventEndDate=datetime.now(), 
+    #             createdAt=datetime.now(),
+    #             additionalInfo=self.event_additional_info,
+    #             active=True
+    #         )
             
-            data = {
-                'eventId': food_event.id,
-            }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_addBookmark_valid_data_with_noEvents ------',result)
+    #         data = {
+    #             'eventId': food_event.id,
+    #         }
+    #         response = self.client.post(url, data, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_addBookmark_valid_data_with_noEvents ------',result)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
         
-    '''
-    Test case to test add Bookmark with missing parameters (eventId)
-    '''
+    # '''
+    # Test case to test add Bookmark with missing parameters (eventId)
+    # '''
 
-    def test_user_addBookmark_with_missing_eventId(self):
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
-            data = { }
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_addBookmark_with_missing_eventId ------',result)
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    # def test_user_addBookmark_with_missing_eventId(self):
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
+    #         data = { }
+    #         response = self.client.post(url, data, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_addBookmark_with_missing_eventId ------',result)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
         
-    '''
-    Test case to test add Bookmark with Bookmark Already Exist
-    '''
+    # '''
+    # Test case to test add Bookmark with Bookmark Already Exist
+    # '''
 
-    def test_user_addBookmark_with_bookmark_exist(self):
+    # def test_user_addBookmark_with_bookmark_exist(self):
         
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
             
-            food_event = FoodEvent.objects.create(
-                name=self.test_event_name,
-                organizerPhoneNumber=997263, 
-                eventStartDate=datetime.now(),
-                eventEndDate=datetime.now(), 
-                createdAt=datetime.now(),
-                additionalInfo=self.event_additional_info,
-                active=True
-            )
+    #         food_event = FoodEvent.objects.create(
+    #             name=self.test_event_name,
+    #             organizerPhoneNumber=997263, 
+    #             eventStartDate=datetime.now(),
+    #             eventEndDate=datetime.now(), 
+    #             createdAt=datetime.now(),
+    #             additionalInfo=self.event_additional_info,
+    #             active=True
+    #         )
 
-            EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
-            data = {'eventId': food_event.id}
-            response = self.client.post(url, data, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_addBookmark_with_bookmark_exist ------',result)
+    #         EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
+    #         data = {'eventId': food_event.id}
+    #         response = self.client.post(url, data, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_addBookmark_with_bookmark_exist ------',result)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
 
-    # User Bookmark Events test cases
-    '''
-    Test case to test Get Bookmark Event with valid data
-    '''
+    # # User Bookmark Events test cases
+    # '''
+    # Test case to test Get Bookmark Event with valid data
+    # '''
     
-    def test_user_getBookmark_valid_data(self):
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
+    # def test_user_getBookmark_valid_data(self):
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
             
-            food_event = FoodEvent.objects.create(
-                name=self.test_event_name,
-                organizerPhoneNumber=997263, 
-                eventStartDate=datetime.now(),
-                eventEndDate=datetime.now(), 
-                createdAt=datetime.now(),
-                additionalInfo=self.event_additional_info,
-                active=True
-            )
+    #         food_event = FoodEvent.objects.create(
+    #             name=self.test_event_name,
+    #             organizerPhoneNumber=997263, 
+    #             eventStartDate=datetime.now(),
+    #             eventEndDate=datetime.now(), 
+    #             createdAt=datetime.now(),
+    #             additionalInfo=self.event_additional_info,
+    #             active=True
+    #         )
 
-            EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
+    #         EventBookmark.objects.create(user=self.user, event=food_event, createdAt=datetime.now())
 
-            response = self.client.get(url, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_getBookmark_valid_data ------',result)
+    #         response = self.client.get(url, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_getBookmark_valid_data ------',result)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
     
-    '''
-        Test case to test Get Bookmark Event with No Bookmarks present
-    '''
+    # '''
+    #     Test case to test Get Bookmark Event with No Bookmarks present
+    # '''
 
-    def test_user_getBookmark_valid_data_with_noBookmark(self):
+    # def test_user_getBookmark_valid_data_with_noBookmark(self):
         
-        try:
-            self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
-            url = reverse(self.bookmark_url)
+    #     try:
+    #         self.client.credentials(HTTP_AUTHORIZATION=self.access_token)
+    #         url = reverse(self.bookmark_url)
             
-            response = self.client.get(url, format='json')
-            result = json.loads(response.content)
-            print('------ test case response for  : test_user_getBookmark_valid_data_with_noBookmark ------',result)
+    #         response = self.client.get(url, format='json')
+    #         result = json.loads(response.content)
+    #         print('------ test case response for  : test_user_getBookmark_valid_data_with_noBookmark ------',result)
 
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-            return result
-        except Exception as e:
-            return str(e)
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
+
+    # <------------------------------------------------------------------------------------->
         
     # Volunteer Post Food Recipe test cases
     '''

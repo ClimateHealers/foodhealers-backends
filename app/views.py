@@ -618,103 +618,106 @@ class Event(APIView):
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+        
+# <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
 
 # GET and POST Bookmark Food Event API
-class BookmarkEvent(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+# class BookmarkEvent(APIView):
+#     authentication_classes = [VolunteerTokenAuthentication]
+#     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['eventId'], 
-            properties={
-                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=['eventId'], 
+#             properties={
+#                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+#             },
+#         ),
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
+#                 },
+#             ),
+#         },
 
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Add to Calender API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def post(self, request, format=None):
-        try:
-            if request.data.get('eventId') != None:
-                event_id = request.data.get('eventId')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Id'})
+#     def post(self, request, format=None):
+#         try:
+#             if request.data.get('eventId') != None:
+#                 event_id = request.data.get('eventId')
+#             else:
+#                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            user = request.user
+#             user = request.user
 
-            if FoodEvent.objects.filter(id=event_id).exists():
-                food_event = FoodEvent.objects.get(id=event_id)
-                if EventBookmark.objects.filter(user=user, event=food_event).exists():
-                    return Response({'success':False, 'message': 'Bookmark already exists'})
-                else:
-                    created_at = timezone.now()
-                    EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
-                    return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
+#             if FoodEvent.objects.filter(id=event_id).exists():
+#                 food_event = FoodEvent.objects.get(id=event_id)
+#                 if EventBookmark.objects.filter(user=user, event=food_event).exists():
+#                     return Response({'success':False, 'message': 'Bookmark already exists'})
+#                 else:
+#                     created_at = timezone.now()
+#                     EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
+#                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
-            else:
-                return Response({'success': False, 'message': 'Food Event with id does not exist'})
+#             else:
+#                 return Response({'success': False, 'message': 'Food Event with id does not exist'})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
         
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+#                 },
+#             ),
+#         },
 
-        operation_description="Get Food Events Posted by volunteer API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Get Food Events Posted by volunteer API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def get(self, request, format=None):
-        try:
-            user = request.user
+#     def get(self, request, format=None):
+#         try:
+#             user = request.user
 
-            if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
-                bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
-                bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
-                return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
-            else:
-                return Response({'success': True, 'bookmarkedEventDetails': []})
+#             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
+#                 bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
+#                 bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
+#                 return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
+#             else:
+#                 return Response({'success': True, 'bookmarkedEventDetails': []})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
-        
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
+# <<----------------------------------------------------------------------------------------------------------->>
+      
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
     ## removed authentication for fetch categories as food seekers do not have access Token

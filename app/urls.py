@@ -26,8 +26,8 @@ urlpatterns = [
     re_path(r'all-events/', views.AllEvents.as_view()),
     # GET (to View Events added by user) and POST (to Add Events)
     re_path(r'event/', views.Event.as_view(), name='food-event'), 
-    # GET (to View Bookmarked Events added by user) and POST (to Add Bookmarked Events)
-    re_path(r'bookmark/', views.BookmarkEvent.as_view(), name='bookmark-event'),  
+    # # GET (to View Bookmarked Events added by user) and POST (to Add Bookmarked Events) 
+    # re_path(r'bookmark/', views.BookmarkEvent.as_view(), name='bookmark-event'), ----> Not Using It 
     # GET (to fetch categories fo recipies)
     re_path(r'categories/', views.Categories.as_view(), name='fetch-category'),
     # GET (to View recipes) and POST (to Add recipes)
