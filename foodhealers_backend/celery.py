@@ -27,7 +27,7 @@ def debug_task(self):
 app.conf.beat_schedule = {
     'daily-pending-events-email-notification': {
         'task': 'pending_events_email',
-        'schedule': crontab(hour=12, minute=0),
+        'schedule': crontab(hour=12, minute=0, tz='UTC'),
     },
 
     'daily-event-status-check-notification': {
