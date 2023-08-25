@@ -1,0 +1,8 @@
+<div class="card">
+    <div class="container">
+        <h2> {{event_name}} by {{event_organizer}}</h2>
+        <p><b>{{event_food}} </b></p>  
+        <p>starts from {{event_date}} at {{event_time}} onwards </p>
+        <p>At {{event_location}} </p>
+    </div>
+</div>

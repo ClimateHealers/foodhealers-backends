@@ -40,6 +40,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class AddressAdmin(admin.ModelAdmin):
     list_display = ('id', 'city', 'state', 'postalCode')
+    search_fields = ['city', 'state', 'postalCode', 'lat', 'lng']
 
 class VolunteerAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'phoneNumber', 'email', 'isDriver')
@@ -56,18 +57,18 @@ class FoodEventAdmin(admin.ModelAdmin):
         models.FileField: {"widget": CustomAdminFileWidget}
     }
     list_display = ('id', 'createdBy', 'name','eventStartDate', 'status', 'active')
-    search_fields = ['createdBy', 'name', 'eventStartDate', 'status', 'active', 'additionalInfo', 'verified']
-    filter_fields = ['name',  'createdBy', 'eventStartDate', 'status', 'active', 'additionalInfo', 'verified']
+    search_fields = ['createdBy__name', 'name', 'eventStartDate', 'status', 'active', 'additionalInfo', 'verified']
 
 class DocumentAdmin(admin.ModelAdmin):
     formfield_overrides = {         
         models.FileField: {"widget": CustomAdminFileWidget}
     }
     list_display = ('id', 'createdAt', 'docType', 'name', 'verified')
+    search_fields = ['docType', 'volunteer__name', 'event__name', 'vehicle__make', 'food__foodName']
 
 class FoodItemAdmin(admin.ModelAdmin):
     list_display = ('id', 'itemName', 'itemType', 'addedBy', 'expiryDate')
-    search_fields = ['itemName', 'itemType', 'addedBy', 'expiryDate']
+    search_fields = ['itemName', 'itemType__name', 'addedBy__name', 'expiryDate']
     filter_fields = ['itemName', 'itemType', 'addedBy', 'expiryDate']
 
 class FoodRecipeAdmin(admin.ModelAdmin):
@@ -83,8 +84,8 @@ class FoodRecipeAdmin(admin.ModelAdmin):
     display_categories.short_description = 'Category'
 
 class DeliveryDetailAdmin(admin.ModelAdmin):
-    list_display = ('id', 'pickupDate', 'dropDate', 'driver')
-    search_fields = ['pickupDate', 'dropDate', 'driver']
+    list_display = ('id', 'pickupDate', 'pickedup', 'dropDate', 'delivered', 'driver')
+    search_fields = ['pickupDate', 'dropDate', 'driver__name']
     filter_fields = ['pickupDate', 'dropDate', 'driver']
 
 class RequestTypeAdmin(admin.ModelAdmin):
@@ -92,12 +93,12 @@ class RequestTypeAdmin(admin.ModelAdmin):
 
 class RequestAdmin(admin.ModelAdmin):
     list_display = ('id', 'createdBy','type' ,'fullfilled', 'active')
-    search_fields = ['createdBy', 'requiredDate', 'dropDate']
+    search_fields = ['createdBy__name', 'requiredDate', 'dropDate']
     filter_fields = ['createdBy', 'type', 'fullfilled', 'active']
 
 class DonationAdmin(admin.ModelAdmin):
     list_display = ('id', 'donationType', 'donatedBy','fullfilled')
-    search_fields = ['donationType', 'donatedBy']
+    search_fields = ['donationType', 'donatedBy__name']
     filter_fields = ['donationType', 'donatedBy', 'needsPickup', 'fullfilled']
 
 class EventVolunteerAdmin(admin.ModelAdmin):
@@ -105,12 +106,14 @@ class EventVolunteerAdmin(admin.ModelAdmin):
 
 class CustomeTokenAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'createdAt')
+    search_fields = ['user__name']
 
 class EventBookmarkAdmin(admin.ModelAdmin):
     list_display = ('id', 'event', 'user', 'createdAt')
 
 class NotificationAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'title', 'createdAt')
+    search_fields = ['user__name', 'title']
 
 admin.site.register(ItemType, ItemTypeAdmin)
 admin.site.register(Category, CategoryAdmin)
