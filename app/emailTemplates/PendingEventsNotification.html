@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Delete Account Request</title>
+        <style>
+
+			body {
+				margin-top: 5px;
+				margin-left: 5px;
+			}
+			
+			.main-container{
+                border: none;
+                text-decoration: none;
+                font-size: 14px;
+				margin-left: 5px;
+			}
+			.intro-container{
+                border: none;
+                text-decoration: none;
+                font-size: 14px;
+				margin-left: 5px;
+			}
+			.event-container{
+                border: solid 2px;
+                text-decoration: none;
+                font-size: 14px;
+				margin-left: 5px;
+			}
+
+			.card {
+				background-color: #e7fae6 ;
+				margin-bottom: 8px;
+				border: 1px solid #080808;
+				transition: 0.3s;
+				border-radius: 5px; 
+			} 
+
+			/* .card:hover {
+				box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+			} */
+
+			.container {
+				padding: 2px 16px;
+			}
+
+        </style>
+    </head>
+
+    <body>
+
+		<div class="main-container">
+			<div class="intro-container">
+				<h2> Hello Staff Admin, </h2>
+				<p>
+					You have been sent this email because there are pending Food Events that require your approval.<br>
+				</p>
+				<p>
+					Please take a moment to review and approve them.
+				</p>
+			</div>
+
+			<div class="event-conatiner">
+				<p>
+					{{details}}
+				</p>	
+			</div>
+
+			<div class="intro-container"> 
+				<h4>
+					To View More Pending Events,<br>
+					Please Click 
+					<a href="{{base_url}}/admin/app/foodevent/?q=pending">
+						<b> View Events.</b> 
+					</a>
+				</h4>
+				<br>
+				<h3>
+					Thank you,<br />
+					Climate Healers Team.
+				</h3>
+			</div>
+
+		</div>
+        
+    </body>
+
+</html>

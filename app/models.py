@@ -49,6 +49,7 @@ class Category(models.Model):
     name =  models.CharField(max_length=50, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
+    categoryImage = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
 
 # 3. Model to Store all types of Address
 class Address(models.Model):
@@ -177,6 +178,7 @@ class FoodRecipe(models.Model):
     cookingInstructions = models.TextField(max_length=1000, default='', null=True, blank=True)
     recipeSource = models.CharField(max_length=100, null=True, blank=True)
     recipeCredits = models.CharField(max_length=100, null=True, blank=True)
+    preparationTime = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 

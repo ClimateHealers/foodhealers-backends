@@ -618,103 +618,106 @@ class Event(APIView):
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+        
+# <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
 
 # GET and POST Bookmark Food Event API
-class BookmarkEvent(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+# class BookmarkEvent(APIView):
+#     authentication_classes = [VolunteerTokenAuthentication]
+#     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['eventId'], 
-            properties={
-                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=['eventId'], 
+#             properties={
+#                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+#             },
+#         ),
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
+#                 },
+#             ),
+#         },
 
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Add to Calender API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def post(self, request, format=None):
-        try:
-            if request.data.get('eventId') != None:
-                event_id = request.data.get('eventId')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Id'})
+#     def post(self, request, format=None):
+#         try:
+#             if request.data.get('eventId') != None:
+#                 event_id = request.data.get('eventId')
+#             else:
+#                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            user = request.user
+#             user = request.user
 
-            if FoodEvent.objects.filter(id=event_id).exists():
-                food_event = FoodEvent.objects.get(id=event_id)
-                if EventBookmark.objects.filter(user=user, event=food_event).exists():
-                    return Response({'success':False, 'message': 'Bookmark already exists'})
-                else:
-                    created_at = timezone.now()
-                    EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
-                    return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
+#             if FoodEvent.objects.filter(id=event_id).exists():
+#                 food_event = FoodEvent.objects.get(id=event_id)
+#                 if EventBookmark.objects.filter(user=user, event=food_event).exists():
+#                     return Response({'success':False, 'message': 'Bookmark already exists'})
+#                 else:
+#                     created_at = timezone.now()
+#                     EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
+#                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
-            else:
-                return Response({'success': False, 'message': 'Food Event with id does not exist'})
+#             else:
+#                 return Response({'success': False, 'message': 'Food Event with id does not exist'})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
         
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+#                 },
+#             ),
+#         },
 
-        operation_description="Get Food Events Posted by volunteer API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Get Food Events Posted by volunteer API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def get(self, request, format=None):
-        try:
-            user = request.user
+#     def get(self, request, format=None):
+#         try:
+#             user = request.user
 
-            if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
-                bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
-                bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
-                return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
-            else:
-                return Response({'success': True, 'bookmarkedEventDetails': []})
+#             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
+#                 bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
+#                 bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
+#                 return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
+#             else:
+#                 return Response({'success': True, 'bookmarkedEventDetails': []})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
-        
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
+# <<----------------------------------------------------------------------------------------------------------->>
+      
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
     ## removed authentication for fetch categories as food seekers do not have access Token
@@ -745,82 +748,8 @@ class Categories(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
-# GET and POST Food Recipe API
+# GET Food Recipe API
 class FindFoodRecipe(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
-
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['categoryId','foodName','ingredients','cookingInstructions'], 
-            properties={
-                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
-                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
-                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
-                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
-                },
-            ),
-        },
-    
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
-
-    def post(self, request, category_id, format=None):
-        try:
-            if category_id is None:
-                return Response({'success': False, 'message': 'Please provide category Id'})
-
-            food_name = request.data.get('foodName')
-            ingredients = request.data.get('ingredients')
-            cooking_instructions = request.data.get('cookingInstructions')
-            files = request.FILES.getlist('foodImage', [])
-
-            if food_name is None:
-                return Response({'success': False, 'message': 'Please enter valid Food Name'})
-            if ingredients is None:
-                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
-            if cooking_instructions is None:
-                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
-
-            try:
-                category = Category.objects.get(id=category_id)
-            except Category.DoesNotExist:
-                return Response({'success': False, 'message': 'Category with id does not exist'})
-
-            try:
-                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
-                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
-            except FoodRecipe.DoesNotExist:
-                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
-                                                cookingInstructions=cooking_instructions)
-                created_at = timezone.now()
-                for file in files:
-                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
-                    recipe.foodImage.add(doc)
-                recipe.save()
-                return Response({'success': True, 'message': 'Food Recipe successfully created'})
-
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -861,6 +790,87 @@ class FindFoodRecipe(APIView):
             else:
                 return Response({'success': True, 'recipeList': []})
             
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+# POST Food Recipe API
+class PostFoodRecipe(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['categoryId','foodName','ingredients','cookingInstructions', 'preparationTime'], 
+            properties={
+                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
+                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
+                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
+                'preparationTime':openapi.Schema(type=openapi.TYPE_STRING, example="45 mins"),
+                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
+                },
+            ),
+        },
+    
+        operation_description="Add Food Recipe API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, category_id, format=None):
+        try:
+            if category_id is None:
+                return Response({'success': False, 'message': 'Please provide category Id'})
+
+            food_name = request.data.get('foodName')
+            ingredients = request.data.get('ingredients')
+            cooking_instructions = request.data.get('cookingInstructions')
+            files = request.FILES.getlist('foodImage', [])
+            preparation_time = request.data.get('preparationTime')
+
+            if food_name is None:
+                return Response({'success': False, 'message': 'Please enter valid Food Name'})
+            if ingredients is None:
+                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
+            if cooking_instructions is None:
+                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
+            if preparation_time is None:
+                return Response({'success': False, 'message': 'Please enter valid Preparation Time'})
+
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                return Response({'success': False, 'message': 'Category with id does not exist'})
+
+            try:
+                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
+                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
+            except FoodRecipe.DoesNotExist:
+                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
+                                                cookingInstructions=cooking_instructions, preparationTime=preparation_time)
+                created_at = timezone.now()
+                for file in files:
+                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
+                    recipe.foodImage.add(doc)
+                recipe.save()
+                return Response({'success': True, 'message': 'Food Recipe successfully created'})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
