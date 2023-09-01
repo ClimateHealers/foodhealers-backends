@@ -8,7 +8,7 @@ CELERY_ENABLED = True
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'foodhealers_backend.settings')
 app = Celery('foodhealers_backend')
-
+app.conf.timezone = 'UTC'
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
@@ -27,7 +27,7 @@ def debug_task(self):
 app.conf.beat_schedule = {
     'daily-pending-events-email-notification': {
         'task': 'pending_events_email',
-        'schedule': crontab(hour=12, minute=0, tz='UTC'),
+        'schedule': crontab(hour=12, minute=0),
     },
 
     'daily-event-status-check-notification': {
