@@ -304,6 +304,7 @@ class FoodRecipeSerializer(Serializer):
     category = serializers.SerializerMethodField() 
     foodImage = serializers.SerializerMethodField() 
     cookingInstructions = serializers.SerializerMethodField()
+    preprationTime = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -339,6 +340,12 @@ class FoodRecipeSerializer(Serializer):
             return document_url
         else:
             return 'Food image not specified'
+        
+    def get_preprationTime(self, obj):
+        if obj.preprationTime is not None:
+            return obj.preprationTime
+        else:
+            return 'Prepration time not specified'
         
 class RequestTypeSerializer(Serializer):
     id = serializers.SerializerMethodField()

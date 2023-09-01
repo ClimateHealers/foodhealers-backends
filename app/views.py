@@ -748,82 +748,8 @@ class Categories(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
-# GET and POST Food Recipe API
+# GET Food Recipe API
 class FindFoodRecipe(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
-
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['categoryId','foodName','ingredients','cookingInstructions'], 
-            properties={
-                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
-                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
-                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
-                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
-                },
-            ),
-        },
-    
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
-
-    def post(self, request, category_id, format=None):
-        try:
-            if category_id is None:
-                return Response({'success': False, 'message': 'Please provide category Id'})
-
-            food_name = request.data.get('foodName')
-            ingredients = request.data.get('ingredients')
-            cooking_instructions = request.data.get('cookingInstructions')
-            files = request.FILES.getlist('foodImage', [])
-
-            if food_name is None:
-                return Response({'success': False, 'message': 'Please enter valid Food Name'})
-            if ingredients is None:
-                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
-            if cooking_instructions is None:
-                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
-
-            try:
-                category = Category.objects.get(id=category_id)
-            except Category.DoesNotExist:
-                return Response({'success': False, 'message': 'Category with id does not exist'})
-
-            try:
-                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
-                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
-            except FoodRecipe.DoesNotExist:
-                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
-                                                cookingInstructions=cooking_instructions)
-                created_at = timezone.now()
-                for file in files:
-                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
-                    recipe.foodImage.add(doc)
-                recipe.save()
-                return Response({'success': True, 'message': 'Food Recipe successfully created'})
-
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -864,6 +790,87 @@ class FindFoodRecipe(APIView):
             else:
                 return Response({'success': True, 'recipeList': []})
             
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+# POST Food Recipe API
+class PostFoodRecipe(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['categoryId','foodName','ingredients','cookingInstructions', 'preprationTime'], 
+            properties={
+                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
+                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
+                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
+                'preprationTime':openapi.Schema(type=openapi.TYPE_STRING, example="45 mins"),
+                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
+                },
+            ),
+        },
+    
+        operation_description="Add Food Recipe API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, category_id, format=None):
+        try:
+            if category_id is None:
+                return Response({'success': False, 'message': 'Please provide category Id'})
+
+            food_name = request.data.get('foodName')
+            ingredients = request.data.get('ingredients')
+            cooking_instructions = request.data.get('cookingInstructions')
+            files = request.FILES.getlist('foodImage', [])
+            prepration_time = request.data.get('preprationTime')
+
+            if food_name is None:
+                return Response({'success': False, 'message': 'Please enter valid Food Name'})
+            if ingredients is None:
+                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
+            if cooking_instructions is None:
+                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
+            if prepration_time is None:
+                return Response({'success': False, 'message': 'Please enter valid Prepration Time'})
+
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                return Response({'success': False, 'message': 'Category with id does not exist'})
+
+            try:
+                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
+                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
+            except FoodRecipe.DoesNotExist:
+                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
+                                                cookingInstructions=cooking_instructions, preprationTime=prepration_time)
+                created_at = timezone.now()
+                for file in files:
+                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
+                    recipe.foodImage.add(doc)
+                recipe.save()
+                return Response({'success': True, 'message': 'Food Recipe successfully created'})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
