@@ -26,7 +26,7 @@ DOCUMENT_TYPE = (
     ('vehicle_photo','Vehicle Photo')
 )
 
-EVENT_STATUS = (
+STATUS = (
     ('approved','Approved'),
     ('rejected','Rejected'),
     ('pending','Pending'),
@@ -34,6 +34,7 @@ EVENT_STATUS = (
 
 NOTIFICATION_TYPE = (
     ('event', 'Event'),
+    ('donation', 'Donation'),
     ('other','Other')
 )
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
@@ -110,7 +111,7 @@ class FoodEvent(models.Model):
     createdAt = models.DateTimeField(null=True, blank=True) 
     additionalInfo = models.TextField(blank=True, null=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
-    status = models.CharField(max_length=20, null=True, blank=True, choices=EVENT_STATUS, default=EVENT_STATUS[2][0])
+    status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
     eventPhoto = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
 
 @receiver(post_save, sender=FoodEvent)
@@ -125,13 +126,13 @@ def send_notification_on_change(sender, instance, created , **kwargs):
         send_push_message(instance.createdBy, title, message, notification_type)
 
     # logic to check if status has changed to approved or rejected
-    elif instance.status == EVENT_STATUS[0][0]:
+    elif instance.status == STATUS[0][0]:
         title = 'Event Approved'
         message = f'Your Event - {instance.name} has been approved by Food healers team'
         notification_type= NOTIFICATION_TYPE[0][0]
         send_push_message(instance.createdBy, title, message, notification_type)
 
-    elif instance.status == EVENT_STATUS[1][0]:
+    elif instance.status == STATUS[1][0]:
         title = 'Event Rejected'
         message = f'Your Event - {instance.name} has been rejected by Food healers team'
         notification_type= NOTIFICATION_TYPE[0][0]
@@ -228,6 +229,32 @@ class Donation(models.Model):
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
     createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
+
+
+@receiver(post_save, sender=Donation)
+def send_donation_notification_on_change(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    # if donation has been created
+    if created :
+        title = 'Donation Under Review'
+        message = f'Your Donation - {instance.foodItem} is under review'
+        notification_type = NOTIFICATION_TYPE[1][0]
+        send_push_message(instance.donatedBy, title, message, notification_type)
+
+    # logic to check if status has changed to approved or rejected
+    elif instance.status == STATUS[0][0]:
+        title = 'Donation Approved'
+        message = f'Your Donation - {instance.foodItem} has been approved by Food healers team'
+        notification_type= NOTIFICATION_TYPE[1][0]
+        send_push_message(instance.donatedBy, title, message, notification_type)
+
+    elif instance.status == STATUS[1][0]:
+        title = 'Donation Rejected'
+        message = f'Your Donation - {instance.foodItem} has been rejected by Food healers team'
+        notification_type= NOTIFICATION_TYPE[1][0]
+        send_push_message(instance.donatedBy, title, message, notification_type)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):

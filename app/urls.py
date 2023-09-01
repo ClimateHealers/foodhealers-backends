@@ -30,8 +30,9 @@ urlpatterns = [
     # re_path(r'bookmark/', views.BookmarkEvent.as_view(), name='bookmark-event'), ----> Not Using It 
     # GET (to fetch categories fo recipies)
     re_path(r'categories/', views.Categories.as_view(), name='fetch-category'),
-    # GET (to View recipes) and POST (to Add recipes)
+    # GET (to View recipes) 
     re_path(r'recipe/(?P<category_id>[-\w]*)/', views.FindFoodRecipe.as_view(), name='food-recipe'),
+    # POST (to Add recipes)
     re_path(r'add-recipe/(?P<category_id>[-\w]*)/', views.PostFoodRecipe.as_view(), name='Post-food-recipe'),
 
     # GET (to fetch requestTypes for Request API)
@@ -48,6 +49,8 @@ urlpatterns = [
     re_path(r'volunteer-vehicle/', views.VehicleOperations.as_view(), name='volunteer-vehicle'), 
     # GET (to fetch Volunteer notification of last 7 days)
     re_path(r'volunteer-notifications/', views.VolunteerNotification.as_view(), name='volunteer-notification'), 
+    # GET ( Fetch Calender Events )
+    re_path(r'calender-events/', views.CalenderEvents.as_view(), name='calender-events')
 
     
 

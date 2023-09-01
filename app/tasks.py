@@ -5,7 +5,7 @@
 '''
 
 import os
-from .models import Notification, CustomToken, FoodEvent, EVENT_STATUS
+from .models import Notification, CustomToken, FoodEvent, STATUS
 from celery import Celery, shared_task
 from celery.utils.log import get_task_logger
 from exponent_server_sdk import PushClient, PushMessage 
@@ -59,7 +59,7 @@ def event_status_check():
 @shared_task(name='pending_events_email')
 def pending_events_reminder():
     try:
-        pending_event_list = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-eventStartDate')[:5]
+        pending_event_list = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-eventStartDate')[:5]
         detailslist = []
         for pending_events in pending_event_list:
             jobdetailscard = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/EventDetailsCard.txt')).read()

@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication 
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
-                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, EVENT_STATUS)
+                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
                           RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer )
 from drf_yasg.utils import swagger_auto_schema
@@ -455,7 +455,7 @@ class FindFood(APIView):
             events_qs = FoodEvent.objects.filter(
                 Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) |
                 Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)),
-                status=EVENT_STATUS[0][0]
+                status=STATUS[0][0]
             ).order_by('-id')
 
             final_food_events = [
@@ -1906,7 +1906,7 @@ class AdminDashboardView(APIView):
         user_details = UserProfileSerializer(users, many=True).data
 
         # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-        food_events = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
+        food_events = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-id')
         event_details = FoodEventSerializer(food_events, many=True).data
 
         # ---------------DONATIONS CREATED ON GRAPH -----------------
@@ -1959,3 +1959,45 @@ class VolunteerNotification(APIView):
                 return Response({'success': True, 'notifications': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+
+# FETCH EVENTS API According to Calender Dates
+class CalenderEvents(APIView):
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='startDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True), # Date-time in epoch format
+            openapi.Parameter(name='endDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),  # Date-time in epoch format
+        ],   
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch Calender Events API",
+    )
+
+    def get(self, request, format=None):
+        try:
+
+            from_date_epochs = int(request.query_params.get('startDate'))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
+
+            to_date_epochs = int(request.query_params.get('endDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
+
+            if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date)).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date))
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
+            else:
+                return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+   
