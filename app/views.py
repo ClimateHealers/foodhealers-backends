@@ -1959,3 +1959,44 @@ class VolunteerNotification(APIView):
                 return Response({'success': True, 'notifications': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+
+# FETCH EVENTS API According to Calender Dates
+class CalenderEvents(APIView):
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='startDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True), # Date-time in epoch format
+            openapi.Parameter(name='endDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),  # Date-time in epoch format
+        ],   
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch Calender Events API",
+    )
+
+    def get(self, request, format=None):
+        try:
+
+            from_date_epochs = int(request.query_params.get('startDate'))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
+
+            to_date_epochs = int(request.query_params.get('endDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
+
+            if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date)).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date))
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
+            else:
+                return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
