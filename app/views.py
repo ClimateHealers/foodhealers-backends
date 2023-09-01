@@ -468,7 +468,6 @@ class FindFood(APIView):
 
             food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
             return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
-
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
