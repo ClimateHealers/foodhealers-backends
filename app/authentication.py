@@ -7,8 +7,8 @@ from app.models import Volunteer
 from django.core import signing
 
 
-def create_access_token(userId):
-    value = signing.dumps(str(userId))
+def create_access_token(user_id):
+    value = signing.dumps(str(user_id))
     return jwt.encode({
         'data': value,
         # Expiry time of a token
@@ -21,12 +21,12 @@ def decode_access_token(token):
     try:
         payload = jwt.decode(token, 'access_secret', algorithms='HS256')
         return payload['data']
-    except:
+    except jwt.exceptions.DecodeError:
         raise exceptions.AuthenticationFailed('Access denied')
 
 
-def create_refresh_token(userId):
-    value = signing.dumps(str(userId))
+def create_refresh_token(user_id):
+    value = signing.dumps(str(user_id))
     return jwt.encode({
         'data': value,
         'exp': datetime.datetime.utcnow()+datetime.timedelta(days=38),
@@ -48,9 +48,9 @@ class VolunteerTokenAuthentication(TokenAuthentication):
             auth = get_authorization_header(request).split()
             if auth and len(auth) == 2:
                 token = auth[1].decode('utf-8')
-                encodedUserId = decode_access_token(token)
-                userId = signing.loads(encodedUserId)
-                volunteer = Volunteer.objects.get(id=userId)
+                encoded_user_id = decode_access_token(token)
+                user_id = signing.loads(encoded_user_id)
+                volunteer = Volunteer.objects.get(id=user_id)
 
                 return (volunteer, token)
         except Exception as e:
@@ -64,6 +64,6 @@ class VolunteerPermissionAuthentication(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return bool(request.user and request.user)
+        return bool(request.user)
     
 

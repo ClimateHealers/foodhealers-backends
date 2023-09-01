@@ -11,8 +11,13 @@ app_name = "usermgmnt"
 
 urlpatterns = [
     # DELETE (Django Template view to Delete Volunteer Profile)
-    re_path(r'delete-account/(?P<uniqueID>[-\w]*)/', views.DeleteUserAccountView.as_view(), name='delete-account-view'), 
+    re_path(r'delete-account/(?P<unique_id>[-\w]*)/', views.DeleteUserAccountView.as_view(), name='delete-account-view'), 
     # DELETE (Delete Action for the Django Template)
-    re_path(r'delete-account-action/(?P<uniqueID>[-\w]*)/', views.deleteUserAccountAction, name='delete-account-action'), 
+    re_path(r'delete-account-action/(?P<unique_id>[-\w]*)/', views.delete_user_account_action, name='delete-account-action'), 
+    # Upload Bulk Recipe (Django Template) 
+    re_path(r'upload-recipe/', views.UploadBulkRecipeView.as_view(), name='upload-recipe'),
+    # (Upload Recipe Action for the Django Template)
+    re_path(r'upload-recipe-action/', views.upload_recipes_action, name='upload-recipe-action'),
+
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
