@@ -802,13 +802,13 @@ class PostFoodRecipe(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['categoryId','foodName','ingredients','cookingInstructions', 'preprationTime'], 
+            required=['categoryId','foodName','ingredients','cookingInstructions', 'preparationTime'], 
             properties={
                 'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
                 'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
                 'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
-                'preprationTime':openapi.Schema(type=openapi.TYPE_STRING, example="45 mins"),
+                'preparationTime':openapi.Schema(type=openapi.TYPE_STRING, example="45 mins"),
                 'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
             },
         ),
@@ -842,7 +842,7 @@ class PostFoodRecipe(APIView):
             ingredients = request.data.get('ingredients')
             cooking_instructions = request.data.get('cookingInstructions')
             files = request.FILES.getlist('foodImage', [])
-            prepration_time = request.data.get('preprationTime')
+            preparation_time = request.data.get('preparationTime')
 
             if food_name is None:
                 return Response({'success': False, 'message': 'Please enter valid Food Name'})
@@ -850,8 +850,8 @@ class PostFoodRecipe(APIView):
                 return Response({'success': False, 'message': 'Please enter valid Ingredients'})
             if cooking_instructions is None:
                 return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
-            if prepration_time is None:
-                return Response({'success': False, 'message': 'Please enter valid Prepration Time'})
+            if preparation_time is None:
+                return Response({'success': False, 'message': 'Please enter valid Preparation Time'})
 
             try:
                 category = Category.objects.get(id=category_id)
@@ -863,7 +863,7 @@ class PostFoodRecipe(APIView):
                 return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
             except FoodRecipe.DoesNotExist:
                 recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
-                                                cookingInstructions=cooking_instructions, preprationTime=prepration_time)
+                                                cookingInstructions=cooking_instructions, preparationTime=preparation_time)
                 created_at = timezone.now()
                 for file in files:
                     doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)

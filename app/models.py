@@ -178,7 +178,7 @@ class FoodRecipe(models.Model):
     cookingInstructions = models.TextField(max_length=1000, default='', null=True, blank=True)
     recipeSource = models.CharField(max_length=100, null=True, blank=True)
     recipeCredits = models.CharField(max_length=100, null=True, blank=True)
-    preprationTime = models.CharField(max_length=100, null=True, blank=True)
+    preparationTime = models.CharField(max_length=100, null=True, blank=True)
     slug = models.SlugField(unique=True, max_length=100)
     tags = TaggableManager()
 
