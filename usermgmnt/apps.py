@@ -1,6 +1,1 @@
-# from django.apps import AppConfig
-
-
-# class UsermgmntConfig(AppConfig):
-#     default_auto_field = 'django.db.models.BigAutoField'
-#     name = 'usermgmnt'
+# Your app configuration here

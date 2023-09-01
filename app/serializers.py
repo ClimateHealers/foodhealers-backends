@@ -1,5 +1,5 @@
 
-from .models import *
+from .models import Volunteer
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
 from django.core.files.storage import get_storage_class
@@ -84,9 +84,9 @@ class DocumentSerializer(Serializer):
         
     def get_document(self, obj): # to be modified
         if obj.document is not None:
-            mediaStorage = get_storage_class()()
-            documentUrl = mediaStorage.url(name=obj.document.name)
-            return documentUrl
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=obj.document.name)
+            return document_url
         else:
             return 'Document not specified'
 
@@ -105,8 +105,8 @@ class DocumentSerializer(Serializer):
     def get_volunteer(self, obj):
         if obj.volunteer is not None:
             user = Volunteer.objects.get(id=obj.volunteer.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else: 
             return "Volunteer not specified"
         
@@ -188,7 +188,7 @@ class FoodEventSerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not specified'
+            return 'Event name not specified'
     
     def get_address(self, obj):
         if obj.address is not None:
@@ -217,8 +217,8 @@ class FoodEventSerializer(Serializer):
     def get_createdBy(self, obj):
         if obj.createdBy is not None:
             user = Volunteer.objects.get(id=obj.createdBy.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else:
             return 'Created by details not specified'
         
@@ -242,9 +242,9 @@ class FoodEventSerializer(Serializer):
         
     def get_eventPhoto(self, obj): # to be modified
         if obj.eventPhoto is not None:
-            mediaStorage = get_storage_class()()
-            documentUrl = mediaStorage.url(name=obj.eventPhoto.name)
-            return documentUrl
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=obj.eventPhoto.name)
+            return document_url
         else:
             return 'Event Photo not specified'
 
@@ -259,8 +259,8 @@ class BookmarkedEventSerializer(Serializer):
     def get_user(self, obj):
         if obj.user is not None:
             user = Volunteer.objects.get(id=obj.user.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else:
             return 'User not specified'
     
@@ -283,13 +283,13 @@ class CategorySerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not specified'
+            return 'Category name not specified'
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
             return obj.createdAt
         else:
-            return 'CreatedAt not specified'
+            return 'Category created date not specified'
     
     def get_active(self, obj):
         if obj.active is not None:
@@ -304,6 +304,7 @@ class FoodRecipeSerializer(Serializer):
     category = serializers.SerializerMethodField() 
     foodImage = serializers.SerializerMethodField() 
     cookingInstructions = serializers.SerializerMethodField()
+    preparationTime = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -312,7 +313,7 @@ class FoodRecipeSerializer(Serializer):
         if obj.foodName is not None:
             return obj.foodName
         else:
-            return 'Name not specified'
+            return 'Recipe name not specified'
         
     def get_ingredients(self, obj):
         if obj.ingredients is not None:
@@ -328,15 +329,23 @@ class FoodRecipeSerializer(Serializer):
         
     def get_category(self, obj):
         if obj.category is not None:
-            return obj.category.name
+            return CategorySerializer(obj.category.all(), many=True).data
         else:
-            return 'Name not specified'
+            return 'Category name not specified'
         
     def get_foodImage(self, obj):
         if obj.foodImage is not None:
-            return DocumentSerializer(obj.foodImage.all(), many=True).data
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=obj.foodImage.name)
+            return document_url
         else:
             return 'Food image not specified'
+        
+    def get_preparationTime(self, obj):
+        if obj.preparationTime is not None:
+            return obj.preparationTime
+        else:
+            return 'preparation time not specified'
         
 class RequestTypeSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -351,13 +360,13 @@ class RequestTypeSerializer(Serializer):
         if obj.name is not None:
             return obj.name
         else:
-            return 'Name not specified'
+            return 'Request type not specified'
         
     def get_createdAt(self, obj):
         if obj.createdAt is not None:
             return obj.createdAt
         else:
-            return 'CreatedAt not specified'
+            return 'Request type created date not specified'
     
     def get_active(self, obj):
         if obj.active is not None:
@@ -417,8 +426,8 @@ class DeliveryDetailSerializer(Serializer):
     def get_driver(self, obj):
         if obj.driver is not None:
             user = Volunteer.objects.get(id=obj.driver.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else:
             return 'Driver not specified'    
 
@@ -457,8 +466,8 @@ class DonationSerializer(Serializer):
     def get_donatedBy(self, obj):
         if obj.donatedBy is not None:
             user = Volunteer.objects.get(id=obj.donatedBy.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else:
             return 'DonatedBy details not specified'    
 
@@ -478,7 +487,7 @@ class DonationSerializer(Serializer):
         if obj.createdAt is not None:
             return obj.createdAt
         else:
-            return 'CreatedAt not specified'
+            return 'Donation created date not specified'
         
 class VehicleSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -497,8 +506,8 @@ class VehicleSerializer(Serializer):
     def get_owner(self, obj):
         if obj.owner is not None:
             user = Volunteer.objects.get(id=obj.owner.id)
-            userDetails = UserProfileSerializer(user).data
-            return userDetails
+            user_details = UserProfileSerializer(user).data
+            return user_details
         else:
             return 'vehicle owner not specified'
         
@@ -536,10 +545,74 @@ class VehicleSerializer(Serializer):
         if obj.createdAt is not None:
             return obj.createdAt
         else:
-            return 'Vehicle createdAt not specified'
+            return 'Vehicle created date not specified'
         
     def get_verified(self, obj):
         if obj.verified is not None:
             return obj.verified
         else:
             return False
+        
+class NotificationSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+    title =  serializers.CharField(max_length=50)
+    message = serializers.CharField(max_length=255)
+    is_unread = serializers.BooleanField()
+    modifiedAt = serializers.SerializerMethodField()
+    notificationType = serializers.CharField(max_length=50)
+    isDeleted = serializers.BooleanField()
+
+    def get_id(self, obj):
+        return obj.id
+
+    def get_user(self, obj):
+        if obj.user is not None:
+            user = Volunteer.objects.get(id=obj.user.id)
+            user_details = UserProfileSerializer(user).data
+            return user_details
+        else:
+            return 'Notification user not specified'
+        
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'Notification created date not specified'
+        
+    def get_title(self, obj):
+        if obj.title is not None:
+            return obj.title
+        else:
+            return 'Notification Title not specified'
+        
+    def get_message(self, obj):
+        if obj.message is not None:
+            return obj.message
+        else:
+            return 'Notification Message not specified'
+        
+    def get_is_unread(self, obj):
+        if obj.is_unread is not None:
+            return obj.is_unread
+        else:
+            return False
+
+    def get_modifiedAt(self, obj):
+        if obj.modifiedAt is not None:
+            return obj.modifiedAt
+        else:
+            return 'Notification modifiedAt not specified'
+    
+    def get_notificationType(self, obj):
+        if obj.notificationType is not None:
+            return obj.notificationType
+        else:
+            return 'other'
+        
+    def get_isDeleted(self, obj):
+        if obj.isDeleted is not None:
+            return obj.isDeleted
+        else:
+            return True

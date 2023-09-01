@@ -10,9 +10,11 @@ import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication
-from .models import *
-from .serializers import *
+from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication 
+from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
+                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
+from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -26,13 +28,11 @@ from django.http import JsonResponse
 from django.utils import timezone
 from geopy.distance import lonlat, distance
 from rest_framework.pagination import PageNumberPagination
-
-
-# from .local_dev_utils import getAccessToken
-# from mixpanel import Mixpanel
-
-# get Django Access token for development testing. 
-# getAccessToken(2)
+from django.db.models import Count
+from django.db.models.functions import Trunc
+from datetime import timedelta
+import matplotlib
+matplotlib.use('Agg')
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -62,44 +62,146 @@ class GetRefreshToken(APIView):
 
     # Generate Access Token Using Referesh Token
     def post(self, request, format=None):
-        if request.data.get('refreshTokenId') is not None:
-            refreshTokenId = request.data.get('refreshTokenId')
+        if request.data.get('refreshTokenId') != None:
+            refresh_token_id = request.data.get('refreshTokenId')
         else:
             return Response({'success':False, 'message':'please enter valid refresh token'})
         
         try:
-            if refreshTokenId is not None:
-                if CustomToken.objects.filter(refreshToken=refreshTokenId).exists():
-                    token = CustomToken.objects.get(refreshToken=refreshTokenId)
+            if refresh_token_id != None:
+                if CustomToken.objects.filter(refreshToken=refresh_token_id).exists():
+                    token = CustomToken.objects.get(refreshToken=refresh_token_id)
                     email = token.user.email
 
                     if Volunteer.objects.filter(email=email).exists():
                         user = Volunteer.objects.get(email=email)
-                        userDetails = UserProfileSerializer(user).data
-                        accessToken = create_access_token(user.id)
-                        refreshToken = create_refresh_token(user.id)
-                        token.refreshToken = refreshToken
-                        token.accessToken = accessToken
+                        user_details = UserProfileSerializer(user).data
+                        access_token = create_access_token(user.id)
+                        refresh_token = create_refresh_token(user.id)
+                        token.refreshToken = refresh_token
+                        token.accessToken = access_token
                         token.save()
                     else:
                         return Response({'success': False, 'message':'user with email does not exist'})
                 else:
                     return Response({'success': False, 'message':'Custom Token Object does not exist'})
             else:
-                return Response({'success': False, 'message': 'Please provide valid id token'})
+                return Response({'success': False, 'message': 'Please provide valid refresh token'})
             
             return Response({
                 'success': True,
                 'message': 'successfully generated token',
                 'isAuthenticated': True,
-                'token': accessToken,
-                'expiresIn': '2 minutes',
-                'refreshToken': refreshToken,
-                'user': userDetails,
+                'token': access_token,
+                'expiresIn': '31 Days',
+                'refreshToken': refresh_token,
+                'user': user_details,
             })
             
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+        
+class VolunteerExpoPushToken(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['expoPushToken'],
+            properties={
+                'expoPushToken': openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]'),
+            },            
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully updated ExpoPush Token'),
+                },
+            ),
+        },
+        operation_description="Updating ExpoPushToken API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # Update ExpoPushToken
+    def put(self, request, format=None):
+
+        if request.data.get('expoPushToken') != None:
+            expo_push_token = request.data.get('expoPushToken')
+        else:
+            return Response({'success':False, 'message':'please enter valid Expo Push Token'})
+        
+        try:
+            if request.user != None:
+                user = request.user
+
+                if CustomToken.objects.filter(user=user).exists():
+                    token = CustomToken.objects.get(user=user)
+                    token.expoPushToken = expo_push_token
+                    token.save()
+
+                    return Response({
+                        'success': True, 
+                        'message': 'successfully updated Expo Push Token', 
+                    })
+                
+                else:
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+            else:
+                return Response({'success': False, 'message': 'User does not exist'})
+            
+        except Exception as e:
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'expoPushToken': openapi.Schema(type=openapi.TYPE_STRING, default='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]'),
+                },
+            ),
+        },
+        operation_description="Get ExpoPushToken API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    ) 
+
+    def get(self, request, format=None):
+        try:
+            if request.user != None:
+                user = request.user
+
+                if CustomToken.objects.filter(user=user).exists():
+                    token = CustomToken.objects.get(user=user)
+                    return Response({'success': True, 'expoPushToken': token.expoPushToken })
+                else:
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+            else:
+                return Response({'success': False, 'message': 'User does not exist'})
+            
+        except Exception as e:
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+
 
 class ChoicesView(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -132,8 +234,8 @@ class ChoicesView(APIView):
     def get(self, request, format=None):
         try:
             return Response({'success': True, 'VOLUNTEER_TYPE': VOLUNTEER_TYPE, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
-        except:
-            return Response({'success': False})
+        except Exception as e:
+            return Response({'success': False, 'error' : str(e)})
         
 # Sign Up API  
 class SignUp(APIView):
@@ -141,12 +243,13 @@ class SignUp(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['tokenId', 'name', 'email', 'isVolunteer'],
+            required=['tokenId', 'name', 'email', 'isVolunteer', 'expoPushToken'],
             properties={
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
                 'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
-                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True)
+                'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
+                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
             },
         ),
         responses={
@@ -163,76 +266,54 @@ class SignUp(APIView):
     )
 
     # user onboarding API required firebase token and name
-    def post(self, request,  format=None):
+    def post(self, request, format=None):
+        data = request.data
 
-        if request.data.get('tokenId') is not None:
-            tokenId = request.data.get('tokenId')
-        else:
-            return Response({'success':False, 'message':'please enter valid token'})
-        
-        if request.data.get('name') is not None:
-            name = request.data.get('name')
-        else:
-            return Response({'success':False, 'message':'please enter valid name'})
-        
-        if request.data.get('isVolunteer') is not None:
-            isVolunteer = request.data.get('isVolunteer')
-        else:
-            return Response({'success':False, 'message':'please enter if Volunteer or not'})
-        
-        password = 'Admin123'
+        token_id = data.get('tokenId')
+        name = data.get('name')
+        is_volunteer = data.get('isVolunteer')
+        expo_push_token = data.get('expoPushToken')
+
+        if token_id == None or token_id == '' or token_id == " ":
+            return Response({'success': False, 'message': 'please enter valid token'})
+        if name == None or name == '' or name == " ":
+            return Response({'success': False, 'message': 'please enter valid name'})
+        if is_volunteer == None or is_volunteer == '' or is_volunteer == " ":
+            return Response({'success': False, 'message': 'please enter if Volunteer or not'})
+        if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
+            return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
+
+        password = settings.VOLUNTEER_PASSWORD
 
         try:
-
-            if 'email' in request.session.keys() and request.session['email'] is not None:
+            if 'email' in request.session.keys() and request.session['email']:
                 email = request.session['email']
             else:
-                if tokenId is not None:
-                    try:
-                        decoded_token = auth.verify_id_token(tokenId)
-                        if decoded_token is not None:
-                            if 'email' in decoded_token:
-                                email = decoded_token['email']
-                            else:
-                                email = None
-                        else:
-                            return Response({'success': False, 'message': 'unable to verify user'})
-                    except Exception as e:
-                        return Response({'success': False, 'error': str(e)})
-                else:
-                    return Response({'success': False, 'message': 'Please provide valid id token'})
-                
-            randomNumber = str(uuid.uuid4())[:6]
-            username = randomNumber + '@' + name
+                try:
+                    decoded_token = auth.verify_id_token(token_id)
+                    email = decoded_token.get('email')
+                except Exception as e:
+                    return Response({'success': False, 'error': str(e)})
+
+            random_number = str(uuid.uuid4())[:6]
+            username = random_number + '@' + name
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
-                userDetails = UserProfileSerializer(user).data
-                # mixpanel_token = settings.MIXPANEL_API_TOKEN
-                # mp = Mixpanel(mixpanel_token)
-                # mp.track(user.id, 'Sign-up',  {
-                #     'Signup Type': 'Volunteer'
-                # })
-                return Response({'success': True, 'message':'user already exists', 'userDetails': userDetails})
-            else:
-                user = Volunteer.objects.create(name=name, email=email, username=username , isVolunteer=isVolunteer, password=password)
-                userDetails = UserProfileSerializer(user).data
-                accessToken = create_access_token(user.id)
-                refreshToken = create_refresh_token(user.id)
-                if CustomToken.objects.filter(user=user).exists():
-                    token = CustomToken.objects.get(user=user)
-                    token.refreshToken = refreshToken
-                    token.accessToken = accessToken
-                    token.save()
-                else:
-                    token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
-                
-                # mixpanel_token = settings.MIXPANEL_API_TOKEN
-                # mp = Mixpanel(mixpanel_token)
-                # mp.track(user.id, 'Sign-up',  {
-                #     'Signup Type': 'Volunteer'
-                # })
-                return Response({'success':True, 'message':'successfully created user', 'userDetails':userDetails})
+                user_details = UserProfileSerializer(user).data
+                return Response({'success': True, 'message': 'user already exists', 'userDetails': user_details})
+
+            user = Volunteer.objects.create(name=name, email=email, username=username, isVolunteer=is_volunteer, password=password)
+            user_details = UserProfileSerializer(user).data
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
+            token, _ = CustomToken.objects.get_or_create(user=user)
+            token.refreshToken = refresh_token
+            token.accessToken = access_token
+            token.expoPushToken = expo_push_token
+            token.save()
+            return Response({'success': True, 'message': 'successfully created user', 'userDetails': user_details})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
@@ -243,9 +324,11 @@ class SignIn(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['tokenId'],
+            required=['tokenId','expoPushToken'],
             properties={
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
+                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
+
             },            
         ),
         responses={
@@ -256,7 +339,7 @@ class SignIn(APIView):
                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully signed in'),
                     'isAuthenticated': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
                     'accessToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9.3EyvZffo4g2R3Zy8sZw'),
-                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='2 minutes'),
+                    'expiresIn': openapi.Schema(type=openapi.TYPE_STRING, default='31 Days'),
                     'refreshToken': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIiwiZXhwIjoxNjgzNzk4MzU5LCJpYXQiOjE2ODM2Mrffo4g2R3Zy8sZw'),
                 },
             ),
@@ -266,64 +349,53 @@ class SignIn(APIView):
 
     # Login API requires Firebase token
     def post(self, request, format=None):
-        if request.data.get('tokenId') is not None:
-            tokenId = request.data.get('tokenId')
-        else:
-            return Response({'success':False, 'message':'please enter valid token'})
-        
         try:
-            if 'email' in request.session.keys() and request.session['email'] is not None:
-                email = request.session['email']
-            else:
-                if tokenId is not None:
-                    try:
-                        decoded_token = auth.verify_id_token(tokenId)
-                        if decoded_token is not None:
-                            if 'email' in decoded_token:
-                                email = decoded_token['email']
-                            else:
-                                return Response({'success':False, 'message':'email Cannot be Empty'})         
-                        else:
-                            return Response({'success': False, 'message': 'unable to verify user'})
-                    except Exception as e:
-                        return Response({'success': False, 'error': str(e)})
-                else:
-                    return Response({'success': False, 'message': 'Please provide valid id token'})
+            token_id = request.data.get('tokenId')
+            expo_push_token = request.data.get('expoPushToken')
+            if token_id is None:
+                return Response({'success': False, 'message': 'Please provide a valid token'})
+            
+            if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
+                return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
 
-            if Volunteer.objects.filter(email=email).exists():
-                user = Volunteer.objects.get(email=email)
-                userDetails = UserProfileSerializer(user).data
-                accessToken = create_access_token(user.id)
-                refreshToken = create_refresh_token(user.id)
-            else:
-                return Response({'success': False, 'message':'user with email does not exist'})
+            decoded_token = None
+            try:
+                decoded_token = auth.verify_id_token(token_id)
+            except Exception as e:
+                return Response({'success': False, 'error': str(e)})
 
-            if CustomToken.objects.filter(user=user).exists():
-                token = CustomToken.objects.get(user=user)
-                token.refreshToken = refreshToken
-                token.accessToken = accessToken
-                token.save()
-            else:
-                token = CustomToken.objects.create(accessToken=accessToken, refreshToken=refreshToken, user=user)
-            # mixpanel_token = settings.MIXPANEL_API_TOKEN
-            # mp = Mixpanel(mixpanel_token)
-            # mp.track(user.id, 'login',  {
-            #     'login Type': 'Volunteer'
-            # })
+            email = decoded_token.get('email')
+            if not email:
+                return Response({'success': False, 'message': 'Email cannot be empty'})
+
+            user = Volunteer.objects.filter(email=email).first()
+            if not user:
+                return Response({'success': False, 'message': 'User with email does not exist'})
+
+            user_details = UserProfileSerializer(user).data
+            access_token = create_access_token(user.id)
+            refresh_token = create_refresh_token(user.id)
+
+            token, created = CustomToken.objects.get_or_create(user=user)
+            token.refreshToken = refresh_token
+            token.accessToken = access_token
+            token.expoPushToken = expo_push_token
+            token.save()
+
             return Response({
                 'success': True,
-                'message': 'successfully signed in',
+                'message': 'Successfully signed in',
                 'isAuthenticated': True,
-                'token': accessToken,
-                'expiresIn': '2 minutes',
-                'refreshToken': refreshToken,
-                'user': userDetails,
+                'token': access_token,
+                'expiresIn': '30 Days',
+                'refreshToken': refresh_token,
+                'user': user_details,
             })
-            
+
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
         
-# fetch All Food Events for food Seekers (POST METHOD)     
+# fetch All Food Events for food Seekers (GET METHOD)     
 class FindFood(APIView):
 
     # OpenApi specification and Swagger Documentation
@@ -356,88 +428,46 @@ class FindFood(APIView):
         # Address (latitude, longitude and altitude)
         # From and to date
         try:
-            if request.query_params.get('lat') is not None and request.query_params.get('lat') is not ' ' and request.query_params.get('lat') is not '':
-                lat = float(request.query_params.get('lat'))
-            else:
-                return Response({'success': False, 'message':'please enter valid latitude'})
+            data = request.query_params
+
+            for param in ['lat', 'lng', 'fullAddress', 'eventStartDate']:
+                if not data.get(param, '').strip():
+                    return Response({'success': False, 'message': f'please enter valid {param}'})
             
-            if request.query_params.get('lng') is not None and request.query_params.get('lng') is not ' ' and request.query_params.get('lng') is not '':
-                lng = float(request.query_params.get('lng'))
-            else:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
+            to_date_epochs = int(data.get('eventEndDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
 
-            if request.query_params.get('fullAddress') is not None and request.query_params.get('fullAddress') is not ' ' and request.query_params.get('fullAddress') is not '':
-                fullAddress = request.query_params.get('fullAddress')
-            else:
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if request.query_params.get('postalCode') is not None and request.query_params.get('postalCode') is not ' ' and request.query_params.get('postalCode') is not '':
-                postalCode = int(request.query_params.get('postalCode'))
-            else:
-                postalCode = 0
-            
-            if request.query_params.get('state') is not None:
-                state = request.query_params.get('state')
-            else:
-                state = ''
-            
-            if request.query_params.get('city') is not None:
-                city = request.query_params.get('city')
-            else:
-                city = ''
+            postal_code = int(data.get('postalCode', 0))
+            state = data.get('state', '')
+            city = data.get('city', '')
 
-            if request.query_params.get('eventStartDate') is not None and request.query_params.get('eventStartDate') is not ' ' and request.query_params.get('eventStartDate') is not '':
-                fromDateEpochs = int(request.query_params.get('eventStartDate'))
-                fromDate = datetime.fromtimestamp(fromDateEpochs).astimezone(timezone.utc)
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
-            
-            if request.query_params.get('eventEndDate') is not None and request.query_params.get('eventEndDate') is not ' ' and request.query_params.get('eventEndDate') is not '':
-                toDateEpochs = int(request.query_params.get('eventEndDate'))
-                toDate = datetime.fromtimestamp(toDateEpochs).astimezone(timezone.utc)
-            else:
-                toDate = timezone.now()
+            lat = float(data.get('lat'))
+            lng = float(data.get('lng'))
+            full_address = data.get('fullAddress')
+            from_date_epochs = int(data.get('eventStartDate'))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+            address, _ = Address.objects.get_or_create(lat=lat, lng=lng, streetAddress=full_address, 
+                fullAddress=full_address, defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )
 
-            # if start <= startDate && End >= endDate ------------> Today's Events -> NOT USING
-            # if (start >=startDate or start <=endDate ), End >= startDate ------------> Weekly Events -> NOT USING
-
-            # ( (Eventstart >= fromDate & Eventstart <= toDate) Or (Eventstart <=fromDate & Eventend >= fromDate) city = city, status = approved )--------------> FIND FOOD API LOGIC
-
-            foodEvents = []
             searched_xy = (lng, lat)
+            events_qs = FoodEvent.objects.filter(
+                Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) |
+                Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)),
+                status=STATUS[0][0]
+            ).order_by('-id')
 
-            if FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).exists():
-                foodEventList = FoodEvent.objects.filter( Q(Q(eventStartDate__gte=fromDate) & Q(eventStartDate__lte=toDate)) | Q(Q(eventStartDate__lte=fromDate) & Q(eventEndDate__gte=fromDate)), status=EVENT_STATUS[0][0]).order_by('-id')
- 
-                for fEvent in foodEventList:
-                    event_xy = (fEvent.address.lng, fEvent.address.lat)
-                    eventDistance = distance(lonlat(*searched_xy), lonlat(*event_xy)).km
-                                    
-                    if eventDistance <= 50: # If Events Location is Less Than 50 Km then Event will be Fetched.
-                        foodEvents.append(fEvent)
+            final_food_events = [
+                event for event in events_qs if
+                distance(lonlat(*searched_xy), lonlat(*(event.address.lng, event.address.lat))).km <= 50
+            ]
 
-                # <---------------------------- Depreceated Code ----------------------------------------------------->
-                
-                # if address.city == None or address.city == ' ' or address.city == '' :
-                #     if address.state == None or address.state == ' ' or address.state == '' :
-                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), status=EVENT_STATUS[0][0]).order_by('-id')[:50]              
-                #     else:
-                #         foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__state=address.state, status=EVENT_STATUS[0][0])
-                # else:
-                #     foodEvents = FoodEvent.objects.filter( Q(Q(eventStartDate__date__gte=fromDate.date()) & Q(eventStartDate__date__lte=toDate.date())) | Q(Q(eventStartDate__date__lte=fromDate.date()) & Q(eventEndDate__date__gte=fromDate.date())), address__city=address.city, status=EVENT_STATUS[0][0])
-                
-                paginator = PageNumberPagination()
-                paginated_foodEvents = paginator.paginate_queryset(foodEvents, request)
+            paginator = PageNumberPagination()
+            paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
-                foodEventsDetails = FoodEventSerializer(paginated_foodEvents, many=True).data  
-                return paginator.get_paginated_response({'success': True, 'foodEvents': foodEventsDetails})
-            else:
-                return Response({'success': True, 'foodEvents': []})
+            food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
+            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
@@ -479,128 +509,76 @@ class Event(APIView):
 
     def post(self, request, format=None):
         try:
-            if request.data.get('eventName') is not None:
-                eventName = request.data.get('eventName')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Name'})
+            required_fields = [
+                'eventName', 'lat', 'lng', 'fullAddress', 'postalCode',
+                'state', 'city', 'eventStartDate', 'eventEndDate', 'additionalInfo'
+            ]
+            for field in required_fields:
+                if field not in request.data:
+                    return Response({'success': False, 'message': f'Please enter valid {field.replace("event", "Event ").capitalize()}'})
+                
+            event_name = request.data['eventName']
+            lat = request.data['lat']
+            lng = request.data['lng']
+            full_address = request.data['fullAddress']
+            postal_code = request.data['postalCode']
+            state = request.data['state']
+            city = request.data['city']
             
-            if request.data.get('lat') is not None:
-                lat = request.data.get('lat')
-            else:
-                return Response({'success': False, 'message':'please enter valid latitude'})
-            
-            if request.data.get('lng') is not None:
-                lng = request.data.get('lng')
-            else:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') is not None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
+            event_start_date = datetime.fromtimestamp(int(request.data['eventStartDate'])).astimezone(timezone.utc)
+            event_end_date = datetime.fromtimestamp(int(request.data['eventEndDate'])).astimezone(timezone.utc)
+            additional_info = request.data['additionalInfo']
 
-            if request.data.get('fullAddress') is not None:
-                fullAddress = request.data.get('fullAddress')
-            else:
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if request.data.get('postalCode') is not None:
-                postalCode = request.data.get('postalCode')
-            else:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
-            
-            if request.data.get('state') is not None:
-                state = request.data.get('state')
-            else:
-                return Response({'success': False, 'message': 'please enter valid state'})
-            
-            if request.data.get('city') is not None:
-                city = request.data.get('city')
-            else:
-                return Response({'success': False, 'message': 'please enter valid city'})
-            
-            if request.data.get('eventStartDate') is not None:
-                eventStartDateEpochs = request.data.get('eventStartDate')
-                eventStartDate = datetime.fromtimestamp(int(eventStartDateEpochs)).astimezone(timezone.utc)
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Start Date'})
-            
-            if request.data.get('eventEndDate') is not None:
-                eventEndDateEpochs = request.data.get('eventEndDate')
-                eventEndDate = datetime.fromtimestamp(int(eventEndDateEpochs)).astimezone(timezone.utc)
-            else:
-                eventEndDate = None
-            
-            if request.data.get('additionalInfo') is not None:
-                additionalInfo = request.data.get('additionalInfo')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Description'})
-            
-            if request.FILES.get('files') is not None:
-                eventPhoto = request.FILES.get('files')
+            event_photo = request.FILES.get('files')
+            temp_file = None
 
-                # Read the contents of the InMemoryUploadedFile
-                file_contents = eventPhoto.read()
-                # Create a temporary file
+            if event_photo:
+                file_contents = event_photo.read()
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
-
                 try:
-                    # Write the contents to the temporary file
                     temp_file.write(file_contents)
                     temp_file.close()
-
                 except Exception as e:
-                    # If an exception occurs, make sure to close the temporary file
                     temp_file.close()
                     return Response({'success': False, 'message': str(e)})
-            else:
-                temp_file = None
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+            address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address,
+                defaults={'alt': None, 'postalCode': postal_code, 'state': state, 'city': city}
+            )
 
             organizer = Volunteer.objects.get(id=request.user.id, isVolunteer=True)
-    
-            if FoodEvent.objects.filter(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer).exists():
-                foodEvent = FoodEvent.objects.get(name=eventName, address=address, eventStartDate=eventStartDate, eventEndDate=eventEndDate, createdBy=organizer)
-                foodEventDetaills = FoodEventSerializer(foodEvent).data
-                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails':foodEventDetaills})
-            else:
-                createdAt = timezone.now()
-                foodEvent = FoodEvent.objects.create(
-                    name = eventName,
-                    address=address, 
-                    eventStartDate=eventStartDate, 
-                    eventEndDate=eventEndDate, 
-                    createdBy=organizer, 
-                    organizerPhoneNumber=organizer.phoneNumber, 
-                    createdAt=createdAt, 
-                    additionalInfo=additionalInfo,
-                    active=True 
+
+            food_event, created = FoodEvent.objects.get_or_create(
+                name=event_name, address=address, eventStartDate=event_start_date, eventEndDate=event_end_date, createdBy=organizer,
+                defaults={
+                    'organizerPhoneNumber': organizer.phoneNumber, 'createdAt': timezone.now(),
+                    'additionalInfo': additional_info, 'active': True
+                }
+            )
+
+            if not created:
+                food_event_details = FoodEventSerializer(food_event).data
+                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': food_event_details})
+
+            if temp_file:
+                with open(temp_file.name, 'rb') as f:
+                    food_event.eventPhoto.save(event_photo.name, File(f))
+                food_event.save()
+                f.close()
+
+                doc = Document.objects.create(
+                    docType=DOCUMENT_TYPE[1][0], createdAt=food_event.createdAt, event=food_event
                 )
 
-                if temp_file != None:
+                with open(temp_file.name, 'rb') as f:
+                    doc.document.save(event_photo.name, File(f))
 
-                    with open(temp_file.name, 'rb') as f:
-                        foodEvent.eventPhoto.save(eventPhoto.name, File(f))
-                    foodEvent.save()
-                    f.close()
+                doc.save()
+                f.close()
 
-                    doc = Document.objects.create(
-                        docType=DOCUMENT_TYPE[1][0], 
-                        createdAt=createdAt, 
-                        event=foodEvent
-                    )
+            return Response({'success': True, 'message': 'Event Posted Successfully'})
 
-                    with open(temp_file.name, 'rb') as f:
-                        doc.document.save(eventPhoto.name, File(f))
-
-                    doc.save()
-                    f.close()
-
-                return Response({'success': True, 'message': 'Event Posted Sucessfully'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
@@ -632,110 +610,113 @@ class Event(APIView):
             user = request.user
 
             if FoodEvent.objects.filter(createdBy=user).exists():
-                foodEvents = FoodEvent.objects.filter(createdBy=user)
-                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
-                return Response({'success': True, 'foodEvents': foodEventsDetails})
+                food_events = FoodEvent.objects.filter(createdBy=user)
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
+        
+# <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
 
 # GET and POST Bookmark Food Event API
-class BookmarkEvent(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+# class BookmarkEvent(APIView):
+#     authentication_classes = [VolunteerTokenAuthentication]
+#     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['eventId'], 
-            properties={
-                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=['eventId'], 
+#             properties={
+#                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+#             },
+#         ),
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
+#                 },
+#             ),
+#         },
 
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Add to Calender API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def post(self, request, format=None):
-        try:
-            if request.data.get('eventId') is not None:
-                eventId = request.data.get('eventId')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Event Id'})
+#     def post(self, request, format=None):
+#         try:
+#             if request.data.get('eventId') != None:
+#                 event_id = request.data.get('eventId')
+#             else:
+#                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            user = request.user
+#             user = request.user
 
-            if FoodEvent.objects.filter(id=eventId).exists():
-                foodEvent = FoodEvent.objects.get(id=eventId)
-                if EventBookmark.objects.filter(user=user, event=foodEvent).exists():
-                    return Response({'success':False, 'message': 'Bookmark already exists'})
-                else:
-                    createdAt = timezone.now()
-                    EventBookmark.objects.create(user=user, event=foodEvent, createdAt=createdAt)
-                    return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
+#             if FoodEvent.objects.filter(id=event_id).exists():
+#                 food_event = FoodEvent.objects.get(id=event_id)
+#                 if EventBookmark.objects.filter(user=user, event=food_event).exists():
+#                     return Response({'success':False, 'message': 'Bookmark already exists'})
+#                 else:
+#                     created_at = timezone.now()
+#                     EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
+#                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
                 
-            else:
-                return Response({'success': False, 'message': 'Food Event with id does not exist'})
+#             else:
+#                 return Response({'success': False, 'message': 'Food Event with id does not exist'})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
         
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
-                },
-            ),
-        },
+#     # OpenApi specification and Swagger Documentation
+#     @swagger_auto_schema(
+#         responses={
+#             200: openapi.Schema(
+#                 type=openapi.TYPE_OBJECT,
+#                 properties={
+#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+#                     'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+#                 },
+#             ),
+#         },
 
-        operation_description="Get Food Events Posted by volunteer API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
+#         operation_description="Get Food Events Posted by volunteer API",
+#         manual_parameters=[
+#             openapi.Parameter(
+#                 name='Authorization',
+#                 in_=openapi.IN_HEADER,
+#                 type=openapi.TYPE_STRING,
+#                 description='Token',
+#             ),
+#         ],
+#     )
 
-    def get(self, request, format=None):
-        try:
-            user = request.user
+#     def get(self, request, format=None):
+#         try:
+#             user = request.user
 
-            if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
-                bookmarkedEvents = EventBookmark.objects.filter(user=user, isDeleted=False)
-                bookmarkedEventDetails = BookmarkedEventSerializer(bookmarkedEvents, many=True).data
-                return Response({'success':True, 'bookmarkedEventDetails': bookmarkedEventDetails})
-            else:
-                return Response({'success': True, 'bookmarkedEventDetails': []})
+#             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
+#                 bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
+#                 bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
+#                 return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
+#             else:
+#                 return Response({'success': True, 'bookmarkedEventDetails': []})
             
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
-        
+#         except Exception as e:
+#             return Response({'success': False, 'message': str(e)})
+# <<----------------------------------------------------------------------------------------------------------->>
+      
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
     ## removed authentication for fetch categories as food seekers do not have access Token
@@ -755,118 +736,19 @@ class Categories(APIView):
         },
         
         operation_description="Get Food Events Posted by volunteer API",
-        # manual_parameters=[
-        #     openapi.Parameter(
-        #         name='Authorization',
-        #         in_=openapi.IN_HEADER,
-        #         type=openapi.TYPE_STRING,
-        #         description='Token',
-        #     ),
-        # ],
     )
     
     def get(self, request, format=None):
         try:            
             category = Category.objects.all()
-            categoryList = CategorySerializer(category, many=True).data
-            return Response({'success': True, 'categoriesList': categoryList})
+            category_list = CategorySerializer(category, many=True).data
+            return Response({'success': True, 'categoriesList': category_list})
 
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
         
-# GET and POST Food Recipe API
+# GET Food Recipe API
 class FindFoodRecipe(APIView):
-    authentication_classes = [VolunteerTokenAuthentication]
-    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
-
-    # OpenApi specification and Swagger Documentation
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['categoryId','foodName','ingredients','cookingInstructions'], 
-            properties={
-                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
-                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
-                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
-                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
-            },
-        ),
-        responses={
-            200: openapi.Schema(
-                type=openapi.TYPE_OBJECT,
-                properties={
-                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
-                },
-            ),
-        },
-    
-        operation_description="Add to Calender API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
-    )
-
-    def post(self, request, categoryId, format=None):
-        try:
-
-            if categoryId is None:
-                return Response({'success': False, 'message':'Please provide category Id'})
-            
-            if request.data.get('foodName') is not None:
-                foodName = request.data.get('foodName')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Food Name'})
-            
-            if request.data.get('ingredients') is not None:
-                ingredients = request.data.get('ingredients')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Ingredients'})
-            
-            if request.data.get('cookingInstructions') is not None:
-                cookingInstructions = request.data.get('cookingInstructions')
-            else:
-                return Response({'success': False, 'message': 'please enter valid Cooking Instructions'})
-            
-            if request.FILES.getlist('foodImage') is not None:
-                files = request.FILES.getlist('foodImage')
-            else:
-                files=[]
-                return  files
-            
-            # Slugs and tags to  be modified later
-
-            user = request.user
-            
-            if Category.objects.filter(id=categoryId).exists():
-                category = Category.objects.get(id=categoryId)
-            else:
-                return Response({'success': False, 'message': 'Category with id does not exist'})
-            
-            if FoodRecipe.objects.filter(foodName=foodName, ingredients=ingredients, category=category).exists():
-                recipe = FoodRecipe.objects.get(foodName=foodName, ingredients=ingredients, category=category)
-                return Response({'success': True, 'message': 'Food Recipe already exists','recipe':recipe.id})
-            else:
-                recipe = FoodRecipe.objects.create(foodName=foodName, ingredients=ingredients, category=category, cookingInstructions=cookingInstructions)
-                createdAt = timezone.now()
-                for file in files:
-                    doc = Document.objects.create(
-                        docType=DOCUMENT_TYPE[2][0], 
-                        document=file, 
-                        createdAt=createdAt, 
-                    )
-                    recipe.foodImage.add(doc)
-                recipe.save()
-                return Response({'success': True, 'message': 'Food Recipe successfully created'})
-            
-        except Exception as e:
-            return Response({'success': False, 'message': str(e)})
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -891,22 +773,103 @@ class FindFoodRecipe(APIView):
         ],
     )
 
-    def get(self, request, categoryId, format=None):
-        try:
-            user = request.user
-            
-            if Category.objects.filter(id=categoryId).exists():
-                category = Category.objects.get(id=categoryId)
+    def get(self, request, category_id, format=None):
+        try:            
+            if Category.objects.filter(id=category_id).exists():
+                category = Category.objects.get(id=category_id)
             else:
                 return Response({'success': False, 'message': 'Category with id does not exist'})
 
             if FoodRecipe.objects.filter(category=category).exists():
                 recipes = FoodRecipe.objects.filter(category=category)
-                recipeList = FoodRecipeSerializer(recipes, many=True).data
-                return Response({'success':True, 'recipeList': recipeList})
+                paginator = PageNumberPagination()
+                paginated_recipes = paginator.paginate_queryset(recipes, request)
+                recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
             else:
                 return Response({'success': True, 'recipeList': []})
             
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
+# POST Food Recipe API
+class PostFoodRecipe(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['categoryId','foodName','ingredients','cookingInstructions', 'preparationTime'], 
+            properties={
+                'categoryId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
+                'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="vegetable Stew"),
+                'ingredients': openapi.Schema(type=openapi.TYPE_STRING, example="vegetables, etc"),
+                'cookingInstructions': openapi.Schema(type=openapi.TYPE_STRING, example="Boil for 5 mins on High Flame"),
+                'preparationTime':openapi.Schema(type=openapi.TYPE_STRING, example="45 mins"),
+                'foodImage': openapi.Schema(type=openapi.TYPE_FILE,),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Food Recipe successfully created'),
+                },
+            ),
+        },
+    
+        operation_description="Add Food Recipe API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, category_id, format=None):
+        try:
+            if category_id is None:
+                return Response({'success': False, 'message': 'Please provide category Id'})
+
+            food_name = request.data.get('foodName')
+            ingredients = request.data.get('ingredients')
+            cooking_instructions = request.data.get('cookingInstructions')
+            files = request.FILES.getlist('foodImage', [])
+            preparation_time = request.data.get('preparationTime')
+
+            if food_name is None:
+                return Response({'success': False, 'message': 'Please enter valid Food Name'})
+            if ingredients is None:
+                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
+            if cooking_instructions is None:
+                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
+            if preparation_time is None:
+                return Response({'success': False, 'message': 'Please enter valid Preparation Time'})
+
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                return Response({'success': False, 'message': 'Category with id does not exist'})
+
+            try:
+                recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
+                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
+            except FoodRecipe.DoesNotExist:
+                recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
+                                                cookingInstructions=cooking_instructions, preparationTime=preparation_time)
+                created_at = timezone.now()
+                for file in files:
+                    doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
+                    recipe.foodImage.add(doc)
+                recipe.save()
+                return Response({'success': True, 'message': 'Food Recipe successfully created'})
+
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
@@ -939,12 +902,10 @@ class RequestTypes(APIView):
     )
     
     def get(self, request, format=None):
-        try:
-            user = request.user
-            
-            requestType = RequestType.objects.all()
-            requestTypeList = RequestTypeSerializer(requestType, many=True).data
-            return Response({'success': True, 'requestTypeList': requestTypeList})
+        try:            
+            request_type = RequestType.objects.all()
+            request_type_list = RequestTypeSerializer(request_type, many=True).data
+            return Response({'success': True, 'requestTypeList': request_type_list})
 
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -987,52 +948,49 @@ class RequestFoodSupplies(APIView):
         ],
     )
 
-    def post(self, request, requestTypeId, format=None):
+    def post(self, request, request_type_id, format=None):
         try:
             
-            if request.data.get('itemTypeId') is not None:
-                itemTypeId = request.data.get('itemTypeId')
-            else:
+            if request.data.get('itemTypeId') == None:
                 return Response({'success': False, 'message': 'please enter valid Item Type'})
             
-            if request.data.get('itemName') is not None:
-                itemName = request.data.get('itemName')
-            else:
+            if request.data.get('itemName') == None:
                 return Response({'success': False, 'message': 'please enter valid Item Name'})
             
-            if request.data.get('requiredDate') is not None:
-                requiredDate = request.data.get('requiredDate')
-            else:
+            if request.data.get('requiredDate') == None:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
-            if request.data.get('quantity') is not None:
-                quantity = request.data.get('quantity')
-            else:
+            if request.data.get('quantity') == None:                
                 return  Response({'success': False, 'message': 'please enter valid quantity'})
             
+            item_type_id = request.data.get('itemTypeId')
+            item_name = request.data.get('itemName')
+            required_date = request.data.get('requiredDate')
+            quantity = request.data.get('quantity')
+
             user = request.user
 
-            if ItemType.objects.filter(id=itemTypeId).exists():
-                itemType = ItemType.objects.get(id=itemTypeId)
+            if ItemType.objects.filter(id=item_type_id).exists():
+                item_type = ItemType.objects.get(id=item_type_id)
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if FoodItem.objects.filter(itemName=itemName, itemType=itemType).exists():
-                foodItem = FoodItem.objects.get(itemName=itemName, itemType=itemType)
+            if FoodItem.objects.filter(itemName=item_name, itemType=item_type).exists():
+                food_item = FoodItem.objects.get(itemName=item_name, itemType=item_type)
             else:
-                foodItem = FoodItem.objects.create(itemName=itemName, itemType=itemType, addedBy=user, createdAt=timezone.now())
+                food_item = FoodItem.objects.create(itemName=item_name, itemType=item_type, addedBy=user, createdAt=timezone.now())
             
-            if RequestType.objects.filter(id=requestTypeId).exists():
-                requestType = RequestType.objects.get(id=requestTypeId)
+            if RequestType.objects.filter(id=request_type_id).exists():
+                request_type = RequestType.objects.get(id=request_type_id)
             else:
                 return Response({'success': False, 'message': 'Request Type with id does not exist'})
             
-            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem).exists():
-                itemRequest = Request.objects.get(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem)
-                return Response({'success': True, 'message': 'Request already exists','itemRequest':itemRequest.id})
+            if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item).exists():
+                item_request = Request.objects.get(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item)
+                return Response({'success': True, 'message': 'Request already exists','itemRequest':item_request.id})
             else:
-                createdAt = timezone.now()
-                itemRequest = Request.objects.create(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, quantity=quantity, foodItem=foodItem, createdAt=createdAt)
+                created_at = timezone.now()
+                item_request = Request.objects.create(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item, createdAt=created_at)
                 return Response({'success': True, 'message': 'Successfully requested items'})
             
         except Exception as e:
@@ -1047,16 +1005,9 @@ class RequestVolunteers(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['eventId', 'lat', 'lng', 'alt', 'requiredDate', 'numberOfVolunteers'], 
+            required=['eventId', 'requiredDate', 'numberOfVolunteers'], 
             properties={
                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
-                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
-                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
-                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
-                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
-                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
                 'numberOfVolunteers': openapi.Schema(type=openapi.TYPE_NUMBER, example='15'),
             }
@@ -1082,83 +1033,48 @@ class RequestVolunteers(APIView):
         ],
     )
 
-    def post(self, request, requestTypeId, format=None):
+    def post(self, request, request_type_id, format=None):
         try:
-            if request.data.get('eventId') is not None:
-                eventId = request.data.get('eventId')
+            if request.data.get('eventId') != None:
+                event_id = request.data.get('eventId')
             else:
                 return Response({'success': False, 'message': 'please enter valid Event Id'})
             
-            if request.data.get('lat') is not None:
-                lat = request.data.get('lat')
-            else:
-                return Response({'success': False, 'message': 'please enter valid latitude'})
-            
-            if request.data.get('lng') is not None:
-                lng = request.data.get('lng')
-            else:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') is not None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
-
-            if request.data.get('fullAddress') is not None:
-                fullAddress = request.data.get('fullAddress')
-            else:
-                return Response({'success': False, 'message': 'please enter valid full address'})
-            
-            if request.data.get('postalCode') is not None:
-                postalCode = request.data.get('postalCode')
-            else:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
-            
-            if request.data.get('state') is not None:
-                state = request.data.get('state')
-            else:
-                return Response({'success': False, 'message': 'please enter valid state'})
-            
-            if request.data.get('city') is not None:
-                city = request.data.get('city')
-            else:
-                return Response({'success': False, 'message': 'please enter valid city'})
-            
-            if request.data.get('requiredDate') is not None:
-                requiredDate = request.data.get('requiredDate')
+            if request.data.get('requiredDate') != None:
+                required_date = request.data.get('requiredDate')
             else:
                 return Response({'success': False, 'message': 'please enter valid Required Date'})
             
-            if request.data.get('numberOfVolunteers') is not None:
-                numberOfVolunteers = request.data.get('numberOfVolunteers')
+            if request.data.get('numberOfVolunteers') != None:
+                number_of_volunteers = request.data.get('numberOfVolunteers')
             else:
                 return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
 
             user = request.user            
 
-            if FoodEvent.objects.filter(id=eventId, createdBy=user).exists():
-                foodEvent = FoodEvent.objects.get(id=eventId, createdBy=user)
+            if FoodEvent.objects.filter(id=event_id, createdBy=user).exists():
+                food_event = FoodEvent.objects.get(id=event_id, createdBy=user)
             else:
                 return Response({'success': False, 'message': 'Food event with id does not exist'})
 
-            if RequestType.objects.filter(id=requestTypeId, active=True).exists():
-                requestType = RequestType.objects.get(id=requestTypeId, active=True)
+            if RequestType.objects.filter(id=request_type_id, active=True).exists():
+                request_type = RequestType.objects.get(id=request_type_id, active=True)
             else:
                 return Response({'success':False, 'message':'Request Type with id does not exist'})
             
             
-            if Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers,foodEvent=foodEvent).exists():
-                request = Request.objects.filter(type=requestType, createdBy=user, requiredDate=requiredDate, active=True, fullfilled=False, quantity=numberOfVolunteers, foodEvent=foodEvent)
+            if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers,foodEvent=food_event).exists():
+                request = Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers, foodEvent=food_event)
                 return Response({'success':False, 'message':'Request Already Exists for this particular Event'})
             else:
                 Request.objects.create(
-                    type=requestType, 
+                    type=request_type, 
                     createdBy=user, 
-                    requiredDate=requiredDate,
+                    requiredDate=required_date,
                     active=True,
                     createdAt=timezone.now(),
-                    quantity=numberOfVolunteers,
-                    foodEvent=foodEvent
+                    quantity=number_of_volunteers,
+                    foodEvent=food_event
                 )
                 return Response({'success':True, 'message':'Volunteers Request successfully created'})
         except Exception as e:
@@ -1173,7 +1089,7 @@ class DonateFood(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city', 'phoneNumber'], 
+            required=['itemTypeId', 'foodName', 'quantity', 'pickupDate', 'lat', 'lng', 'fullAddress', 'postalCode', 'state', 'city'], 
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
@@ -1181,12 +1097,10 @@ class DonateFood(APIView):
                 'pickupDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example='4500'),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
                 'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
-                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='99802732'),
             }
         ),
         responses={
@@ -1213,103 +1127,78 @@ class DonateFood(APIView):
     def post(self, request, format=None):
         try:
 
-            if request.data.get('itemTypeId') is not None:
-                itemTypeId = request.data.get('itemTypeId')
-            else:
+            if request.data.get('itemTypeId') == None:
                 return Response({'success': False, 'message': 'please enter valid item Type Id'})
             
-            if request.data.get('foodName') is not None:
-                foodName = request.data.get('foodName')
-            else:
+            if request.data.get('foodName') == None:
                 return Response({'success': False, 'message': 'please enter valid Food Item'})
             
-            if request.data.get('quantity') is not None:
-                quantity = request.data.get('quantity')
-            else:
+            if request.data.get('quantity') == None:
                 return Response({'success': False, 'message': 'please enter valid quantity'})
             
-            if request.data.get('pickupDate') is not None:
-                pickupDate = request.data.get('pickupDate')
-            else:
+            if request.data.get('pickupDate') == None:
                 return Response({'success': False, 'message': 'please enter valid pickup Date'})
          
-            if request.data.get('lat') is not None:
-                lat = request.data.get('lat')
-            else:
+            if request.data.get('lat') == None:
                 return Response({'success': False, 'message': 'please enter valid latitude'})
             
-            if request.data.get('lng') is not None:
-                lng = request.data.get('lng')
-            else:
+            if request.data.get('lng') == None:
                 return Response({'success': False, 'message': 'please enter valid longitude'})
-            
-            if request.data.get('alt') is not None:
-                alt = request.data.get('alt')
-            else:
-                alt = None
 
-            if request.data.get('fullAddress') is not None:
-                fullAddress = request.data.get('fullAddress')
-            else:
+            if request.data.get('fullAddress') == None:
                 return Response({'success': False, 'message': 'please enter valid full address'})
             
-            if request.data.get('postalCode') is not None:
-                postalCode = request.data.get('postalCode')
-            else:
+            if request.data.get('postalCode') == None:
                 return Response({'success': False, 'message': 'please enter valid postal code'})
             
-            if request.data.get('state') is not None:
-                state = request.data.get('state')
-            else:
+            if request.data.get('state') == None:
                 return Response({'success': False, 'message': 'please enter valid state'})
             
-            if request.data.get('city') is not None:
-                city = request.data.get('city')
-            else:
+            if request.data.get('city') == None:
                 return Response({'success': False, 'message': 'please enter valid city'})
-            
-            if request.data.get('phoneNumber') is not None:
-                phoneNumber = request.data.get('phoneNumber')
-            else:
-                return Response({'success': False, 'message': 'please enter valid phone Number'})
 
             user = request.user
-            
-            if ItemType.objects.filter(id=itemTypeId).exists():
-                itemType = ItemType.objects.get(id=itemTypeId)
+
+            item_type_id = request.data.get('itemTypeId')
+            food_name = request.data.get('foodName')
+            quantity = request.data.get('quantity')
+            pick_up_date = request.data.get('pickupDate')
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
+            full_address = request.data.get('fullAddress')
+            postal_code = request.data.get('postalCode')
+            state = request.data.get('state')
+            city = request.data.get('city')
+
+            if ItemType.objects.filter(id=item_type_id).exists():
+                item_type = ItemType.objects.get(id=item_type_id)
             else:
                 return Response({'success': False, 'message': 'Item Type with id does not exist'})
             
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                pickupAddress = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                pickupAddress = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)
+            pickup_address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )  
 
-            if FoodItem.objects.filter(itemName=foodName).exists():
-                foodItem = FoodItem.objects.get(itemName=foodName, addedBy=user, itemType=itemType)
-            else:
-                foodItem = FoodItem.objects.create(itemName=foodName, addedBy=user, itemType=itemType, createdAt=timezone.now())
+            food_item = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
 
-            if DeliveryDetail.objects.filter(pickupAddress=pickupAddress, pickupDate=pickupDate).exists():
-                deliveryDetails = DeliveryDetail.objects.get(pickupAddress=pickupAddress, pickupDate=pickupDate)
-            else:
-                deliveryDetails = DeliveryDetail.objects.create(pickupAddress=pickupAddress, pickupDate=pickupDate)
+            delivery_details, _ = DeliveryDetail.objects.get_or_create(pickupAddress=pickup_address, pickupDate=pick_up_date)
 
-            if Donation.objects.filter(donationType=itemType, foodItem=foodItem, quantity=quantity, donatedBy=user).exists(): 
-                donation = Donation.objects.get(donationType=itemType, foodItem=foodItem, quantity=quantity, donatedBy=user)
-                donationDetails = DonationSerializer(donation).data
-                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donationDetails})     
+            if Donation.objects.filter(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user).exists(): 
+                donation = Donation.objects.get(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user)
+                donation_details = DonationSerializer(donation).data
+                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donation_details})     
             else:
                 donation = Donation.objects.create(
-                    donationType=itemType,
-                    foodItem=foodItem,
+                    donationType=item_type,
+                    foodItem=food_item,
                     quantity=quantity,
                     donatedBy=user,
                     needsPickup=True,
-                    delivery=deliveryDetails,
+                    delivery=delivery_details,
                 )  
-                donationDetails = DonationSerializer(donation).data
-                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donationDetails})     
+                donation_details = DonationSerializer(donation).data
+                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donation_details})     
     
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
@@ -1343,8 +1232,8 @@ class DonateFood(APIView):
 
             if Donation.objects.filter(donatedBy=user).exists(): 
                 donation = Donation.objects.filter(donatedBy=user)
-                donationDetails = DonationSerializer(donation, many=True).data
-                return Response({'success': True, 'donationList':donationDetails})    
+                donation_details = DonationSerializer(donation, many=True).data
+                return Response({'success': True, 'donationList':donation_details})    
              
             else:
                 return Response({'success': True,'donationList':[]})     
@@ -1383,12 +1272,12 @@ class VolunteerProfile(APIView):
     # fetch volunteer Profile API
     def get(self, request,  format=None):
         try:
-            if request.user.id is not None:
-                userId= request.user.id
-                if Volunteer.objects.filter(id=userId).exists():
-                    user = Volunteer.objects.get(id=userId)
-                    userDetails = UserProfileSerializer(user).data
-                    return Response({'success':True, 'userDetails':userDetails})
+            if request.user.id != None:
+                user_id= request.user.id
+                if Volunteer.objects.filter(id=user_id).exists():
+                    user = Volunteer.objects.get(id=user_id)
+                    user_details = UserProfileSerializer(user).data
+                    return Response({'success':True, 'userDetails':user_details})
                 else:
                     return Response({'success': False, 'message': 'user not found'})
             else :
@@ -1408,7 +1297,6 @@ class VolunteerProfile(APIView):
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
-                'alt': openapi.Schema(type=openapi.FORMAT_FLOAT, example=4500),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
@@ -1439,88 +1327,58 @@ class VolunteerProfile(APIView):
     # update Volunteer Profile API
     def put(self, request,  format=None):
 
-        if request.data.get('name') is not None:
-            name = request.data.get('name')
-        else:
+        if request.data.get('name') == None:
             return Response({'success':False, 'message':'Please enter valid name'})
         
-        if request.data.get('email') is not None:
-            email = request.data.get('email')
-        else:
+        if request.data.get('email') == None:
             return Response({'success':False, 'message':'Please enter valid email'})
         
-        if request.data.get('lat') is not None:
-            lat = request.data.get('lat')
-        else:
+        if request.data.get('lat') == None:
             return Response({'success':False, 'message':'Please enter valid latitude'})
         
-        if request.data.get('lng') is not None:
-            lng = request.data.get('lng')
-        else:
+        if request.data.get('lng') == None:
             return Response({'success':False, 'message':'Please enter valid longitude'})
-        
-        if request.data.get('alt') is not None:
-            alt = request.data.get('alt')
-        else:
-            alt = None
 
-        if request.data.get('fullAddress') is not None:
-            fullAddress = request.data.get('fullAddress')
-        else:
+        if request.data.get('fullAddress') == None:
             return Response({'success': False, 'message': 'please enter valid full address'})
         
-        if request.data.get('postalCode') is not None:
-            postalCode = request.data.get('postalCode')
-        else:
+        if request.data.get('postalCode') == None:
             return Response({'success': False, 'message': 'please enter valid postal code'})
         
-        if request.data.get('state') is not None:
-            state = request.data.get('state')
-        else:
+        if request.data.get('state') == None:
             return Response({'success': False, 'message': 'please enter valid state'})
         
-        if request.data.get('city') is not None:
-            city = request.data.get('city')
-        else:
+        if request.data.get('city') == None:
             return Response({'success': False, 'message': 'please enter valid city'})
 
-        if request.data.get('phoneNumber') is not None:
-            phoneNumber = request.data.get('phoneNumber')
-        else:
+        if request.data.get('phoneNumber') == None:
             return Response({'success':False, 'message':'Please enter valid phoneNumber'})
-        
-        if request.data.get('volunteerType') is not None:
-            volunteerType = request.data.get('volunteerType')
-        else:
-            return Response({'success':False, 'message':'Please enter valid volunteer Type'})
-        
-        try:
 
-            if Address.objects.filter(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress).exists():
-                address = Address.objects.get(lat=lat, lng=lng, streetAddress=fullAddress, fullAddress=fullAddress)
-            else:
-                address = Address.objects.create(lat=lat, lng=lng, alt=alt, fullAddress=fullAddress, streetAddress=fullAddress, postalCode=postalCode, state=state, city=city)           
+        name = request.data.get('name')
+        email = request.data.get('email')
+        lat = request.data.get('lat')
+        lng = request.data.get('lng')
+        full_address = request.data.get('fullAddress')
+        postal_code = request.data.get('postalCode')
+        state = request.data.get('state')
+        city = request.data.get('city')
+        phone_number = request.data.get('phoneNumber')
+
+        try:
+            address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )          
 
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 user.name = name
-                user.phoneNumber = phoneNumber
+                user.phoneNumber = phone_number
                 user.address = address
-
-                if volunteerType == VOLUNTEER_TYPE[0][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[0][0]
-                elif volunteerType == VOLUNTEER_TYPE[1][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[1][0]
-                elif volunteerType == VOLUNTEER_TYPE[2][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[2][0]
-                elif volunteerType == VOLUNTEER_TYPE[3][0]:
-                    user.volunteerType = VOLUNTEER_TYPE[3][0]
-                else:
-                    return Response({'success': False, 'message': 'Volunteer type does not exist'})
                 
                 user.save()
-                userDetails = UserProfileSerializer(user).data
-                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':userDetails})
+                user_details = UserProfileSerializer(user).data
+                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':user_details})
             else:
                 return Response({'success':False, 'message':'Volunteer with email does not exist'})
         except Exception as e:
@@ -1552,8 +1410,8 @@ class VolunteerProfile(APIView):
     # Delete Volunteer Object, Documents Object, Vehicle Object, Food Events Object, Donations Object, To be Implemented ---> [Requests Object (Volunteer, food/supplies/ pickup/drop)], 
     def delete(self, request,  format=None):
         try:            
-            if request.user.id is not None:
-                res = sendMailForConfirmDeletion(request.user.id)
+            if request.user.id != None:
+                res = send_mail_for_confirm_deletion(request.user.id)
                 if res['success'] == True:
                     return Response({'success':True, 'message':'E-Mail has been sent successfully'})
                 else:
@@ -1565,10 +1423,10 @@ class VolunteerProfile(APIView):
             return Response({'success': False, 'message': str(e)})
 
 
-def sendMailForConfirmDeletion(userId):
+def send_mail_for_confirm_deletion(user_id):
     try:
-        if Volunteer.objects.filter(id=userId).exists():
-            user = Volunteer.objects.get(id=userId)
+        if Volunteer.objects.filter(id=user_id).exists():
+            user = Volunteer.objects.get(id=user_id)
 
             subject = f'Confirmation E-Mail To Delete your Account'
             email_from = settings.DEFAULT_SENDER
@@ -1577,7 +1435,7 @@ def sendMailForConfirmDeletion(userId):
             firebase_user = auth.get_user_by_email(email=user.email)
 
             html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/ConfirmUserAccountDelete.html')).read()
-            email_text = html.replace('{{name}}', user.name).replace('{{email}}', user.email).replace('{{delete_url}}', settings.PRODUCTION_URL).replace('{{uniqueID}}', firebase_user.uid)
+            email_text = html.replace('{{name}}', user.name).replace('{{email}}', user.email).replace('{{delete_url}}', settings.PRODUCTION_URL).replace('{{unique_id}}', firebase_user.uid)
             
             try:
                 
@@ -1630,8 +1488,8 @@ class VehicleOperations(APIView):
             user = request.user 
             if Vehicle.objects.filter(owner=user).exists():
                 vehicle = Vehicle.objects.filter(owner=user)
-                vehicleDetails = VehicleSerializer(vehicle, many=True).data
-                return Response({'success': True, 'vehicleDetails': vehicleDetails})
+                vehicle_details = VehicleSerializer(vehicle, many=True).data
+                return Response({'success': True, 'vehicleDetails': vehicle_details})
             else:
                 return Response({'success': True, 'message': f'No vehicle found for user {user.name}', 'vehicleDetails': []})
             
@@ -1675,46 +1533,46 @@ class VehicleOperations(APIView):
     def post(self, request, format=None):
         try:
             
-            if request.data.get('make') is not None:
+            if request.data.get('make') != None:
                 make = request.data.get('make')
             else:
                 return Response({'success': False, 'message': 'please enter valid make'})
             
-            if request.data.get('model') is not None:
+            if request.data.get('model') != None:
                 model = request.data.get('model')
             else:
                 return Response({'success': False, 'message':'please enter valid model'})
             
-            if request.data.get('vehicleColour') is not None:
-                vehicleColour = request.data.get('vehicleColour')
+            if request.data.get('vehicleColour') != None:
+                vehicle_colour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'please enter valid vehicle colour'})
             
-            if request.data.get('plateNumber') is not None:
-                plateNumber = request.data.get('plateNumber')
+            if request.data.get('plateNumber') != None:
+                plate_number = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'please enter valid plate number'})
             
-            if request.data.get('active') is not None:
+            if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
                 return Response({'success': False, 'message': 'please enter True if active and False if not active'})
             
             user = request.user
 
-            if Vehicle.objects.filter(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour).exists():
-                vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour)
-                vehicleDetails = VehicleSerializer(vehicle).data
-                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicleDetails})
+            if Vehicle.objects.filter(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour).exists():
+                vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour)
+                vehicle_details = VehicleSerializer(vehicle).data
+                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details})
             else:
-                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plateNumber, owner=user, vehicleColour=vehicleColour, active=active, createdAt=timezone.now())
-                vehicleDetails = VehicleSerializer(vehicle).data
+                vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour, active=active, createdAt=timezone.now())
+                vehicle_details = VehicleSerializer(vehicle).data
 
                 # updating isDriver Field of Volunteer model when the user Adds a vehicle.
                 user.isDriver = True
                 user.save()
 
-                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicleDetails})
+                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicle_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})    
     
@@ -1753,38 +1611,38 @@ class VehicleOperations(APIView):
 
     def put(self, request, format=None):
         try:
-            if request.data.get('vehicleId') is not None:
-                vehicleId = request.data.get('vehicleId')
+            if request.data.get('vehicleId') != None:
+                vehicle_id = request.data.get('vehicleId')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle Id'})
             
-            if request.data.get('vehicleColour') is not None:
-                vehicleColour = request.data.get('vehicleColour')
+            if request.data.get('vehicleColour') != None:
+                vehicle_colour = request.data.get('vehicleColour')
             else:
                 return Response({'success': False, 'message': 'Please enter valid vehicle colour'})
             
-            if request.data.get('plateNumber') is not None:
-                plateNumber = request.data.get('plateNumber')
+            if request.data.get('plateNumber') != None:
+                plate_number = request.data.get('plateNumber')
             else:
                 return Response({'success': False, 'message': 'Please enter valid plate number'})
             
-            if request.data.get('active') is not None:
+            if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
                 return Response({'success': False, 'message': 'Please enter True if active and False if not active'})
             
             user = request.user
 
-            if Vehicle.objects.filter(id=vehicleId, owner=user).exists():
-                vehicle = Vehicle.objects.get(id=vehicleId, owner=user)
-                vehicle.vehicleColour = vehicleColour
-                vehicle.plateNumber = plateNumber
+            if Vehicle.objects.filter(id=vehicle_id, owner=user).exists():
+                vehicle = Vehicle.objects.get(id=vehicle_id, owner=user)
+                vehicle.vehicleColour = vehicle_colour
+                vehicle.plateNumber = plate_number
                 vehicle.active = active
                 vehicle.save()
-                vehicleDetails = VehicleSerializer(vehicle).data
-                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicleDetails})
+                vehicle_details = VehicleSerializer(vehicle).data
+                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicle_details})
             else:
-                return Response({'success': False, 'message': f'Vehicle with id {vehicleId} not found'})
+                return Response({'success': False, 'message': f'Vehicle with id {vehicle_id} not found'})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
  
@@ -1817,26 +1675,19 @@ class AllEvents(APIView):
 
     def get(self, request, format=None):
         try:
-            # user = request.user
-            todayDate = timezone.now()
+            today_date = timezone.now()
 
-            if FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate)).exists():
-                foodEvents = FoodEvent.objects.filter(Q(eventStartDate__gte=todayDate) | Q(eventEndDate__gte=todayDate))
-                foodEventsDetails = FoodEventSerializer(foodEvents, many=True).data
-                return Response({'success': True, 'foodEvents': foodEventsDetails})
+            if FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date)).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date))
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
             else:
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
-from django.db.models import Count
-from django.db.models.functions import Trunc
-# import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
-
 # <-------------------------------- Pie Graph -------------------------------->
-def Create_pie_graph(x_data, y_data, title):
+def create_pie_graph(x_data, y_data, title):
     
     fig, ax = plt.subplots()
     ax.pie(x_data, labels=y_data, autopct='%1.0f%%')
@@ -1855,7 +1706,7 @@ def Create_pie_graph(x_data, y_data, title):
     return image_png
 
 # <-------------------------------- Bar Graph -------------------------------->
-def Create_bar_graph(x_data, y_data, title, x_label, y_label):
+def create_bar_graph(x_data, y_data, title, x_label, y_label):
 
     fig, ax = plt.subplots()
     bars = ax.bar(x_data, y_data)
@@ -1882,7 +1733,7 @@ def Create_bar_graph(x_data, y_data, title, x_label, y_label):
     return image_png
 
 # <-------------------------------- Line Graph -------------------------------->
-def Create_line_graph(x_data, y_data, title, x_label, y_label):
+def create_line_graph(x_data, y_data, title, x_label, y_label):
     
     fig, ax = plt.subplots()
     ax.plot(x_data, y_data)
@@ -1903,7 +1754,7 @@ def Create_line_graph(x_data, y_data, title, x_label, y_label):
     return image_png
 
 # <-------------------------------- Scatter Graph -------------------------------->
-def Create_scatter_graph(x_data, y_data, title, x_label, y_label):
+def create_scatter_graph(x_data, y_data, title, x_label, y_label):
     
     fig, ax = plt.subplots()
     ax.scatter(x_data, y_data)
@@ -1956,111 +1807,196 @@ def get_last_12_months(current_date):
         
     return last_12_months[::-1]
 
-def plot_view(request):
+class PlotView(APIView):
+    def get(self, request):
 
-    # Get the current month and year
-    current_date = datetime.now()
+        # Get the current month and year
+        current_date = datetime.now()
 
-    # function to get the list of last 12 months of the current year
-    last_12_monthList = get_last_12_months(current_date)
+        # function to get the list of last 12 months of the current year
+        last_year_month_list = get_last_12_months(current_date)
+        print(last_year_month_list)
 
+        # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+        data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
-    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
-    data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-    # print('data=============>>>>>',data)
+        formatted_month = '%B-%Y'
+        # Extract the x and y values from the data
+        x = [entry['month'].strftime(formatted_month) for entry in data]
+        y = [entry['count'] for entry in data]
 
-    for da in data:
-        print(da['month'].strftime("%B %Y"))
+        user_graph_title = 'User Growth'
+        user_x_axis_label = 'Joined Month'
+        user_y_axis_label = 'Number of Users Joined'
 
-    # Extract the x and y values from the data
-    x = [entry['month'].strftime('%B-%Y') for entry in data]
-    y = [entry['count'] for entry in data]
-
-    # print(x,'******************************************',y)
-
-    # call the create bar graph function
-    bar_img_png = Create_bar_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    line_img_png = Create_line_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    scatter_img_png = Create_scatter_graph(x, y, 'User Growth', 'Joined Month', 'Number of Users Joined')
-    pie_img_png = Create_pie_graph(y, x, 'Number of Users Joined')
-
-
-    # Encode the image in base64 for embedding in HTML
-    bar_volunteerGraphic = urllib.parse.quote(base64.b64encode(bar_img_png))
-    line_volunteerGraphic = urllib.parse.quote(base64.b64encode(line_img_png))
-    scatter_volunteerGraphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
-    pie_volunteerGraphic = urllib.parse.quote(base64.b64encode(pie_img_png))
-
-    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-    foodEvents = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-
-    # Extract the x and y values from the data
-    a = [foodEventEntry['month'].strftime('%B-%Y') for foodEventEntry in foodEvents]
-    b = [foodEventEntry['count'] for foodEventEntry in foodEvents]
-
-    # call the create bar graph function
-    bar_foodEventImage_png = Create_bar_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    line_foodEventImage_png = Create_line_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    scatter_foodEventImage_png = Create_scatter_graph(a, b, 'Food Events', 'Created Month', 'Number of Events Created')
-    pie_foodEventImage_png = Create_pie_graph(b, a, 'Food Events',)
-
-    # Encode the image in base64 for embedding in HTML
-    bar_foodEventGraphic = urllib.parse.quote(base64.b64encode(bar_foodEventImage_png))
-    line_foodEventGraphic = urllib.parse.quote(base64.b64encode(line_foodEventImage_png))
-    scatter_foodEventGraphic = urllib.parse.quote(base64.b64encode(scatter_foodEventImage_png))
-    pie_foodEventGraphic = urllib.parse.quote(base64.b64encode(pie_foodEventImage_png))
-
-    # ---------------DONATIONS CREATED ON GRAPH -----------------
-    foodDonation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
-
-    # Extract the x and y values from the data
-    a = [foodDonationEntry['month'].strftime('%B-%Y') for foodDonationEntry in foodDonation]
-    b = [foodDonationEntry['count'] for foodDonationEntry in foodDonation]
-
-    # call the create bar graph function
-    bar_foodDonationImage_png = Create_bar_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    line_foodDonationImage_png = Create_line_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    scatter_foodDonationImage_png = Create_scatter_graph(a, b, 'Food Donations', 'Created Month', 'Number of Donations Created')
-    pie_foodDonationImage_png = Create_pie_graph(b, a, 'Food Donations',)
-
-    # Encode the image in base64 for embedding in HTML
-    bar_foodDonationGraphic = urllib.parse.quote(base64.b64encode(bar_foodDonationImage_png))
-    line_foodDonationGraphic = urllib.parse.quote(base64.b64encode(line_foodDonationImage_png))
-    scatter_foodDonationGraphic = urllib.parse.quote(base64.b64encode(scatter_foodDonationImage_png))
-    pie_foodDonationGraphic = urllib.parse.quote(base64.b64encode(pie_foodDonationImage_png))
-
-    #---------------   -----------------
-    bar_graphData = {'bar_volunteerGraphic':bar_volunteerGraphic,'bar_foodEventGraphic':bar_foodEventGraphic, 'bar_foodDonationGraphic':bar_foodDonationGraphic}
-    line_graphData = {'line_volunteerGraphic':line_volunteerGraphic,'line_foodEventGraphic':line_foodEventGraphic, 'line_foodDonationGraphic':line_foodDonationGraphic}
-    scatter_graphData = {'scatter_volunteerGraphic':scatter_volunteerGraphic,'scatter_foodEventGraphic':scatter_foodEventGraphic, 'scatter_foodDonationGraphic':scatter_foodDonationGraphic}
-    pie_graphData = {'pie_volunteerGraphic':pie_volunteerGraphic, 'pie_foodEventGraphic':pie_foodEventGraphic, 'pie_foodDonationGraphic':pie_foodDonationGraphic}
-
-    # Pass the graphic to the template context
-    context = {'bar_graphData':bar_graphData, 'line_graphData':line_graphData, 'scatter_graphData':scatter_graphData, 'pie_graphData':pie_graphData, 'updatedTime':0}
-    return render(request, 'base.html', context)
-
-def dashboard_view(request):
-
-    # Get the current month and year
-    current_date = datetime.now()
+        # call the create bar graph function
+        bar_img_png = create_bar_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        line_img_png = create_line_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        scatter_img_png = create_scatter_graph(x, y, user_graph_title, user_x_axis_label, user_y_axis_label)
+        pie_img_png = create_pie_graph(y, x, user_graph_title)
 
 
-    # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
-    users = Volunteer.objects.all().order_by('-id')
-    userDetails = UserProfileSerializer(users, many=True).data
+        # Encode the image in base64 for embedding in HTML
+        bar_volunteer_graphic = urllib.parse.quote(base64.b64encode(bar_img_png))
+        line_volunteer_graphic = urllib.parse.quote(base64.b64encode(line_img_png))
+        scatter_volunteer_graphic = urllib.parse.quote(base64.b64encode(scatter_img_png))
+        pie_volunteer_graphic = urllib.parse.quote(base64.b64encode(pie_img_png))
 
-    # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-    foodEvents = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
-    eventDetails = FoodEventSerializer(foodEvents, many=True).data
+        # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+        food_events = FoodEvent.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
 
-    # print(eventDetails)
+        # Extract the x and y values from the data
+        a = [food_event_entry['month'].strftime(formatted_month) for food_event_entry in food_events]
+        b = [food_event_entry['count'] for food_event_entry in food_events]
 
-    # ---------------DONATIONS CREATED ON GRAPH -----------------
-    foodDonations = Donation.objects.all().order_by('-id')
-    donationDetails = DonationSerializer(foodDonations, many=True).data
+        event_graph_title = 'Food Events'
+        x_axis_label = 'Created Month'
+        event_y_axis_label = 'Number of Events Created'
 
-    # print(donationDetails)
+        # call the create bar graph function
+        bar_food_event_image_png = create_bar_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        line_food_event_image_png = create_line_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        scatter_food_event_image_png = create_scatter_graph(a, b, event_graph_title, x_axis_label, event_y_axis_label)
+        pie_food_event_image_png = create_pie_graph(b, a, event_graph_title,)
 
-    # Pass the graphic to the template context
-    context = {"volunteerDetails" : userDetails,'eventDetails':eventDetails, 'donationDetails':donationDetails,  'updatedTime':0}
-    return render(request, 'dashboard.html', context)
+        # Encode the image in base64 for embedding in HTML
+        bar_food_event_graphic = urllib.parse.quote(base64.b64encode(bar_food_event_image_png))
+        line_food_event_graphic = urllib.parse.quote(base64.b64encode(line_food_event_image_png))
+        scatter_food_event_graphic = urllib.parse.quote(base64.b64encode(scatter_food_event_image_png))
+        pie_food_event_graphic = urllib.parse.quote(base64.b64encode(pie_food_event_image_png))
+
+        # ---------------DONATIONS CREATED ON GRAPH -----------------
+        food_donation = Donation.objects.annotate(month=Trunc('createdAt', 'month')).values('month').annotate(count=Count('id')).order_by('month')
+
+        # Extract the x and y values from the data
+        a = [food_donation_entry['month'].strftime(formatted_month) for food_donation_entry in food_donation]
+        b = [food_donation_entry['count'] for food_donation_entry in food_donation]
+
+        donation_graph_title = 'Food Donations'
+        donation_y_axis_label = 'Number of Donations Created'
+
+        # call the create bar graph function
+        bar_food_donation_image_png = create_bar_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        line_food_donation_image_png = create_line_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        scatter_food_donation_image_png = create_scatter_graph(a, b, donation_graph_title, x_axis_label, donation_y_axis_label)
+        pie_food_donation_image_png = create_pie_graph(b, a, donation_graph_title,)
+
+        # Encode the image in base64 for embedding in HTML
+        bar_food_donation_graphic = urllib.parse.quote(base64.b64encode(bar_food_donation_image_png))
+        line_food_donation_graphic = urllib.parse.quote(base64.b64encode(line_food_donation_image_png))
+        scatter_food_donation_graphic = urllib.parse.quote(base64.b64encode(scatter_food_donation_image_png))
+        pie_food_donation_graphic = urllib.parse.quote(base64.b64encode(pie_food_donation_image_png))
+
+        #---------------   -----------------
+        bar_graph_data = {'bar_volunteerGraphic':bar_volunteer_graphic,'bar_foodEventGraphic':bar_food_event_graphic, 'bar_foodDonationGraphic':bar_food_donation_graphic}
+        line_graph_data = {'line_volunteerGraphic':line_volunteer_graphic,'line_foodEventGraphic':line_food_event_graphic, 'line_foodDonationGraphic':line_food_donation_graphic}
+        scatter_graph_data = {'scatter_volunteerGraphic':scatter_volunteer_graphic,'scatter_foodEventGraphic':scatter_food_event_graphic, 'scatter_foodDonationGraphic':scatter_food_donation_graphic}
+        pie_graph_data = {'pie_volunteerGraphic':pie_volunteer_graphic, 'pie_foodEventGraphic':pie_food_event_graphic, 'pie_foodDonationGraphic':pie_food_donation_graphic}
+
+        # Pass the graphic to the template context
+        context = {'bar_graphData':bar_graph_data, 'line_graphData':line_graph_data, 'scatter_graphData':scatter_graph_data, 'pie_graphData':pie_graph_data, 'updatedTime':0}
+        return render(request, 'base.html', context)
+
+class AdminDashboardView(APIView):
+    def get(self,request):
+
+        # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
+        users = Volunteer.objects.all().order_by('-id')
+        user_details = UserProfileSerializer(users, many=True).data
+
+        # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
+        food_events = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-id')
+        event_details = FoodEventSerializer(food_events, many=True).data
+
+        # ---------------DONATIONS CREATED ON GRAPH -----------------
+        food_donations = Donation.objects.all().order_by('-id')
+        donation_details = DonationSerializer(food_donations, many=True).data
+
+        # Pass the graphic to the template context
+        context = {"volunteerDetails" : user_details,'eventDetails':event_details, 'donationDetails':donation_details,  'updatedTime':0}
+        return render(request, 'dashboard.html', context)
+
+class VolunteerNotification(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'notificationa': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Get Volunteer Notifications API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # My notifications 
+    def get(self, request, format=None):
+        try:
+            user = request.user
+            today = timezone.now().date()
+            seven_days_ago = today - timedelta(days=7, hours=0.0)
+
+            if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
+                notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
+                notification_details = NotificationSerializer(notification, many=True).data
+                return Response({'success': True, 'notifications': notification_details})
+            else:
+                return Response({'success': True, 'notifications': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+# FETCH EVENTS API According to Calender Dates
+class CalenderEvents(APIView):
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='startDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True), # Date-time in epoch format
+            openapi.Parameter(name='endDate', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),  # Date-time in epoch format
+        ],   
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodEvents': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch Calender Events API",
+    )
+
+    def get(self, request, format=None):
+        try:
+
+            from_date_epochs = int(request.query_params.get('startDate'))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
+
+            to_date_epochs = int(request.query_params.get('endDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
+
+            if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date)).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date))
+                food_events_details = FoodEventSerializer(food_events, many=True).data
+                return Response({'success': True, 'foodEvents': food_events_details})
+            else:
+                return Response({'success': True, 'foodEvents': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+
+   
