@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from app.authentication import create_access_token, create_refresh_token, VolunteerPermissionAuthentication, VolunteerTokenAuthentication 
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
-                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, EVENT_STATUS)
+                      Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
                           RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer )
 from drf_yasg.utils import swagger_auto_schema
@@ -455,7 +455,7 @@ class FindFood(APIView):
             events_qs = FoodEvent.objects.filter(
                 Q(Q(eventStartDate__gte=from_date) & Q(eventStartDate__lte=to_date)) |
                 Q(Q(eventStartDate__lte=from_date) & Q(eventEndDate__gte=from_date)),
-                status=EVENT_STATUS[0][0]
+                status=STATUS[0][0]
             ).order_by('-id')
 
             final_food_events = [
@@ -1906,7 +1906,7 @@ class AdminDashboardView(APIView):
         user_details = UserProfileSerializer(users, many=True).data
 
         # ---------------FOOD EVENTS CREATED ON GRAPH -----------------
-        food_events = FoodEvent.objects.filter(status=EVENT_STATUS[2][0]).order_by('-id')
+        food_events = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-id')
         event_details = FoodEventSerializer(food_events, many=True).data
 
         # ---------------DONATIONS CREATED ON GRAPH -----------------
@@ -1999,4 +1999,5 @@ class CalenderEvents(APIView):
                 return Response({'success': True, 'foodEvents': []})
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
-        
+
+   

@@ -36,6 +36,9 @@ class ItemTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'createdAt', 'active')
 
 class CategoryAdmin(admin.ModelAdmin):
+    formfield_overrides = {         
+        models.FileField: {"widget": CustomAdminFileWidget}
+    }
     list_display = ('id', 'name', 'createdAt', 'active')
 
 class AddressAdmin(admin.ModelAdmin):
