@@ -275,6 +275,7 @@ class CategorySerializer(Serializer):
     name =  serializers.SerializerMethodField()
     createdAt = serializers.SerializerMethodField()
     active = serializers.BooleanField(default=True)
+    categoryImage = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -297,6 +298,14 @@ class CategorySerializer(Serializer):
         else:
             return False
         
+    def get_categoryImage(self, obj):
+        if obj.categoryImage is not None:
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=obj.categoryImage.name)
+            return document_url
+        else:
+            return 'Category image not specified'
+        
 class FoodRecipeSerializer(Serializer):
     id = serializers.SerializerMethodField()
     foodName =  serializers.SerializerMethodField()
@@ -304,6 +313,8 @@ class FoodRecipeSerializer(Serializer):
     category = serializers.SerializerMethodField() 
     foodImage = serializers.SerializerMethodField() 
     cookingInstructions = serializers.SerializerMethodField()
+    recipeSource = serializers.SerializerMethodField()
+    recipeCredits = serializers.SerializerMethodField()
     preparationTime = serializers.SerializerMethodField()
 
     def get_id(self, obj):
@@ -340,6 +351,18 @@ class FoodRecipeSerializer(Serializer):
             return document_url
         else:
             return 'Food image not specified'
+
+    def get_recipeCredits(self, obj):
+        if obj.recipeCredits is not None:
+            return obj.recipeCredits
+        else:
+            return 'Recipe Credits not specified'
+
+    def get_recipeSource(self, obj):
+        if obj.recipeSource is not None:
+            return obj.recipeSource
+        else:
+            return 'Recipe Source not specified'
         
     def get_preparationTime(self, obj):
         if obj.preparationTime is not None:
