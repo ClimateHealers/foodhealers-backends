@@ -552,4 +552,4 @@ def plantbased_extract_recipe_data(url):
         }
     except Exception as e:
         return f"An error occurred: {str(e)}"
-    
+   
