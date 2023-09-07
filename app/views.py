@@ -34,6 +34,15 @@ from datetime import timedelta
 import matplotlib
 matplotlib.use('Agg')
 
+# <------------------------------- Function Call to Extract Recipe Data ---------------------------------------------------------------->    
+# from .local_dev_utils import pcrm_extract_recipe_page, fok_extract_recipe_page, sharan_extract_recipe_page, veganista_extract_recipe_page, plantbased_extract_recipe_page
+# pcrm_extract_recipe_page('https://www.pcrm.org/good-nutrition/plant-based-diets/')
+# fok_extract_recipe_page('https://www.forksoverknives.com/')
+# sharan_extract_recipe_page("https://sharan-india.org/recipe/breads-and-spreads/")
+# veganista_extract_recipe_page("https://simple-veganista.com/vegan-recipe-index/")
+# plantbased_extract_recipe_page("https://plantbasedcookingshow.com/2023/08/27/vegan-peach-quick-bread/")
+
+
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
