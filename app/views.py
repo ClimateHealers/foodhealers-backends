@@ -42,6 +42,7 @@ matplotlib.use('Agg')
 # veganista_extract_recipe_page("https://simple-veganista.com/vegan-recipe-index/")
 # plantbased_extract_recipe_page("https://plantbasedcookingshow.com/2023/08/27/vegan-peach-quick-bread/")
 
+
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
