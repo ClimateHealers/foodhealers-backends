@@ -6,3 +6,6 @@ food-healers-b6ab8-firebase-adminsdk-dqe5w-9169a69607.json
 
 # local env config file
 envs
+
+#avoid migrations folder while merging
+app/migrations

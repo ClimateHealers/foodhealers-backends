@@ -4,6 +4,7 @@ from app.models import (Volunteer, CustomToken, Document, Vehicle, Donation, Foo
 from django.shortcuts import render
 import ast
 import urllib, base64
+from urllib.parse import urlparse, urlunparse
 import os
 import pandas as pd
 import requests
@@ -74,51 +75,77 @@ def upload_recipes_action(request):
     bulk_recipe_file = request.FILES.get('bulkRecipeFile')
 
     try:
-        df = pd.read_csv(bulk_recipe_file, encoding='latin-1', encoding_errors='ignore')
-        required_columns = ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Recipe Source', 'Recipe Credits']
+        df = pd.read_csv(bulk_recipe_file, encoding='utf-8', encoding_errors='ignore') 
+        required_columns = ['Recipe Name', 'Ingredients', 'Instructions', 'Image', 'Category', 'Prepration Time','Recipe Source', 'Recipe Credits']
 
         if not all(col in df.columns for col in required_columns):
             return render(request, template_name, {'success': False, 'error': 'Required columns are missing'})
-
+        
         for _, row in df.iterrows():
             try:
-                food_name, ingredients, cooking_instructions, image, category, recipe_source, recipe_credits = row[required_columns]
-                category_list = ast.literal_eval(category) if category else []
+                food_name, ingredients, cooking_instructions, image, category, prepration_time, recipe_source, recipe_credits = row[required_columns]
 
+                try:
+                    ingredients_test = ast.literal_eval(ingredients) if ingredients else []
+                except:
+                    ingredients_test = []
+                    ingredients_test.append(ingredients)
+                cleaned_ingredients = [s.replace('\n', '') for s in ingredients_test]
+
+                try:
+                    instructions_test = ast.literal_eval(cooking_instructions) if cooking_instructions else []
+                except:
+                    instructions_test = []
+                    instructions_test.append(cooking_instructions)
+                cleaned_instructions = [s.replace('\n', '') for s in instructions_test]
+
+                try:
+                    category_list = ast.literal_eval(category) if category else []
+                except:
+                    category_list = []
+                    category_list.append(category)
+            
                 if not FoodRecipe.objects.filter(foodName=food_name).exists():
-                    extension = os.path.splitext(image)[1]
-                    filename = os.path.join("images", f"{food_name}{extension}")
+                    # Parse the URL to extract its components
+                    parsed_url = urlparse(image)
+                    # Extract the path and file name from the URL
+                    path = parsed_url.path
+                    file_name = path.split("/")[-1]
+
+                    filename = os.path.join("images", f"{file_name}")
+
                     if not os.path.exists("images"):
                         os.makedirs("images")
-                    urllib.request.urlretrieve(image, filename)
+                    try:
+                        urllib.request.urlretrieve(image, filename)
+                    except:
+                        response = requests.get(image)
+                        if response.status_code == 200:
+                            with open(filename, 'wb') as file:
+                                file.write(response.content)
 
                     recipe = FoodRecipe.objects.create(
                         foodName=food_name,
-                        ingredients=ingredients,
-                        cookingInstructions=cooking_instructions,
+                        ingredients=cleaned_ingredients,
+                        cookingInstructions=cleaned_instructions,
+                        preparationTime=prepration_time,
                         recipeSource=recipe_source,
                         recipeCredits=recipe_credits
                     )
-
+                
                     for cat in category_list:
                         recipe_category, _ = Category.objects.get_or_create(name=cat, active=True)
                         recipe.category.add(recipe_category)
 
                     recipe.slug = recipe.id
                     recipe.tags.add(*category_list)
-
                     with open(filename, 'rb') as f:
-                        recipe.foodImage.save(food_name + extension, File(f))
-                        recipe_docs = Document.objects.create(
-                            docType=DOCUMENT_TYPE[2][0],
-                            createdAt=timezone.now(),
-                            food=recipe
-                        )
-                        recipe_docs.document.save(food_name + extension, File(f))
-                        recipe_docs.save()
+                        recipe.foodImage.save(file_name, File(f))
 
-            except Exception:
-                pass
+            except Exception as e :
+                print(str(e))
+                return render(request, template_name, {'success': False, 'error': str(e)})
+                # pass
 
         return render(request, template_name, {'success': True, 'message': 'Recipes Uploaded Successfully'})
 
