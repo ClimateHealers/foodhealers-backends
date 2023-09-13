@@ -50,7 +50,9 @@ urlpatterns = [
     # GET (to fetch Volunteer notification of last 7 days)
     re_path(r'volunteer-notifications/', views.VolunteerNotification.as_view(), name='volunteer-notification'), 
     # GET ( Fetch Calender Events )
-    re_path(r'calender-events/', views.CalenderEvents.as_view(), name='calender-events')
+    re_path(r'calender-events/', views.CalenderEvents.as_view(), name='calender-events'),
+    # GET (View All Donations By All Users API)
+    re_path(r'all-donations/', views.AllDonations.as_view()),
 
     
 
