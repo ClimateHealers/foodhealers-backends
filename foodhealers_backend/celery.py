@@ -37,7 +37,7 @@ app.conf.beat_schedule = {
 
     'daily-pending-donation-email-notification': {
         'task': 'pending_donations_email',
-        'schedule': crontab(minute='*/1'),
+        'schedule': crontab(hour=12, minute=0),
     },
 }
 
