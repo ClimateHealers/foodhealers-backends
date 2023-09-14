@@ -180,6 +180,7 @@ class FoodEventSerializer(Serializer):
     verified = serializers.BooleanField()
     status = serializers.CharField(max_length=50)
     eventPhoto = serializers.SerializerMethodField()
+    requiredVolunteers = serializers.IntegerField()
 
     def get_id(self, obj):
         return obj.id
@@ -247,6 +248,12 @@ class FoodEventSerializer(Serializer):
             return document_url
         else:
             return 'Event Photo not specified'
+        
+    def get_requiredVolunteers(self, obj):
+        if obj.requiredVolunteers is not None:
+            return obj.requiredVolunteers
+        else:
+            return 0        
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
