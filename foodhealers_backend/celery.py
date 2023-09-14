@@ -34,5 +34,10 @@ app.conf.beat_schedule = {
         'task': 'checking_event_status',
         'schedule': crontab(minute=0, hour='*/2'),
     },
+
+    'daily-pending-donation-email-notification': {
+        'task': 'pending_donations_email',
+        'schedule': crontab(minute='*/1'),
+    },
 }
 

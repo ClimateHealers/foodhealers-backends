@@ -113,6 +113,7 @@ class FoodEvent(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
     eventPhoto = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
+    requiredVolunteers = models.IntegerField(null=True, blank=True)
 
 @receiver(post_save, sender=FoodEvent)
 def send_notification_on_change(sender, instance, created , **kwargs):

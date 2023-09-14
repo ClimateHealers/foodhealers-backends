@@ -501,6 +501,7 @@ class Event(APIView):
             openapi.Parameter(name='eventEndDate', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),  # Date-time in epoch format
             openapi.Parameter(name='additionalInfo', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Free Vegan Meals', required=True),
             openapi.Parameter(name='files', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),     
+            openapi.Parameter(name='requiredVolunteers', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER),
         ],   
         responses={
             200: openapi.Schema(
@@ -532,6 +533,7 @@ class Event(APIView):
             postal_code = request.data['postalCode']
             state = request.data['state']
             city = request.data['city']
+            requiredVolunteers = request.data['requiredVolunteers']
             
             event_start_date = datetime.fromtimestamp(int(request.data['eventStartDate'])).astimezone(timezone.utc)
             event_end_date = datetime.fromtimestamp(int(request.data['eventEndDate'])).astimezone(timezone.utc)
@@ -561,7 +563,7 @@ class Event(APIView):
                 name=event_name, address=address, eventStartDate=event_start_date, eventEndDate=event_end_date, createdBy=organizer,
                 defaults={
                     'organizerPhoneNumber': organizer.phoneNumber, 'createdAt': timezone.now(),
-                    'additionalInfo': additional_info, 'active': True
+                    'additionalInfo': additional_info, 'active': True, 'requiredVolunteers':requiredVolunteers
                 }
             )
 
