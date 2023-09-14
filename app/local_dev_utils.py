@@ -105,7 +105,7 @@ def pcrm_extract_recipe_data(url):
                 "Category": category_list,
                 "Prepration Time":'Prepration Time Not Available',
                 "Image": img_url,
-                "Recipe Source": recipe_source,
+                "Recipe Source": url,
                 "Recipe Credits": recipe_credits
             }
     except Exception as e:
@@ -201,7 +201,7 @@ def fok_extract_recipe_data(url):
             "Category": category_list,
             "Prepration Time": prep_time,
             "Image": img_url,
-            "Recipe Source": 'https://www.forksoverknives.com/recipes/',
+            "Recipe Source": url,
             "Recipe Credits": "FORKS OVER KNIVES"
         }
     except Exception as e:
@@ -305,7 +305,7 @@ def sharan_extract_recipe_data(url):
             "Category": ['Category Not Available'],
             "Prepration Time": "Prepration Time not Available",
             "Image": img_url,
-            "Recipe Source": 'https://sharan-india.org/recipe/',
+            "Recipe Source": url,
             "Recipe Credits": "SHARAN"
         }
     except Exception as e:
@@ -435,7 +435,7 @@ def veganista_extract_recipe_data(url):
             "Category": category,
             "Prepration Time": prep_time,
             "Image": img_url,
-            "Recipe Source": 'https://simple-veganista.com/vegan-recipe-index/',
+            "Recipe Source": url,
             "Recipe Credits": "Simple Veganista"
         }
     except Exception as e:
@@ -547,7 +547,7 @@ def plantbased_extract_recipe_data(url):
             "Category": category,
             "Prepration Time": prep_time,
             "Image": img_url,
-            "Recipe Source": 'https://plantbasedcookingshow.com/category/recipes/',
+            "Recipe Source": url,
             "Recipe Credits": "Whole Food Plant Based Cooking Show"
         }
     except Exception as e:

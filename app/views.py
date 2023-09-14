@@ -252,13 +252,13 @@ class SignUp(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['tokenId', 'name', 'email', 'isVolunteer', 'expoPushToken'],
+            required=['tokenId', 'name', 'email', 'isVolunteer',],
             properties={
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
                 'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
                 'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
                 'isVolunteer': openapi.Schema(type=openapi.TYPE_BOOLEAN, example=True),
-                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
+                # 'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
             },
         ),
         responses={
@@ -281,7 +281,7 @@ class SignUp(APIView):
         token_id = data.get('tokenId')
         name = data.get('name')
         is_volunteer = data.get('isVolunteer')
-        expo_push_token = data.get('expoPushToken')
+        # expo_push_token = data.get('expoPushToken')
 
         if token_id == None or token_id == '' or token_id == " ":
             return Response({'success': False, 'message': 'please enter valid token'})
@@ -289,8 +289,8 @@ class SignUp(APIView):
             return Response({'success': False, 'message': 'please enter valid name'})
         if is_volunteer == None or is_volunteer == '' or is_volunteer == " ":
             return Response({'success': False, 'message': 'please enter if Volunteer or not'})
-        if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
-            return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
+        # if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
+        #     return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
 
         password = settings.VOLUNTEER_PASSWORD
 
@@ -319,7 +319,7 @@ class SignUp(APIView):
             token, _ = CustomToken.objects.get_or_create(user=user)
             token.refreshToken = refresh_token
             token.accessToken = access_token
-            token.expoPushToken = expo_push_token
+            # token.expoPushToken = expo_push_token
             token.save()
             return Response({'success': True, 'message': 'successfully created user', 'userDetails': user_details})
 
@@ -333,10 +333,10 @@ class SignIn(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['tokenId','expoPushToken'],
+            required=['tokenId'],
             properties={
                 'tokenId': openapi.Schema(type=openapi.TYPE_STRING, example='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpgtZ2Z1QWxBNmZBQTQyU09DNkI0STR4Qng5UXlUSmhIcW9VIizU5LCJpYXQiOjE2ODM2MjU1NTl9'),
-                'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
+                # 'expoPushToken':openapi.Schema(type=openapi.TYPE_STRING, example='ExponentPushToken[NYM-Q0OmkFj9TkkdkV2UPW7]')
 
             },            
         ),
@@ -360,12 +360,12 @@ class SignIn(APIView):
     def post(self, request, format=None):
         try:
             token_id = request.data.get('tokenId')
-            expo_push_token = request.data.get('expoPushToken')
+            # expo_push_token = request.data.get('expoPushToken')
             if token_id is None:
                 return Response({'success': False, 'message': 'Please provide a valid token'})
             
-            if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
-                return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
+            # if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
+                # return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
 
             decoded_token = None
             try:
@@ -388,7 +388,7 @@ class SignIn(APIView):
             token, created = CustomToken.objects.get_or_create(user=user)
             token.refreshToken = refresh_token
             token.accessToken = access_token
-            token.expoPushToken = expo_push_token
+            # token.expoPushToken = expo_push_token
             token.save()
 
             return Response({
@@ -728,9 +728,6 @@ class Event(APIView):
       
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
-    ## removed authentication for fetch categories as food seekers do not have access Token
-    # authentication_classes = [VolunteerTokenAuthentication]
-    # permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -1117,12 +1114,13 @@ class DonateFood(APIView):
                 type=openapi.TYPE_OBJECT,
                 properties={
                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Volunteers Request successfully created'),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Donation Created Successfully'),
+                    'donationDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
                 },
             ),
         },
     
-        operation_description="Request Volunteers API",
+        operation_description="Donate Food API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -1224,7 +1222,7 @@ class DonateFood(APIView):
             ),
         },
     
-        operation_description="Donation History API",
+        operation_description="My Donation History API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -1695,6 +1693,44 @@ class AllEvents(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)})
 
+class AllDonations(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'AllDonations': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch all Donations API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:
+            if Donation.objects.filter(fullfilled=False).exists():
+                food_donations = Donation.objects.filter(fullfilled=False)
+                food_donations_details = FoodEventSerializer(food_donations, many=True).data
+                return Response({'success': True, 'AllDonations': food_donations_details})
+            else:
+                return Response({'success': True, 'AllDonations': []})
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)})
+        
 # <-------------------------------- Pie Graph -------------------------------->
 def create_pie_graph(x_data, y_data, title):
     
