@@ -652,3 +652,81 @@ class NotificationSerializer(Serializer):
             return obj.isDeleted
         else:
             return True
+        
+class RequestSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    type =  serializers.SerializerMethodField()
+    createdBy =  serializers.SerializerMethodField()
+    requiredDate = serializers.SerializerMethodField()
+    active = serializers.BooleanField()
+    fullfilled = serializers.BooleanField()
+    createdAt = serializers.SerializerMethodField()
+    quantity =  serializers.SerializerMethodField()
+    foodItem = serializers.SerializerMethodField()
+    deliver =   serializers.SerializerMethodField()
+    foodEvent = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.id
+
+    def get_type(self, obj):
+        if obj.type is not None:
+            return obj.type.name
+        else:
+            return 'Request type not specified'
+
+    def get_createdBy(self, obj):
+        if obj.createdBy is not None:
+            user = Volunteer.objects.get(id=obj.createdBy.id)
+            user_details = UserProfileSerializer(user).data
+            return user_details
+        else:
+            return 'DonatedBy details not specified'
+
+    def get_requiredDate(self, obj):
+        if obj.requiredDate is not None:
+            return obj.requiredDate
+        else:
+            return 'Request required date not specified'
+        
+    def get_active(self, obj):
+        if obj.active is not None:
+            return obj.active
+        else:
+            return False
+        
+    def get_fullfilled(self, obj):
+        if obj.fullfilled is not None:
+            return obj.fullfilled
+        else:
+            return False
+
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'Donation created date not specified'
+
+    def get_quantity(self, obj):
+        if obj.quantity is not None:
+            return obj.quantity
+        else:
+            return 'Quantity not specified'
+          
+    def get_foodItem(self, obj):
+        if obj.foodItem is not None:
+            return obj.foodItem.itemName
+        else:
+            return 'Food item not specified'
+        
+    def get_deliver(self, obj):
+        if obj.deliver is not None:
+            return DeliveryDetailSerializer(obj.deliver).data
+        else:
+            return 'Delivery details not specified'
+        
+    def get_foodEvent(self, obj):
+        if obj.foodEvent is not None:
+            return obj.foodEvent.name
+        else:
+            return "Event not specified" 
