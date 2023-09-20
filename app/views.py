@@ -14,7 +14,7 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -31,9 +31,10 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Count
 from django.db.models.functions import Trunc
 from datetime import timedelta
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 import matplotlib
 matplotlib.use('Agg')
-
+import json
 # <------------------------------- Function Call to Extract Recipe Data ---------------------------------------------------------------->    
 # from .local_dev_utils import pcrm_extract_recipe_page, fok_extract_recipe_page, sharan_extract_recipe_page, veganista_extract_recipe_page, plantbased_extract_recipe_page
 # pcrm_extract_recipe_page('https://www.pcrm.org/good-nutrition/plant-based-diets/')
@@ -41,6 +42,24 @@ matplotlib.use('Agg')
 # sharan_extract_recipe_page("https://sharan-india.org/recipe/breads-and-spreads/")
 # veganista_extract_recipe_page("https://simple-veganista.com/vegan-recipe-index/")
 # plantbased_extract_recipe_page("https://plantbasedcookingshow.com/2023/08/27/vegan-peach-quick-bread/")
+
+def load_default_data():
+
+    with open("app/defaultData/requestType.json", "r") as read_file:
+        request_type_json = json.load(read_file)
+
+    with open("app/defaultData/itemType.json", "r") as read_file:
+        item_type_json = json.load(read_file)
+
+    for item_type_dict in item_type_json['itemTypes']:
+        print(item_type_dict['name'], item_type_dict['active'])
+        item_type_object , _ = ItemType.objects.get_or_create(name=item_type_dict['name'], defaults={'active':item_type_dict['active']})
+
+    for request_type_dict in request_type_json['requestTypes']:
+        print(request_type_dict['name'], request_type_dict['active'])
+        request_type_object , _ = RequestType.objects.get_or_create(name=request_type_dict['name'], defaults={'active':item_type_dict['active']})
+
+load_default_data()
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -73,7 +92,7 @@ class GetRefreshToken(APIView):
         if request.data.get('refreshTokenId') != None:
             refresh_token_id = request.data.get('refreshTokenId')
         else:
-            return Response({'success':False, 'message':'please enter valid refresh token'})
+            return Response({'success':False, 'message':'please enter valid refresh token'}, status=HTTP_400_BAD_REQUEST)
         
         try:
             if refresh_token_id != None:
@@ -90,11 +109,11 @@ class GetRefreshToken(APIView):
                         token.accessToken = access_token
                         token.save()
                     else:
-                        return Response({'success': False, 'message':'user with email does not exist'})
+                        return Response({'success': False, 'message':'user with email does not exist'}, status=HTTP_401_UNAUTHORIZED)
                 else:
-                    return Response({'success': False, 'message':'Custom Token Object does not exist'})
+                    return Response({'success': False, 'message':'Custom Token Object does not exist'}, status=HTTP_404_NOT_FOUND)
             else:
-                return Response({'success': False, 'message': 'Please provide valid refresh token'})
+                return Response({'success': False, 'message': 'Please provide valid refresh token'}, status=HTTP_400_BAD_REQUEST)
             
             return Response({
                 'success': True,
@@ -104,10 +123,10 @@ class GetRefreshToken(APIView):
                 'expiresIn': '31 Days',
                 'refreshToken': refresh_token,
                 'user': user_details,
-            })
+            }, status=HTTP_200_OK)
             
         except Exception as e:
-            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 class VolunteerExpoPushToken(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -148,7 +167,7 @@ class VolunteerExpoPushToken(APIView):
         if request.data.get('expoPushToken') != None:
             expo_push_token = request.data.get('expoPushToken')
         else:
-            return Response({'success':False, 'message':'please enter valid Expo Push Token'})
+            return Response({'success':False, 'message':'please enter valid Expo Push Token'}, status=HTTP_400_BAD_REQUEST)
         
         try:
             if request.user != None:
@@ -162,15 +181,15 @@ class VolunteerExpoPushToken(APIView):
                     return Response({
                         'success': True, 
                         'message': 'successfully updated Expo Push Token', 
-                    })
+                    }, status=HTTP_200_OK)
                 
                 else:
-                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'}, status=HTTP_404_NOT_FOUND)
             else:
-                return Response({'success': False, 'message': 'User does not exist'})
+                return Response({'success': False, 'message': 'User does not exist'}, status=HTTP_401_UNAUTHORIZED)
             
         except Exception as e:
-            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
     
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -201,14 +220,14 @@ class VolunteerExpoPushToken(APIView):
 
                 if CustomToken.objects.filter(user=user).exists():
                     token = CustomToken.objects.get(user=user)
-                    return Response({'success': True, 'expoPushToken': token.expoPushToken })
+                    return Response({'success': True, 'expoPushToken': token.expoPushToken }, status=HTTP_200_OK)
                 else:
-                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'})
+                    return Response({'success': False, 'message':'Custom Token Object does not exist for the user'}, status=HTTP_404_NOT_FOUND)
             else:
-                return Response({'success': False, 'message': 'User does not exist'})
+                return Response({'success': False, 'message': 'User does not exist'}, status=HTTP_401_UNAUTHORIZED)
             
         except Exception as e:
-            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ChoicesView(APIView):
@@ -241,9 +260,9 @@ class ChoicesView(APIView):
 
     def get(self, request, format=None):
         try:
-            return Response({'success': True, 'VOLUNTEER_TYPE': VOLUNTEER_TYPE, 'DOCUMENT_TYPE': DOCUMENT_TYPE})
+            return Response({'success': True, 'VOLUNTEER_TYPE': VOLUNTEER_TYPE, 'DOCUMENT_TYPE': DOCUMENT_TYPE}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'error' : str(e)})
+            return Response({'success': False, 'error' : str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # Sign Up API  
 class SignUp(APIView):
@@ -283,11 +302,11 @@ class SignUp(APIView):
         # expo_push_token = data.get('expoPushToken')
 
         if token_id == None or token_id == '' or token_id == " ":
-            return Response({'success': False, 'message': 'please enter valid token'})
+            return Response({'success': False, 'message': 'please enter valid token'}, status=HTTP_400_BAD_REQUEST)
         if name == None or name == '' or name == " ":
-            return Response({'success': False, 'message': 'please enter valid name'})
+            return Response({'success': False, 'message': 'please enter valid name'}, status=HTTP_400_BAD_REQUEST)
         if is_volunteer == None or is_volunteer == '' or is_volunteer == " ":
-            return Response({'success': False, 'message': 'please enter if Volunteer or not'})
+            return Response({'success': False, 'message': 'please enter if Volunteer or not'}, status=HTTP_400_BAD_REQUEST)
         # if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
         #     return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
 
@@ -301,7 +320,7 @@ class SignUp(APIView):
                     decoded_token = auth.verify_id_token(token_id)
                     email = decoded_token.get('email')
                 except Exception as e:
-                    return Response({'success': False, 'error': str(e)})
+                    return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
             random_number = str(uuid.uuid4())[:6]
             username = random_number + '@' + name
@@ -309,7 +328,7 @@ class SignUp(APIView):
             if Volunteer.objects.filter(email=email).exists():
                 user = Volunteer.objects.get(email=email)
                 user_details = UserProfileSerializer(user).data
-                return Response({'success': True, 'message': 'user already exists', 'userDetails': user_details})
+                return Response({'success': False, 'message': 'user already exists', 'userDetails': user_details}, status=HTTP_400_BAD_REQUEST)
 
             user = Volunteer.objects.create(name=name, email=email, username=username, isVolunteer=is_volunteer, password=password)
             user_details = UserProfileSerializer(user).data
@@ -320,10 +339,10 @@ class SignUp(APIView):
             token.accessToken = access_token
             # token.expoPushToken = expo_push_token
             token.save()
-            return Response({'success': True, 'message': 'successfully created user', 'userDetails': user_details})
+            return Response({'success': True, 'message': 'successfully created user', 'userDetails': user_details}, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Login API
 class SignIn(APIView):
@@ -361,7 +380,7 @@ class SignIn(APIView):
             token_id = request.data.get('tokenId')
             # expo_push_token = request.data.get('expoPushToken')
             if token_id is None:
-                return Response({'success': False, 'message': 'Please provide a valid token'})
+                return Response({'success': False, 'message': 'Please provide a valid token'}, status=HTTP_400_BAD_REQUEST)
             
             # if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
                 # return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
@@ -370,15 +389,15 @@ class SignIn(APIView):
             try:
                 decoded_token = auth.verify_id_token(token_id)
             except Exception as e:
-                return Response({'success': False, 'error': str(e)})
+                return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
             email = decoded_token.get('email')
             if not email:
-                return Response({'success': False, 'message': 'Email cannot be empty'})
+                return Response({'success': False, 'message': 'Email cannot be empty'}, status=HTTP_400_BAD_REQUEST)
 
             user = Volunteer.objects.filter(email=email).first()
             if not user:
-                return Response({'success': False, 'message': 'User with email does not exist'})
+                return Response({'success': False, 'message': 'User with email does not exist'}, status=HTTP_401_UNAUTHORIZED)
 
             user_details = UserProfileSerializer(user).data
             access_token = create_access_token(user.id)
@@ -398,10 +417,10 @@ class SignIn(APIView):
                 'expiresIn': '30 Days',
                 'refreshToken': refresh_token,
                 'user': user_details,
-            })
+            }, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'error': str(e), 'isAuthenticated': False, 'success': False})
+            return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # fetch All Food Events for food Seekers (GET METHOD)     
 class FindFood(APIView):
@@ -440,7 +459,7 @@ class FindFood(APIView):
 
             for param in ['lat', 'lng', 'fullAddress', 'eventStartDate']:
                 if not data.get(param, '').strip():
-                    return Response({'success': False, 'message': f'please enter valid {param}'})
+                    return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             
             to_date_epochs = int(data.get('eventEndDate', timezone.now().timestamp()))
             to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
@@ -475,9 +494,9 @@ class FindFood(APIView):
             paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
             food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
-            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
+            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 #  GET and Post Food Event API
 class Event(APIView):
@@ -524,7 +543,7 @@ class Event(APIView):
             ]
             for field in required_fields:
                 if field not in request.data:
-                    return Response({'success': False, 'message': f'Please enter valid {field.replace("event", "Event ").capitalize()}'})
+                    return Response({'success': False, 'message': f'Please enter valid {field.replace("event", "Event ").capitalize()}'}, status=HTTP_400_BAD_REQUEST)
                 
             event_name = request.data['eventName']
             lat = request.data['lat']
@@ -550,7 +569,7 @@ class Event(APIView):
                     temp_file.close()
                 except Exception as e:
                     temp_file.close()
-                    return Response({'success': False, 'message': str(e)})
+                    return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
             address, _ = Address.objects.get_or_create(
                 lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address,
@@ -569,7 +588,7 @@ class Event(APIView):
 
             if not created:
                 food_event_details = FoodEventSerializer(food_event).data
-                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': food_event_details})
+                return Response({'success': False, 'message': 'Event Already Exists', 'eventDetails': food_event_details}, status=HTTP_400_BAD_REQUEST)
 
             if temp_file:
                 with open(temp_file.name, 'rb') as f:
@@ -587,10 +606,10 @@ class Event(APIView):
                 doc.save()
                 f.close()
 
-            return Response({'success': True, 'message': 'Event Posted Successfully'})
+            return Response({'success': True, 'message': 'Event Posted Successfully'}, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -622,11 +641,11 @@ class Event(APIView):
             if FoodEvent.objects.filter(createdBy=user).exists():
                 food_events = FoodEvent.objects.filter(createdBy=user)
                 food_events_details = FoodEventSerializer(food_events, many=True).data
-                return Response({'success': True, 'foodEvents': food_events_details})
+                return Response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'foodEvents': []})
+                return Response({'success': True, 'foodEvents': []}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
 
@@ -749,10 +768,10 @@ class Categories(APIView):
         try:            
             category = Category.objects.all()
             category_list = CategorySerializer(category, many=True).data
-            return Response({'success': True, 'categoriesList': category_list})
+            return Response({'success': True, 'categoriesList': category_list}, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # GET Food Recipe API
 class FindFoodRecipe(APIView):
@@ -785,19 +804,19 @@ class FindFoodRecipe(APIView):
             if Category.objects.filter(id=category_id).exists():
                 category = Category.objects.get(id=category_id)
             else:
-                return Response({'success': False, 'message': 'Category with id does not exist'})
+                return Response({'success': False, 'message': 'Category with id does not exist'}, status=HTTP_400_BAD_REQUEST)
 
             if FoodRecipe.objects.filter(category=category).exists():
                 recipes = FoodRecipe.objects.filter(category=category)
                 paginator = PageNumberPagination()
                 paginated_recipes = paginator.paginate_queryset(recipes, request)
                 recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
-                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'recipeList': []})
+                return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
             
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # POST Food Recipe API
 class PostFoodRecipe(APIView):
@@ -842,7 +861,7 @@ class PostFoodRecipe(APIView):
     def post(self, request, category_id, format=None):
         try:
             if category_id is None:
-                return Response({'success': False, 'message': 'Please provide category Id'})
+                return Response({'success': False, 'message': 'Please provide category Id'}, status=HTTP_400_BAD_REQUEST)
 
             food_name = request.data.get('foodName')
             ingredients = request.data.get('ingredients')
@@ -851,22 +870,22 @@ class PostFoodRecipe(APIView):
             preparation_time = request.data.get('preparationTime')
 
             if food_name is None:
-                return Response({'success': False, 'message': 'Please enter valid Food Name'})
+                return Response({'success': False, 'message': 'Please enter valid Food Name'}, status=HTTP_400_BAD_REQUEST)
             if ingredients is None:
-                return Response({'success': False, 'message': 'Please enter valid Ingredients'})
+                return Response({'success': False, 'message': 'Please enter valid Ingredients'}, status=HTTP_400_BAD_REQUEST)
             if cooking_instructions is None:
-                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'})
+                return Response({'success': False, 'message': 'Please enter valid Cooking Instructions'}, status=HTTP_400_BAD_REQUEST)
             if preparation_time is None:
-                return Response({'success': False, 'message': 'Please enter valid Preparation Time'})
+                return Response({'success': False, 'message': 'Please enter valid Preparation Time'}, status=HTTP_400_BAD_REQUEST)
 
             try:
                 category = Category.objects.get(id=category_id)
             except Category.DoesNotExist:
-                return Response({'success': False, 'message': 'Category with id does not exist'})
+                return Response({'success': False, 'message': 'Category with id does not exist'}, status=HTTP_400_BAD_REQUEST)
 
             try:
                 recipe = FoodRecipe.objects.get(foodName=food_name, ingredients=ingredients, category=category)
-                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id})
+                return Response({'success': True, 'message': 'Food Recipe already exists', 'recipe': recipe.id}, status=HTTP_200_OK)
             except FoodRecipe.DoesNotExist:
                 recipe = FoodRecipe.objects.create(foodName=food_name, ingredients=ingredients, category=category,
                                                 cookingInstructions=cooking_instructions, preparationTime=preparation_time)
@@ -875,10 +894,10 @@ class PostFoodRecipe(APIView):
                     doc = Document.objects.create(docType=DOCUMENT_TYPE[2][0], document=file, createdAt=created_at)
                     recipe.foodImage.add(doc)
                 recipe.save()
-                return Response({'success': True, 'message': 'Food Recipe successfully created'})
+                return Response({'success': True, 'message': 'Food Recipe successfully created'}, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 # GET API (fetch Request Type of Request Food/ Volunteers/ Supplies/ pickup)
 class RequestTypes(APIView):
@@ -912,12 +931,12 @@ class RequestTypes(APIView):
         try:            
             request_type = RequestType.objects.all()
             request_type_list = RequestTypeSerializer(request_type, many=True).data
-            return Response({'success': True, 'requestTypeList': request_type_list})
+            return Response({'success': True, 'requestTypeList': request_type_list}, status=HTTP_200_OK)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
                
-# GET and POST (Request Food / Supplies) API
+# GET and POST (My Request Food / Supplies) API
 class RequestFoodSupplies(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -959,16 +978,16 @@ class RequestFoodSupplies(APIView):
         try:
             
             if request.data.get('itemTypeId') == None:
-                return Response({'success': False, 'message': 'please enter valid Item Type'})
+                return Response({'success': False, 'message': 'please enter valid Item Type'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('itemName') == None:
-                return Response({'success': False, 'message': 'please enter valid Item Name'})
+                return Response({'success': False, 'message': 'please enter valid Item Name'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('requiredDate') == None:
-                return Response({'success': False, 'message': 'please enter valid Required Date'})
+                return Response({'success': False, 'message': 'please enter valid Required Date'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('quantity') == None:                
-                return  Response({'success': False, 'message': 'please enter valid quantity'})
+                return  Response({'success': False, 'message': 'please enter valid quantity'}, status=HTTP_400_BAD_REQUEST)
             
             item_type_id = request.data.get('itemTypeId')
             item_name = request.data.get('itemName')
@@ -980,7 +999,7 @@ class RequestFoodSupplies(APIView):
             if ItemType.objects.filter(id=item_type_id).exists():
                 item_type = ItemType.objects.get(id=item_type_id)
             else:
-                return Response({'success': False, 'message': 'Item Type with id does not exist'})
+                return Response({'success': False, 'message': 'Item Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
             
             if FoodItem.objects.filter(itemName=item_name, itemType=item_type).exists():
                 food_item = FoodItem.objects.get(itemName=item_name, itemType=item_type)
@@ -990,18 +1009,56 @@ class RequestFoodSupplies(APIView):
             if RequestType.objects.filter(id=request_type_id).exists():
                 request_type = RequestType.objects.get(id=request_type_id)
             else:
-                return Response({'success': False, 'message': 'Request Type with id does not exist'})
+                return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
             
             if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item).exists():
                 item_request = Request.objects.get(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item)
-                return Response({'success': True, 'message': 'Request already exists','itemRequest':item_request.id})
+                return Response({'success': False, 'message': 'Request already exists','itemRequest':item_request.id}, status=HTTP_400_BAD_REQUEST)
             else:
                 created_at = timezone.now()
                 item_request = Request.objects.create(type=request_type, createdBy=user, requiredDate=required_date, active=True, quantity=quantity, foodItem=food_item, createdAt=created_at)
-                return Response({'success': True, 'message': 'Successfully requested items'})
+                return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
             
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'requestList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+        
+        operation_description="Get My Food/Supplies Requests API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, request_type_id, format=None):
+        try:  
+            user = request.user
+            
+            if Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"), createdBy=user).exists(): 
+                food_request = Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"), createdBy=user)
+                food_request_details = RequestSerializer(food_request, many=True).data
+                return Response({'success': True, 'requestList':food_request_details}, status=HTTP_200_OK)    
+             
+            else:
+                return Response({'success': True,'requestList':[]}, status=HTTP_200_OK)     
+    
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 # GET and POST  (Request Volunteers) API
 class RequestVolunteers(APIView):
@@ -1045,34 +1102,34 @@ class RequestVolunteers(APIView):
             if request.data.get('eventId') != None:
                 event_id = request.data.get('eventId')
             else:
-                return Response({'success': False, 'message': 'please enter valid Event Id'})
+                return Response({'success': False, 'message': 'please enter valid Event Id'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('requiredDate') != None:
                 required_date = request.data.get('requiredDate')
             else:
-                return Response({'success': False, 'message': 'please enter valid Required Date'})
+                return Response({'success': False, 'message': 'please enter valid Required Date'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('numberOfVolunteers') != None:
                 number_of_volunteers = request.data.get('numberOfVolunteers')
             else:
-                return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'})
+                return Response({'success': False, 'message': 'please enter valid Number of required Volunteers'}, status=HTTP_400_BAD_REQUEST)
 
             user = request.user            
 
             if FoodEvent.objects.filter(id=event_id, createdBy=user).exists():
                 food_event = FoodEvent.objects.get(id=event_id, createdBy=user)
             else:
-                return Response({'success': False, 'message': 'Food event with id does not exist'})
+                return Response({'success': False, 'message': 'Food event with id does not exist'}, status=HTTP_400_BAD_REQUEST)
 
             if RequestType.objects.filter(id=request_type_id, active=True).exists():
                 request_type = RequestType.objects.get(id=request_type_id, active=True)
             else:
-                return Response({'success':False, 'message':'Request Type with id does not exist'})
+                return Response({'success':False, 'message':'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
             
             
             if Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers,foodEvent=food_event).exists():
                 request = Request.objects.filter(type=request_type, createdBy=user, requiredDate=required_date, active=True, fullfilled=False, quantity=number_of_volunteers, foodEvent=food_event)
-                return Response({'success':False, 'message':'Request Already Exists for this particular Event'})
+                return Response({'success':False, 'message':'Request Already Exists for this particular Event'}, status=HTTP_400_BAD_REQUEST)
             else:
                 Request.objects.create(
                     type=request_type, 
@@ -1083,9 +1140,9 @@ class RequestVolunteers(APIView):
                     quantity=number_of_volunteers,
                     foodEvent=food_event
                 )
-                return Response({'success':True, 'message':'Volunteers Request successfully created'})
+                return Response({'success':True, 'message':'Volunteers Request successfully created'}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # GET and POST  (Donate Food) API
 class DonateFood(APIView):
@@ -1136,34 +1193,34 @@ class DonateFood(APIView):
         try:
 
             if request.data.get('itemTypeId') == None:
-                return Response({'success': False, 'message': 'please enter valid item Type Id'})
+                return Response({'success': False, 'message': 'please enter valid item Type Id'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('foodName') == None:
-                return Response({'success': False, 'message': 'please enter valid Food Item'})
+                return Response({'success': False, 'message': 'please enter valid Food Item'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('quantity') == None:
-                return Response({'success': False, 'message': 'please enter valid quantity'})
+                return Response({'success': False, 'message': 'please enter valid quantity'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('pickupDate') == None:
-                return Response({'success': False, 'message': 'please enter valid pickup Date'})
+                return Response({'success': False, 'message': 'please enter valid pickup Date'}, status=HTTP_400_BAD_REQUEST)
          
             if request.data.get('lat') == None:
-                return Response({'success': False, 'message': 'please enter valid latitude'})
+                return Response({'success': False, 'message': 'please enter valid latitude'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('lng') == None:
-                return Response({'success': False, 'message': 'please enter valid longitude'})
+                return Response({'success': False, 'message': 'please enter valid longitude'}, status=HTTP_400_BAD_REQUEST)
 
             if request.data.get('fullAddress') == None:
-                return Response({'success': False, 'message': 'please enter valid full address'})
+                return Response({'success': False, 'message': 'please enter valid full address'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('postalCode') == None:
-                return Response({'success': False, 'message': 'please enter valid postal code'})
+                return Response({'success': False, 'message': 'please enter valid postal code'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('state') == None:
-                return Response({'success': False, 'message': 'please enter valid state'})
+                return Response({'success': False, 'message': 'please enter valid state'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('city') == None:
-                return Response({'success': False, 'message': 'please enter valid city'})
+                return Response({'success': False, 'message': 'please enter valid city'}, status=HTTP_400_BAD_REQUEST)
 
             user = request.user
 
@@ -1181,7 +1238,7 @@ class DonateFood(APIView):
             if ItemType.objects.filter(id=item_type_id).exists():
                 item_type = ItemType.objects.get(id=item_type_id)
             else:
-                return Response({'success': False, 'message': 'Item Type with id does not exist'})
+                return Response({'success': False, 'message': 'Item Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
             
             pickup_address, _ = Address.objects.get_or_create(
                 lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
@@ -1195,7 +1252,7 @@ class DonateFood(APIView):
             if Donation.objects.filter(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user).exists(): 
                 donation = Donation.objects.get(donationType=item_type, foodItem=food_item, quantity=quantity, donatedBy=user)
                 donation_details = DonationSerializer(donation).data
-                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donation_details})     
+                return Response({'success': False, 'message': 'Donation Already Exists', 'donationDetails':donation_details}, status=HTTP_400_BAD_REQUEST)     
             else:
                 donation = Donation.objects.create(
                     donationType=item_type,
@@ -1206,10 +1263,10 @@ class DonateFood(APIView):
                     delivery=delivery_details,
                 )  
                 donation_details = DonationSerializer(donation).data
-                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donation_details})     
+                return Response({'success': True, 'message': 'Donation Created Successfully', 'donationDetails':donation_details}, status=HTTP_200_OK)     
     
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -1241,13 +1298,13 @@ class DonateFood(APIView):
             if Donation.objects.filter(donatedBy=user).exists(): 
                 donation = Donation.objects.filter(donatedBy=user)
                 donation_details = DonationSerializer(donation, many=True).data
-                return Response({'success': True, 'donationList':donation_details})    
+                return Response({'success': True, 'donationList':donation_details}, status=HTTP_200_OK)    
              
             else:
-                return Response({'success': True,'donationList':[]})     
+                return Response({'success': True,'donationList':[]}, status=HTTP_200_OK)     
     
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
  
 # GET and PUT Volunteer Profile API  
@@ -1285,14 +1342,14 @@ class VolunteerProfile(APIView):
                 if Volunteer.objects.filter(id=user_id).exists():
                     user = Volunteer.objects.get(id=user_id)
                     user_details = UserProfileSerializer(user).data
-                    return Response({'success':True, 'userDetails':user_details})
+                    return Response({'success':True, 'userDetails':user_details}, status=HTTP_200_OK)
                 else:
-                    return Response({'success': False, 'message': 'user not found'})
+                    return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
             else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+                return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
         
     # OpenApi specification and Swagger Documentation
@@ -1336,31 +1393,31 @@ class VolunteerProfile(APIView):
     def put(self, request,  format=None):
 
         if request.data.get('name') == None:
-            return Response({'success':False, 'message':'Please enter valid name'})
+            return Response({'success':False, 'message':'Please enter valid name'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('email') == None:
-            return Response({'success':False, 'message':'Please enter valid email'})
+            return Response({'success':False, 'message':'Please enter valid email'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('lat') == None:
-            return Response({'success':False, 'message':'Please enter valid latitude'})
+            return Response({'success':False, 'message':'Please enter valid latitude'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('lng') == None:
-            return Response({'success':False, 'message':'Please enter valid longitude'})
+            return Response({'success':False, 'message':'Please enter valid longitude'}, status=HTTP_400_BAD_REQUEST)
 
         if request.data.get('fullAddress') == None:
-            return Response({'success': False, 'message': 'please enter valid full address'})
+            return Response({'success': False, 'message': 'please enter valid full address'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('postalCode') == None:
-            return Response({'success': False, 'message': 'please enter valid postal code'})
+            return Response({'success': False, 'message': 'please enter valid postal code'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('state') == None:
-            return Response({'success': False, 'message': 'please enter valid state'})
+            return Response({'success': False, 'message': 'please enter valid state'}, status=HTTP_400_BAD_REQUEST)
         
         if request.data.get('city') == None:
-            return Response({'success': False, 'message': 'please enter valid city'})
+            return Response({'success': False, 'message': 'please enter valid city'}, status=HTTP_400_BAD_REQUEST)
 
         if request.data.get('phoneNumber') == None:
-            return Response({'success':False, 'message':'Please enter valid phoneNumber'})
+            return Response({'success':False, 'message':'Please enter valid phoneNumber'}, status=HTTP_400_BAD_REQUEST)
 
         name = request.data.get('name')
         email = request.data.get('email')
@@ -1386,11 +1443,11 @@ class VolunteerProfile(APIView):
                 
                 user.save()
                 user_details = UserProfileSerializer(user).data
-                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':user_details})
+                return Response({'success': True, 'message':'Profile updated successfully', 'userDetails':user_details}, status=HTTP_200_OK)
             else:
-                return Response({'success':False, 'message':'Volunteer with email does not exist'})
+                return Response({'success':False, 'message':'Volunteer with email does not exist'}, status=HTTP_401_UNAUTHORIZED)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -1421,14 +1478,14 @@ class VolunteerProfile(APIView):
             if request.user.id != None:
                 res = send_mail_for_confirm_deletion(request.user.id)
                 if res['success'] == True:
-                    return Response({'success':True, 'message':'E-Mail has been sent successfully'})
+                    return Response({'success':True, 'message':'E-Mail has been sent successfully'}, status=HTTP_200_OK)
                 else:
-                    return Response({'success': False, 'message': 'Email not sent'})
+                    return Response({'success': False, 'message': 'Email not sent'}, status=HTTP_400_BAD_REQUEST)
             else :
-                return Response({'success': False, 'message': 'unable to get user id'})
+                return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 def send_mail_for_confirm_deletion(user_id):
@@ -1497,12 +1554,12 @@ class VehicleOperations(APIView):
             if Vehicle.objects.filter(owner=user).exists():
                 vehicle = Vehicle.objects.filter(owner=user)
                 vehicle_details = VehicleSerializer(vehicle, many=True).data
-                return Response({'success': True, 'vehicleDetails': vehicle_details})
+                return Response({'success': True, 'vehicleDetails': vehicle_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'message': f'No vehicle found for user {user.name}', 'vehicleDetails': []})
+                return Response({'success': False, 'message': f'No vehicle found for user {user.name}', 'vehicleDetails': []}, status=HTTP_404_NOT_FOUND)
             
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
     
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -1544,34 +1601,34 @@ class VehicleOperations(APIView):
             if request.data.get('make') != None:
                 make = request.data.get('make')
             else:
-                return Response({'success': False, 'message': 'please enter valid make'})
+                return Response({'success': False, 'message': 'please enter valid make'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('model') != None:
                 model = request.data.get('model')
             else:
-                return Response({'success': False, 'message':'please enter valid model'})
+                return Response({'success': False, 'message':'please enter valid model'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('vehicleColour') != None:
                 vehicle_colour = request.data.get('vehicleColour')
             else:
-                return Response({'success': False, 'message': 'please enter valid vehicle colour'})
+                return Response({'success': False, 'message': 'please enter valid vehicle colour'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('plateNumber') != None:
                 plate_number = request.data.get('plateNumber')
             else:
-                return Response({'success': False, 'message': 'please enter valid plate number'})
+                return Response({'success': False, 'message': 'please enter valid plate number'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
-                return Response({'success': False, 'message': 'please enter True if active and False if not active'})
+                return Response({'success': False, 'message': 'please enter True if active and False if not active'}, status=HTTP_400_BAD_REQUEST)
             
             user = request.user
 
             if Vehicle.objects.filter(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour).exists():
                 vehicle = Vehicle.objects.get(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour)
                 vehicle_details = VehicleSerializer(vehicle).data
-                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details})
+                return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details}, status=HTTP_400_BAD_REQUEST)
             else:
                 vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour, active=active, createdAt=timezone.now())
                 vehicle_details = VehicleSerializer(vehicle).data
@@ -1580,9 +1637,9 @@ class VehicleOperations(APIView):
                 user.isDriver = True
                 user.save()
 
-                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicle_details})
+                return Response({'success': True, 'message': 'Vehicle added successfully', 'vehicleDetails': vehicle_details}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})    
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    
     
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -1622,22 +1679,22 @@ class VehicleOperations(APIView):
             if request.data.get('vehicleId') != None:
                 vehicle_id = request.data.get('vehicleId')
             else:
-                return Response({'success': False, 'message': 'Please enter valid vehicle Id'})
+                return Response({'success': False, 'message': 'Please enter valid vehicle Id'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('vehicleColour') != None:
                 vehicle_colour = request.data.get('vehicleColour')
             else:
-                return Response({'success': False, 'message': 'Please enter valid vehicle colour'})
+                return Response({'success': False, 'message': 'Please enter valid vehicle colour'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('plateNumber') != None:
                 plate_number = request.data.get('plateNumber')
             else:
-                return Response({'success': False, 'message': 'Please enter valid plate number'})
+                return Response({'success': False, 'message': 'Please enter valid plate number'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('active') != None:
                 active = request.data.get('active')
             else:
-                return Response({'success': False, 'message': 'Please enter True if active and False if not active'})
+                return Response({'success': False, 'message': 'Please enter True if active and False if not active'}, status=HTTP_400_BAD_REQUEST)
             
             user = request.user
 
@@ -1648,11 +1705,11 @@ class VehicleOperations(APIView):
                 vehicle.active = active
                 vehicle.save()
                 vehicle_details = VehicleSerializer(vehicle).data
-                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicle_details})
+                return Response({'success': True, 'message': 'Vehicle details updated successfully', 'vehicleDetails': vehicle_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': False, 'message': f'Vehicle with id {vehicle_id} not found'})
+                return Response({'success': False, 'message': f'Vehicle with id {vehicle_id} not found'}, status=HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
  
 class AllEvents(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -1688,11 +1745,11 @@ class AllEvents(APIView):
             if FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date)).exists():
                 food_events = FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date))
                 food_events_details = FoodEventSerializer(food_events, many=True).data
-                return Response({'success': True, 'foodEvents': food_events_details})
+                return Response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'foodEvents': []})
+                return Response({'success': True, 'foodEvents': []}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AllDonations(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -1726,11 +1783,51 @@ class AllDonations(APIView):
             if Donation.objects.filter(fullfilled=False).exists():
                 food_donations = Donation.objects.filter(fullfilled=False)
                 food_donations_details = FoodEventSerializer(food_donations, many=True).data
-                return Response({'success': True, 'AllDonations': food_donations_details})
+                return Response({'success': True, 'AllDonations': food_donations_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'AllDonations': []})
+                return Response({'success': True, 'AllDonations': []}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AllRequests(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'AllRequests': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch all Food/Supplies Requests API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:              
+            if Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies")).exists(): 
+                food_request = Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"))
+                food_request_details = RequestSerializer(food_request, many=True).data
+                return Response({'success': True, 'AllRequests':food_request_details}, status=HTTP_200_OK)    
+             
+            else:
+                return Response({'success': True,'AllRequests':[]}, status=HTTP_200_OK)     
+    
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # <-------------------------------- Pie Graph -------------------------------->
 def create_pie_graph(x_data, y_data, title):
@@ -1999,11 +2096,11 @@ class VolunteerNotification(APIView):
             if Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today).exists():
                 notification = Notification.objects.filter(user=user, createdAt__date__gte=seven_days_ago, createdAt__date__lte=today)
                 notification_details = NotificationSerializer(notification, many=True).data
-                return Response({'success': True, 'notifications': notification_details})
+                return Response({'success': True, 'notifications': notification_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'notifications': []})
+                return Response({'success': True, 'notifications': []}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
 # FETCH EVENTS API According to Calender Dates
 class CalenderEvents(APIView):
@@ -2039,10 +2136,10 @@ class CalenderEvents(APIView):
             if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date)).exists():
                 food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date))
                 food_events_details = FoodEventSerializer(food_events, many=True).data
-                return Response({'success': True, 'foodEvents': food_events_details})
+                return Response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
             else:
-                return Response({'success': True, 'foodEvents': []})
+                return Response({'success': True, 'foodEvents': []}, status=HTTP_200_OK)
         except Exception as e:
-            return Response({'success': False, 'message': str(e)})
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
    
