@@ -53,8 +53,10 @@ urlpatterns = [
     re_path(r'calender-events/', views.CalenderEvents.as_view(), name='calender-events'),
     # GET (View All Donations By All Users API)
     re_path(r'all-donations/', views.AllDonations.as_view()),
-    # GET (View All Food/Supplies Requests By All Users API)
-    re_path(r'all-requests/', views.AllRequests.as_view()),
+    # GET (View All Food/Supplies Requests By All Users API) AddEventVolunteer
+    re_path(r'all-requests/(?P<request_type_id>[-\w]*)/', views.AllRequests.as_view()),
+    # POST (Add Event Volunteer API) 
+    re_path(r'apply-event-volunteer/', views.AddEventVolunteer.as_view()),
     
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
