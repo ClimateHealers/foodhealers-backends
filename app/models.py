@@ -113,7 +113,8 @@ class FoodEvent(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
     eventPhoto = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
-    requiredVolunteers = models.IntegerField(null=True, blank=True)
+    requiredVolunteers = models.IntegerField(null=True, blank=True, default=0)
+    volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='food_event_volunteers') 
 
 @receiver(post_save, sender=FoodEvent)
 def send_notification_on_change(sender, instance, created , **kwargs):
@@ -260,8 +261,10 @@ def send_donation_notification_on_change(sender, instance, created , **kwargs):
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
-    volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers') 
+    volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT) 
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
+    fromDate = models.DateTimeField(null=True, blank=True)
+    toDate = models.DateTimeField(null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 # 15. model to store information about django token 
@@ -279,7 +282,7 @@ class EventBookmark(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     isDeleted = models.BooleanField(default=False, null=True, blank=True)
 
-# model to store Information about Notifcations
+# 17. model to store Information about Notifcations
 class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)

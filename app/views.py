@@ -52,11 +52,9 @@ def load_default_data():
         item_type_json = json.load(read_file)
 
     for item_type_dict in item_type_json['itemTypes']:
-        print(item_type_dict['name'], item_type_dict['active'])
         item_type_object , _ = ItemType.objects.get_or_create(name=item_type_dict['name'], defaults={'active':item_type_dict['active']})
 
     for request_type_dict in request_type_json['requestTypes']:
-        print(request_type_dict['name'], request_type_dict['active'])
         request_type_object , _ = RequestType.objects.get_or_create(name=request_type_dict['name'], defaults={'active':item_type_dict['active']})
 
 load_default_data()
@@ -606,6 +604,11 @@ class Event(APIView):
                 doc.save()
                 f.close()
 
+            if  food_event.requiredVolunteers!= None:
+                volunteer_result = request_volunteer(food_event, organizer)
+                if volunteer_result['success'] == False:
+                    return Response({'success': False, 'message':f'Event Posted Successfully but Volunteer Request Could not be Created. {volunteer_result.message} '}, status=HTTP_400_BAD_REQUEST)
+
             return Response({'success': True, 'message': 'Event Posted Successfully'}, status=HTTP_200_OK)
 
         except Exception as e:
@@ -646,6 +649,32 @@ class Event(APIView):
                 return Response({'success': True, 'foodEvents': []}, status=HTTP_200_OK)
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def request_volunteer(food_event, organizer):
+    try:
+
+        if RequestType.objects.filter(name='Volunteer', active=True).exists():
+            request_type = RequestType.objects.get(name='Volunteer', active=True)
+        else:
+            return {'success':False, 'message':'Request Type does not exist'}
+        
+        if Request.objects.filter(type=request_type, createdBy=organizer, requiredDate=food_event.eventStartDate, active=True, fullfilled=False, quantity=food_event.requiredVolunteers, foodEvent=food_event).exists():
+            request = Request.objects.filter(type=request_type, createdBy=organizer, requiredDate=food_event.eventStartDate, active=True, fullfilled=False, quantity=food_event.requiredVolunteers, foodEvent=food_event)
+            return {'success':False, 'message':'Request Already Exists for this particular Event'}
+        else:
+            Request.objects.create(
+                type=request_type, 
+                createdBy=organizer, 
+                requiredDate=food_event.eventStartDate,
+                active=True,
+                createdAt=timezone.now(),
+                quantity=food_event.requiredVolunteers,
+                foodEvent=food_event
+            )
+            return {'success':True, 'message':'Volunteers Request successfully created'}
+    except Exception as e:
+        return {'success': False, 'message': str(e)}
         
 # <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
 
@@ -1034,7 +1063,7 @@ class RequestFoodSupplies(APIView):
             ),
         },
         
-        operation_description="Get My Food/Supplies Requests API",
+        operation_description="Get My (Food/Supplies, Volunteers, Pickup) Requests API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -1049,8 +1078,13 @@ class RequestFoodSupplies(APIView):
         try:  
             user = request.user
             
-            if Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"), createdBy=user).exists(): 
-                food_request = Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"), createdBy=user)
+            if RequestType.objects.filter(id=request_type_id).exists():
+                request_type = RequestType.objects.get(id=request_type_id)
+            else:
+                return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+            
+            if Request.objects.filter(type=request_type, createdBy=user).exists(): 
+                food_request = Request.objects.filter(type=request_type, createdBy=user)
                 food_request_details = RequestSerializer(food_request, many=True).data
                 return Response({'success': True, 'requestList':food_request_details}, status=HTTP_200_OK)    
              
@@ -1060,7 +1094,7 @@ class RequestFoodSupplies(APIView):
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-# GET and POST  (Request Volunteers) API
+# POST  (Request Volunteers) API --> not using
 class RequestVolunteers(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1144,6 +1178,8 @@ class RequestVolunteers(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
+# <------------------------------------------- END of Request Volunteers API -------------------------------------->
+                
 # GET and POST  (Donate Food) API
 class DonateFood(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -1307,7 +1343,7 @@ class DonateFood(APIView):
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
  
-# GET and PUT Volunteer Profile API  
+# GET PUT and DELETE Volunteer Profile API  
 class VolunteerProfile(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1742,8 +1778,8 @@ class AllEvents(APIView):
         try:
             today_date = timezone.now()
 
-            if FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date)).exists():
-                food_events = FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date))
+            if FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date), status=STATUS[0][0]).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__gte=today_date) | Q(eventEndDate__gte=today_date), status=STATUS[0][0])
                 food_events_details = FoodEventSerializer(food_events, many=True).data
                 return Response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
             else:
@@ -1780,9 +1816,9 @@ class AllDonations(APIView):
 
     def get(self, request, format=None):
         try:
-            if Donation.objects.filter(fullfilled=False).exists():
-                food_donations = Donation.objects.filter(fullfilled=False)
-                food_donations_details = FoodEventSerializer(food_donations, many=True).data
+            if Donation.objects.filter(fullfilled=False, status=STATUS[0][0]).exists():
+                food_donations = Donation.objects.filter(fullfilled=False, status=STATUS[0][0])
+                food_donations_details = DonationSerializer(food_donations, many=True).data
                 return Response({'success': True, 'AllDonations': food_donations_details}, status=HTTP_200_OK)
             else:
                 return Response({'success': True, 'AllDonations': []}, status=HTTP_200_OK)
@@ -1805,7 +1841,7 @@ class AllRequests(APIView):
             ),
         },
 
-        operation_description="Fetch all Food/Supplies Requests API",
+        operation_description="Fetch all Food/Supplies, Volunteer, Pickup Requests API",
         manual_parameters=[
             openapi.Parameter(
                 name='Authorization',
@@ -1816,10 +1852,16 @@ class AllRequests(APIView):
         ],
     )
 
-    def get(self, request, format=None):
-        try:              
-            if Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies")).exists(): 
-                food_request = Request.objects.filter(Q(type__name = "Food") | Q(type__name = "Supplies"))
+    def get(self, request, request_type_id, format=None):
+        try:        
+
+            if RequestType.objects.filter(id=request_type_id, active=True).exists():
+                request_type = RequestType.objects.get(id=request_type_id, active=True)
+            else:
+                return Response({'success':False, 'message':'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+                
+            if Request.objects.filter(type = request_type, active=True, fullfilled=False).exists(): 
+                food_request = Request.objects.filter(type = request_type, active=True, fullfilled=False)
                 food_request_details = RequestSerializer(food_request, many=True).data
                 return Response({'success': True, 'AllRequests':food_request_details}, status=HTTP_200_OK)    
              
@@ -2133,13 +2175,129 @@ class CalenderEvents(APIView):
             to_date_epochs = int(request.query_params.get('endDate', timezone.now().timestamp()))
             to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
 
-            if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date)).exists():
-                food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date))
+            if FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date), status=STATUS[0][0]).exists():
+                food_events = FoodEvent.objects.filter(Q(eventStartDate__date__lte=from_date) & Q(eventEndDate__date__gte=to_date), status=STATUS[0][0])
                 food_events_details = FoodEventSerializer(food_events, many=True).data
                 return Response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
             else:
                 return Response({'success': True, 'foodEvents': []}, status=HTTP_200_OK)
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class AddEventVolunteer(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
 
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['eventId', 'volunteerPhoneNumber', 'availableToDate', 'availableFromDate', 'lat', 'lng', 'volunteerFullAddress'], 
+            properties={
+                'eventId': openapi.Schema(type=openapi.TYPE_NUMBER),
+                'volunteerPhoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER), 
+                'availableToDate': openapi.Schema(type=openapi.TYPE_NUMBER),
+                'availableFromDate': openapi.Schema(type=openapi.TYPE_NUMBER),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'volunteerFullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(type=openapi.TYPE_NUMBER, example=7108-2899),
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
+            }
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Volunteer Added Successfully'),
+                    'eventVolunteerlist': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+    
+        operation_description="Add Event Volunteer API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def post(self, request, format=None):
+        try:
+            user_id = request.user.id
+
+            for param in ['eventId', 'volunteerPhoneNumber', 'availableFromDate', 'availableToDate', 'lat', 'lng', 'volunteerFullAddress']:
+                if not request.data.get(param):
+                    return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
+
+            event_id = request.data.get('eventId')
+            phone_number = request.data.get('volunteerPhoneNumber')
+
+            from_date_epochs = int(request.data.get('availableFromDate', timezone.now().timestamp()))
+            from_date = datetime.fromtimestamp(from_date_epochs).astimezone(timezone.utc)
+
+            to_date_epochs = int(request.data.get('availableToDate', timezone.now().timestamp()))
+            to_date = datetime.fromtimestamp(to_date_epochs).astimezone(timezone.utc)
+
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
+            full_address = request.data.get('volunteerFullAddress')
+
+            postal_code = request.data.get('postalCode')
+            state = request.data.get('state')
+            city = request.data.get('city')
+
+            volunteer_address, _ = Address.objects.get_or_create(
+                lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                defaults={'postalCode': postal_code, 'state': state, 'city': city}
+            )  
+            
+            if Volunteer.objects.filter(id=user_id).exists():
+                volunteer = Volunteer.objects.get(id=user_id)
+                if volunteer.address == None:
+                    volunteer.address = volunteer_address
+                if volunteer.phoneNumber == None:
+                    volunteer.phoneNumber = phone_number
+                volunteer.save()
+            else:
+                return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            
+            if FoodEvent.objects.filter(id=event_id).exists():
+                food_event = FoodEvent.objects.get(id=event_id)
+
+                if food_event.requiredVolunteers != None :
+                    if food_event.requiredVolunteers > 0:
+                        
+                        volunteer_request = Request.objects.get(type__name='Volunteer', createdBy=food_event.createdBy, fullfilled=False, foodEvent=food_event)
+                        event_vol, created = EventVolunteer.objects.get_or_create(event=food_event, request=volunteer_request, volunteer=volunteer, defaults={'fromDate':from_date, 'toDate':to_date})
+                                                
+                        if not created :                         
+                            return Response({'success': False, 'message': 'Volunteer has Already Applied'}, status=HTTP_400_BAD_REQUEST)     
+
+                        food_event.volunteers.add(volunteer)
+                        food_event.requiredVolunteers = food_event.requiredVolunteers-1
+                        food_event.save()
+
+                        volunteer_request.quantity = food_event.requiredVolunteers
+                        if volunteer_request.quantity == 0:
+                            volunteer_request.fullfilled = True
+                            volunteer_request.active = False
+                        volunteer_request.save()
+
+                        return Response({'success': True, 'message': 'Successfully Applied to Volunteer'}, status=HTTP_200_OK)     
+                    
+                    else:
+                        return Response({'success': False, 'message': 'Volunteer Request is Full'}, status=HTTP_400_BAD_REQUEST)                     
+                else:
+                    return Response({'success': False, 'message': 'Invalid Volunteers Request'}, status=HTTP_400_BAD_REQUEST)     
+            else:
+                return Response({'success': False, 'message': f'Food Event with id {event_id} does not exist'}, status=HTTP_400_BAD_REQUEST)      
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
    

@@ -72,7 +72,7 @@ def pending_events_reminder():
         subject = f'Approval Pending for New Food Events'
 
         email_from = settings.DEFAULT_SENDER
-        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org']
+        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org','padma.chinram@alamanceinc.com', 'raiyan.firaz@alamanceinc.com', 'aravind.muniraj@alamanceinc.com']
 
         finalhtmlcontent = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/PendingEventsNotification.html')).read()
         email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring)
@@ -103,7 +103,7 @@ def pending_donations_reminder():
         subject = f'Approval Pending for New Food Donations'
 
         email_from = settings.DEFAULT_SENDER
-        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org']
+        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org', 'padma.chinram@alamanceinc.com', 'raiyan.firaz@alamanceinc.com', 'aravind.muniraj@alamanceinc.com']
 
         finalhtmlcontent = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/PendingDonationsNotification.html')).read()
         email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring)
