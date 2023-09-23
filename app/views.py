@@ -14,7 +14,7 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -1179,7 +1179,44 @@ class RequestVolunteers(APIView):
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
 # <------------------------------------------- END of Request Volunteers API -------------------------------------->
-                
+
+# GET API (fetch Item Type of Request Food/ Supplies)
+class ViewItemTypes(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'itemTypeList': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+        
+        operation_description="Get Item Type API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+    
+    def get(self, request, format=None):
+        try:            
+            item_type = ItemType.objects.all()
+            item_type_list = ItemTypeSerializer(item_type, many=True).data
+            return Response({'success': True, 'itemTypeList': item_type_list}, status=HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
 # GET and POST  (Donate Food) API
 class DonateFood(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
@@ -1193,8 +1230,8 @@ class DonateFood(APIView):
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
-                'quantity': openapi.Schema(type=openapi.TYPE_NUMBER, example='15'),
-                'pickupDate': openapi.Schema(type=openapi.FORMAT_DATE,example='2023-05-05'),
+                'quantity': openapi.Schema(type=openapi.TYPE_STRING, example='15 KG'),
+                'pickupDate': openapi.Schema(type=openapi.FORMAT_DATETIME,example='2023-05-05'),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),

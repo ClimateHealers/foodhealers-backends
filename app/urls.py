@@ -57,6 +57,8 @@ urlpatterns = [
     re_path(r'all-requests/(?P<request_type_id>[-\w]*)/', views.AllRequests.as_view()),
     # POST (Add Event Volunteer API) 
     re_path(r'apply-event-volunteer/', views.AddEventVolunteer.as_view()),
+    # GET (to fetch itemTypes for Request API)
+    re_path(r'item-types/', views.ViewItemTypes.as_view()),    
     
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
