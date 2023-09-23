@@ -730,3 +730,30 @@ class RequestSerializer(Serializer):
             return obj.foodEvent.name
         else:
             return "Event not specified" 
+        
+class ItemTypeSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    name =  serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+    active = serializers.BooleanField(default=True)
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_name(self, obj):
+        if obj.name is not None:
+            return obj.name
+        else:
+            return 'Item type not specified'
+        
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'Item type created date not specified'
+    
+    def get_active(self, obj):
+        if obj.active is not None:
+            return obj.active
+        else:
+            return False
