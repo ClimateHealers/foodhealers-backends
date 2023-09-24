@@ -181,6 +181,7 @@ class FoodEventSerializer(Serializer):
     status = serializers.CharField(max_length=50)
     eventPhoto = serializers.SerializerMethodField()
     requiredVolunteers = serializers.IntegerField()
+    active = serializers.BooleanField()
 
     def get_id(self, obj):
         return obj.id
@@ -254,6 +255,12 @@ class FoodEventSerializer(Serializer):
             return obj.requiredVolunteers
         else:
             return 0        
+
+    def get_active(self, obj):
+        if obj.active is not None:
+            return obj.active
+        else:
+            return False 
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -477,6 +484,7 @@ class DonationSerializer(Serializer):
     fullfilled = serializers.BooleanField()
     delivery =   serializers.SerializerMethodField()
     createdAt = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -524,6 +532,12 @@ class DonationSerializer(Serializer):
             return obj.createdAt
         else:
             return 'Donation created date not specified'
+
+    def get_status(self, obj):
+        if obj.status is not None:
+            return obj.status
+        else:
+            return 'pending'
         
 class VehicleSerializer(Serializer):
     id = serializers.SerializerMethodField()
@@ -757,3 +771,44 @@ class ItemTypeSerializer(Serializer):
             return obj.active
         else:
             return False
+        
+class EventVolunteerSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    event =  serializers.SerializerMethodField()
+    volunteer = serializers.SerializerMethodField()
+    fromDate = serializers.SerializerMethodField()
+    toDate = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_event(self, obj):
+        if obj.event is not None:
+            return FoodEventSerializer(obj.event).data
+        else:
+            return "Event not specified"
+    
+    def get_volunteer(self, obj):
+        if obj.volunteer is not None:
+            return obj.volunteer.name
+        else:
+            return 'Volunteer not specified'
+        
+    def get_createdAt(self, obj):
+        if obj.createdAt is not None:
+            return obj.createdAt
+        else:
+            return 'created date not specified'
+
+    def get_fromDate(self, obj):
+        if obj.fromDate is not None:
+            return obj.fromDate
+        else:
+            return 'Voluneered from date not specified'
+        
+    def get_toDate(self, obj):
+        if obj.toDate is not None:
+            return obj.toDate
+        else:
+            return 'Voluneered to date not specified'

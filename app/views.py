@@ -14,7 +14,7 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer, EventVolunteerSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -1318,7 +1318,7 @@ class DonateFood(APIView):
                 defaults={'postalCode': postal_code, 'state': state, 'city': city}
             )  
 
-            food_item = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
+            food_item, _ = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
 
             delivery_details, _ = DeliveryDetail.objects.get_or_create(pickupAddress=pickup_address, pickupDate=pick_up_date)
 
@@ -2338,3 +2338,49 @@ class AddEventVolunteer(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
    
+class VolunteerHistory(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'volunteerHistory': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="My volunteering History API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:        
+
+            if request.user.id != None:
+                user_id= request.user.id
+                if Volunteer.objects.filter(id=user_id).exists():
+                    user = Volunteer.objects.get(id=user_id)
+                    if EventVolunteer.objects.filter(volunteer=user).exists():
+                        volunteered_events = EventVolunteer.objects.filter(volunteer=user)
+                        volunteering_history = EventVolunteerSerializer(volunteered_events, many=True).data
+                        return Response({'success': True,'volunteerHistory':volunteering_history}, status=HTTP_200_OK)
+                    else:
+                        return Response({'success': True,'volunteerHistory':[]}, status=HTTP_200_OK)
+                else:
+                    return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST) 
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    
