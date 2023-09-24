@@ -978,7 +978,7 @@ class RequestFoodSupplies(APIView):
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'itemName': openapi.Schema(type=openapi.TYPE_STRING, example="Tomatoe"),
-                'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE, example="2023-06-06"),
+                'requiredDate': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'quantity': openapi.Schema(type=openapi.TYPE_STRING, example="5 Kg"),
             },
         ),
@@ -1020,7 +1020,8 @@ class RequestFoodSupplies(APIView):
             
             item_type_id = request.data.get('itemTypeId')
             item_name = request.data.get('itemName')
-            required_date = request.data.get('requiredDate')
+            required_date_epochs = int(request.data.get('requiredDate', timezone.now().timestamp()))
+            required_date = datetime.fromtimestamp(required_date_epochs).astimezone(timezone.utc)
             quantity = request.data.get('quantity')
 
             user = request.user
@@ -1231,7 +1232,7 @@ class DonateFood(APIView):
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
                 'quantity': openapi.Schema(type=openapi.TYPE_STRING, example='15 KG'),
-                'pickupDate': openapi.Schema(type=openapi.FORMAT_DATETIME,example='2023-05-05'),
+                'pickupDate': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
@@ -1299,8 +1300,9 @@ class DonateFood(APIView):
 
             item_type_id = request.data.get('itemTypeId')
             food_name = request.data.get('foodName')
-            quantity = request.data.get('quantity')
-            pick_up_date = request.data.get('pickupDate')
+            quantity = request.data.get('quantity')            
+            pick_up_date_epochs = int(request.data.get('pickupDate', timezone.now().timestamp()))
+            pick_up_date = datetime.fromtimestamp(pick_up_date_epochs).astimezone(timezone.utc)
             lat = request.data.get('lat')
             lng = request.data.get('lng')
             full_address = request.data.get('fullAddress')
