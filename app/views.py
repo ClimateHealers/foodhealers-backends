@@ -57,7 +57,7 @@ def load_default_data():
     for request_type_dict in request_type_json['requestTypes']:
         request_type_object , _ = RequestType.objects.get_or_create(name=request_type_dict['name'], defaults={'active':item_type_dict['active']})
 
-load_default_data()
+# load_default_data()
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation

@@ -21,6 +21,23 @@ app = Celery()
 def send_push_message(user, title, message, notification_type):
     try:
         Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
+
+        subject = title
+        email_from = settings.DEFAULT_SENDER
+        recipient_list = [user.email]
+        html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/NotificationEmail.html')).read()
+        email_text = html.replace('{{name}}', user.name).replace('{{title}}', title).replace('{{message}}', message)
+        
+        try:
+            
+            msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
+            msg.attach_alternative(email_text, "text/html")
+            msg.send()
+            print("DONE")
+            # return ({'success': True, 'message': 'Message is sent'})
+        
+        except Exception as e:
+            return ({'success': False, 'message': 'Failed to send email invitation', 'error': str(e)})
         
         if CustomToken.objects.filter(user=user).exists():
             custom_token = CustomToken.objects.get(user=user)
