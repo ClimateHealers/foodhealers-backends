@@ -14,7 +14,7 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer, EventVolunteerSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -57,7 +57,7 @@ def load_default_data():
     for request_type_dict in request_type_json['requestTypes']:
         request_type_object , _ = RequestType.objects.get_or_create(name=request_type_dict['name'], defaults={'active':item_type_dict['active']})
 
-load_default_data()
+# load_default_data()
 
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -978,7 +978,7 @@ class RequestFoodSupplies(APIView):
             properties={
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'itemName': openapi.Schema(type=openapi.TYPE_STRING, example="Tomatoe"),
-                'requiredDate': openapi.Schema(type=openapi.FORMAT_DATE, example="2023-06-06"),
+                'requiredDate': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'quantity': openapi.Schema(type=openapi.TYPE_STRING, example="5 Kg"),
             },
         ),
@@ -1020,7 +1020,8 @@ class RequestFoodSupplies(APIView):
             
             item_type_id = request.data.get('itemTypeId')
             item_name = request.data.get('itemName')
-            required_date = request.data.get('requiredDate')
+            required_date_epochs = int(request.data.get('requiredDate', timezone.now().timestamp()))
+            required_date = datetime.fromtimestamp(required_date_epochs).astimezone(timezone.utc)
             quantity = request.data.get('quantity')
 
             user = request.user
@@ -1231,7 +1232,7 @@ class DonateFood(APIView):
                 'itemTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
                 'foodName': openapi.Schema(type=openapi.TYPE_STRING, example="foodName"),  #to be modified # for now conside Food iTem Id
                 'quantity': openapi.Schema(type=openapi.TYPE_STRING, example='15 KG'),
-                'pickupDate': openapi.Schema(type=openapi.FORMAT_DATETIME,example='2023-05-05'),
+                'pickupDate': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
                 'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
@@ -1299,8 +1300,9 @@ class DonateFood(APIView):
 
             item_type_id = request.data.get('itemTypeId')
             food_name = request.data.get('foodName')
-            quantity = request.data.get('quantity')
-            pick_up_date = request.data.get('pickupDate')
+            quantity = request.data.get('quantity')            
+            pick_up_date_epochs = int(request.data.get('pickupDate', timezone.now().timestamp()))
+            pick_up_date = datetime.fromtimestamp(pick_up_date_epochs).astimezone(timezone.utc)
             lat = request.data.get('lat')
             lng = request.data.get('lng')
             full_address = request.data.get('fullAddress')
@@ -1318,7 +1320,7 @@ class DonateFood(APIView):
                 defaults={'postalCode': postal_code, 'state': state, 'city': city}
             )  
 
-            food_item = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
+            food_item, _ = FoodItem.objects.get_or_create(itemName=food_name, addedBy=user, itemType=item_type, defaults={'createdAt':timezone.now()})
 
             delivery_details, _ = DeliveryDetail.objects.get_or_create(pickupAddress=pickup_address, pickupDate=pick_up_date)
 
@@ -2338,3 +2340,49 @@ class AddEventVolunteer(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
    
+class VolunteerHistory(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'volunteerHistory': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="My volunteering History API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:        
+
+            if request.user.id != None:
+                user_id= request.user.id
+                if Volunteer.objects.filter(id=user_id).exists():
+                    user = Volunteer.objects.get(id=user_id)
+                    if EventVolunteer.objects.filter(volunteer=user).exists():
+                        volunteered_events = EventVolunteer.objects.filter(volunteer=user)
+                        volunteering_history = EventVolunteerSerializer(volunteered_events, many=True).data
+                        return Response({'success': True,'volunteerHistory':volunteering_history}, status=HTTP_200_OK)
+                    else:
+                        return Response({'success': True,'volunteerHistory':[]}, status=HTTP_200_OK)
+                else:
+                    return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            else :
+                return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST) 
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    

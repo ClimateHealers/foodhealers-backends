@@ -134,13 +134,19 @@ def upload_recipes_action(request):
                     )
                 
                     for cat in category_list:
-                        recipe_category, _ = Category.objects.get_or_create(name=cat, active=True)
+                        recipe_category, created = Category.objects.get_or_create(name=cat, active=True)
                         recipe.category.add(recipe_category)
 
                     recipe.slug = recipe.id
                     recipe.tags.add(*category_list)
                     with open(filename, 'rb') as f:
                         recipe.foodImage.save(file_name, File(f))
+                        f.close
+                    
+                    if created:
+                        with open (filename,'rb') as cat_image:
+                            recipe_category.categoryImage.save(file_name, File(cat_image))
+                            cat_image.close
 
             except Exception as e :
                 print(str(e))
