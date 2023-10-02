@@ -2417,14 +2417,14 @@ class GetEventVolunteer(APIView):
 
     def get(self, request, event_id, format=None):
         try:        
-
             if FoodEvent.objects.filter(id=event_id).exists():
-                food_events = FoodEvent.objects.get(id=event_id)
-                if food_events.volunteers != None:
-                    event_volunteer_details = UserProfileSerializer(food_events.volunteers, many=True).data
+                food_event = FoodEvent.objects.get(id=event_id)
+                if EventVolunteer.objects.filter(event=food_event).exists():
+                    event_volunteers_list = EventVolunteer.objects.filter(event=food_event)
+                    event_volunteer_details = EventVolunteerSerializer(event_volunteers_list, many=True).data
                     return Response({'success': True, 'EventVolunteers': event_volunteer_details}, status=HTTP_200_OK)
                 else:
-                    return Response({'success': True, 'EventVolunteers':[]}, status=HTTP_200_OK)
+                    return Response({'success': True, 'EventVolunteers':[]}, status=HTTP_400_BAD_REQUEST)
             else:
                 return Response({'success': False, 'message': 'Food Event with id does not exists'}, status=HTTP_400_BAD_REQUEST)
         except Exception as e:

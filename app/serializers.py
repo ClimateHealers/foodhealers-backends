@@ -131,6 +131,7 @@ class UserProfileSerializer(Serializer):
     isVolunteer = serializers.BooleanField()
     volunteerType = serializers.CharField(max_length=100)
     createdAt = serializers.SerializerMethodField()
+    lastLogin = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -167,7 +168,13 @@ class UserProfileSerializer(Serializer):
             return obj.createdAt
         else:
             return 'Date not specified'
-
+    
+    def get_lastLogin(self, obj):
+        if obj.lastLogin is not None:
+            return obj.lastLogin
+        else:
+            return 'last Login Date not specified'
+        
 class FoodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
     name = serializers.CharField(max_length=100)
