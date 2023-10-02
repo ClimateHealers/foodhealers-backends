@@ -14,7 +14,8 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer, EventVolunteerSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, 
+                          ItemTypeSerializer, EventVolunteerSerializer, VolunteerDetailSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -2421,7 +2422,7 @@ class GetEventVolunteer(APIView):
                 food_event = FoodEvent.objects.get(id=event_id)
                 if EventVolunteer.objects.filter(event=food_event).exists():
                     event_volunteers_list = EventVolunteer.objects.filter(event=food_event)
-                    event_volunteer_details = EventVolunteerSerializer(event_volunteers_list, many=True).data
+                    event_volunteer_details = VolunteerDetailSerializer(event_volunteers_list, many=True).data
                     return Response({'success': True, 'EventVolunteers': event_volunteer_details}, status=HTTP_200_OK)
                 else:
                     return Response({'success': True, 'EventVolunteers':[]}, status=HTTP_400_BAD_REQUEST)
