@@ -2386,3 +2386,47 @@ class VolunteerHistory(APIView):
                 return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST) 
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    
+
+
+class GetEventVolunteer(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'EventVolunteers': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch Event Volunteer Details API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, event_id, format=None):
+        try:        
+
+            if FoodEvent.objects.filter(id=event_id).exists():
+                food_events = FoodEvent.objects.get(id=event_id)
+                if food_events.volunteers != None:
+                    event_volunteer_details = UserProfileSerializer(food_events.volunteers, many=True).data
+                    return Response({'success': True, 'EventVolunteers': event_volunteer_details}, status=HTTP_200_OK)
+                else:
+                    return Response({'success': True, 'EventVolunteers':[]}, status=HTTP_200_OK)
+            else:
+                return Response({'success': False, 'message': 'Food Event with id does not exists'}, status=HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        
