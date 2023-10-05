@@ -33,11 +33,11 @@ def send_push_message(user, title, message, notification_type):
             msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
             msg.attach_alternative(email_text, "text/html")
             msg.send()
-            print("DONE")
-            # return ({'success': True, 'message': 'Message is sent'})
+            print("Email Notification sent")
+            # return ({'success': True, 'message': 'Email Notification sent'})
         
         except Exception as e:
-            return ({'success': False, 'message': 'Failed to send email invitation', 'error': str(e)})
+            return ({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
         
         if CustomToken.objects.filter(user=user).exists():
             custom_token = CustomToken.objects.get(user=user)
@@ -76,7 +76,7 @@ def event_status_check():
 @shared_task(name='pending_events_email')
 def pending_events_reminder():
     try:
-        pending_event_list = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-eventStartDate')[:5]
+        pending_event_list = FoodEvent.objects.filter(status=STATUS[2][0], active=True).order_by('-eventStartDate')[:5]
         detailslist = []
         for pending_events in pending_event_list:
             jobdetailscard = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/EventDetailsCard.txt')).read()
@@ -107,7 +107,7 @@ def pending_events_reminder():
 @shared_task(name='pending_donations_email')
 def pending_donations_reminder():
     try:
-        pending_donations_list = Donation.objects.filter(status=STATUS[2][0]).order_by('-createdAt')[:5]
+        pending_donations_list = Donation.objects.filter(status=STATUS[2][0], fullfilled=False).order_by('-createdAt')[:5]
         detailslist = []
         for pending_donations in pending_donations_list:
             donation_details_card = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/DonationDetailsCard.txt')).read()
