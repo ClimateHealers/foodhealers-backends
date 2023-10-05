@@ -14,7 +14,8 @@ from app.authentication import create_access_token, create_refresh_token, Volunt
 from .models import ( ItemType, Category, Address, Volunteer, Vehicle, FoodEvent, Document, FoodItem, FoodRecipe, DeliveryDetail, RequestType, 
                       Donation, EventVolunteer, CustomToken, Request, EventBookmark, Notification, VOLUNTEER_TYPE, DOCUMENT_TYPE, STATUS)
 from .serializers import (UserProfileSerializer, FoodEventSerializer, BookmarkedEventSerializer, CategorySerializer, FoodRecipeSerializer,
-                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, ItemTypeSerializer, EventVolunteerSerializer )
+                          RequestTypeSerializer, DonationSerializer, VehicleSerializer, NotificationSerializer, RequestSerializer, 
+                          ItemTypeSerializer, EventVolunteerSerializer, VolunteerDetailSerializer )
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime
@@ -492,7 +493,7 @@ class FindFood(APIView):
             paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
             food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
-            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
+            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -675,105 +676,6 @@ def request_volunteer(food_event, organizer):
             return {'success':True, 'message':'Volunteers Request successfully created'}
     except Exception as e:
         return {'success': False, 'message': str(e)}
-        
-# <--------------------------------- Commented API and Test Cases Code Because We are not using it --------------------------------------------------------------->
-
-# GET and POST Bookmark Food Event API
-# class BookmarkEvent(APIView):
-#     authentication_classes = [VolunteerTokenAuthentication]
-#     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
-
-#     # OpenApi specification and Swagger Documentation
-#     @swagger_auto_schema(
-#         request_body=openapi.Schema(
-#             type=openapi.TYPE_OBJECT,
-#             required=['eventId'], 
-#             properties={
-#                 'eventId': openapi.Schema(type=openapi.TYPE_NUMBER, example="1"),
-#             },
-#         ),
-#         responses={
-#             200: openapi.Schema(
-#                 type=openapi.TYPE_OBJECT,
-#                 properties={
-#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-#                     'message': openapi.Schema(type=openapi.TYPE_STRING, default='Event Sucessfully Added to Calender'),
-#                 },
-#             ),
-#         },
-
-#         operation_description="Add to Calender API",
-#         manual_parameters=[
-#             openapi.Parameter(
-#                 name='Authorization',
-#                 in_=openapi.IN_HEADER,
-#                 type=openapi.TYPE_STRING,
-#                 description='Token',
-#             ),
-#         ],
-#     )
-
-#     def post(self, request, format=None):
-#         try:
-#             if request.data.get('eventId') != None:
-#                 event_id = request.data.get('eventId')
-#             else:
-#                 return Response({'success': False, 'message': 'please enter valid Event Id'})
-            
-#             user = request.user
-
-#             if FoodEvent.objects.filter(id=event_id).exists():
-#                 food_event = FoodEvent.objects.get(id=event_id)
-#                 if EventBookmark.objects.filter(user=user, event=food_event).exists():
-#                     return Response({'success':False, 'message': 'Bookmark already exists'})
-#                 else:
-#                     created_at = timezone.now()
-#                     EventBookmark.objects.create(user=user, event=food_event, createdAt=created_at)
-#                     return Response({'success': True, 'message': 'Succesfully Added to Bookmarks'})
-                
-#             else:
-#                 return Response({'success': False, 'message': 'Food Event with id does not exist'})
-            
-#         except Exception as e:
-#             return Response({'success': False, 'message': str(e)})
-        
-#     # OpenApi specification and Swagger Documentation
-#     @swagger_auto_schema(
-#         responses={
-#             200: openapi.Schema(
-#                 type=openapi.TYPE_OBJECT,
-#                 properties={
-#                     'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
-#                     'bookmarkedEventDetails': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
-#                 },
-#             ),
-#         },
-
-#         operation_description="Get Food Events Posted by volunteer API",
-#         manual_parameters=[
-#             openapi.Parameter(
-#                 name='Authorization',
-#                 in_=openapi.IN_HEADER,
-#                 type=openapi.TYPE_STRING,
-#                 description='Token',
-#             ),
-#         ],
-#     )
-
-#     def get(self, request, format=None):
-#         try:
-#             user = request.user
-
-#             if EventBookmark.objects.filter(user=user, isDeleted=False).exists():
-#                 bookmarked_events = EventBookmark.objects.filter(user=user, isDeleted=False)
-#                 bookmarked_event_details = BookmarkedEventSerializer(bookmarked_events, many=True).data
-#                 return Response({'success':True, 'bookmarkedEventDetails': bookmarked_event_details})
-#             else:
-#                 return Response({'success': True, 'bookmarkedEventDetails': []})
-            
-#         except Exception as e:
-#             return Response({'success': False, 'message': str(e)})
-# <<----------------------------------------------------------------------------------------------------------->>
       
 # GET API (fetch categories of Recipe)
 class Categories(APIView):
@@ -840,7 +742,7 @@ class FindFoodRecipe(APIView):
                 paginator = PageNumberPagination()
                 paginated_recipes = paginator.paginate_queryset(recipes, request)
                 recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
-                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list}, status=HTTP_200_OK)
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
             else:
                 return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
             
@@ -2039,7 +1941,6 @@ class PlotView(APIView):
 
         # function to get the list of last 12 months of the current year
         last_year_month_list = get_last_12_months(current_date)
-        print(last_year_month_list)
 
         # ---------------VOLUNTEERS JOINED ON GRAPH -----------------
         data = Volunteer.objects.annotate(month=Trunc('date_joined', 'month')).values('month').annotate(count=Count('id')).order_by('month')
@@ -2386,3 +2287,47 @@ class VolunteerHistory(APIView):
                 return Response({'success': False, 'message': 'unable to get user id'}, status=HTTP_400_BAD_REQUEST) 
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    
+
+
+class GetEventVolunteer(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'EventVolunteers': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch Event Volunteer Details API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    def get(self, request, event_id, format=None):
+        try:        
+            if FoodEvent.objects.filter(id=event_id).exists():
+                food_event = FoodEvent.objects.get(id=event_id)
+                if EventVolunteer.objects.filter(event=food_event).exists():
+                    event_volunteers_list = EventVolunteer.objects.filter(event=food_event)
+                    event_volunteer_details = VolunteerDetailSerializer(event_volunteers_list, many=True).data
+                    return Response({'success': True, 'EventVolunteers': event_volunteer_details}, status=HTTP_200_OK)
+                else:
+                    return Response({'success': True, 'EventVolunteers':[]}, status=HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'success': False, 'message': 'Food Event with id does not exists'}, status=HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        

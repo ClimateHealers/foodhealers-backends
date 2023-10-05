@@ -131,6 +131,8 @@ class UserProfileSerializer(Serializer):
     isVolunteer = serializers.BooleanField()
     volunteerType = serializers.CharField(max_length=100)
     createdAt = serializers.SerializerMethodField()
+    lastLogin = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -167,7 +169,19 @@ class UserProfileSerializer(Serializer):
             return obj.createdAt
         else:
             return 'Date not specified'
+    
+    def get_lastLogin(self, obj):
+        if obj.lastLogin is not None:
+            return obj.lastLogin
+        else:
+            return 'last Login Date not specified'
 
+    def get_address(self, obj):
+        if obj.address is not None:
+            return AddressSerializer(obj.address).data
+        else:
+            return 'address not specified'
+        
 class FoodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
     name = serializers.CharField(max_length=100)
@@ -800,6 +814,41 @@ class EventVolunteerSerializer(Serializer):
             return obj.createdAt
         else:
             return 'created date not specified'
+
+    def get_fromDate(self, obj):
+        if obj.fromDate is not None:
+            return obj.fromDate
+        else:
+            return 'Voluneered from date not specified'
+        
+    def get_toDate(self, obj):
+        if obj.toDate is not None:
+            return obj.toDate
+        else:
+            return 'Voluneered to date not specified'
+        
+        
+class VolunteerDetailSerializer(Serializer):
+    id = serializers.SerializerMethodField()
+    event =  serializers.SerializerMethodField()
+    volunteer = serializers.SerializerMethodField()
+    fromDate = serializers.SerializerMethodField()
+    toDate = serializers.SerializerMethodField()
+
+    def get_id(self, obj):
+        return obj.id
+    
+    def get_event(self, obj):
+        if obj.event is not None:
+            return obj.event.name
+        else:
+            return "Event not specified"
+    
+    def get_volunteer(self, obj):
+        if obj.volunteer is not None:
+            return UserProfileSerializer(obj.volunteer).data
+        else:
+            return 'Volunteer not specified'
 
     def get_fromDate(self, obj):
         if obj.fromDate is not None:
