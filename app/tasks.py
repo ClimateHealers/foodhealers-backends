@@ -21,7 +21,8 @@ app = Celery()
 def send_push_message(user, title, message, notification_type):
     try:
         Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
-
+        
+        # Email notification Code
         subject = title
         email_from = settings.DEFAULT_SENDER
         recipient_list = [user.email]
@@ -33,12 +34,11 @@ def send_push_message(user, title, message, notification_type):
             msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
             msg.attach_alternative(email_text, "text/html")
             msg.send()
-            print("Email Notification sent")
-            # return ({'success': True, 'message': 'Email Notification sent'})
         
         except Exception as e:
             return ({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
         
+        # Expo Notification Code
         if CustomToken.objects.filter(user=user).exists():
             custom_token = CustomToken.objects.get(user=user)
 
@@ -50,12 +50,15 @@ def send_push_message(user, title, message, notification_type):
                         body=message,
                     )
                 )
+                return ({'success': True, 'message': 'Expo Notification sent'})
+            
             except Exception as e:
-                print('==========>',str(e))
+                return({'success': False, 'message': 'Failed to send Expo notification', 'error':str(e)})
         else:
-            print('Custom Token for user not exists') 
+            return({'success': False, 'message': 'Custom Token for user not exists', 'error': 'Custom Token for user not exists'})  
+        
     except Exception as e:
-        print('Cant Send MSG', str(e))
+        return({'success':False, 'message':'Cant Send MSG', 'error':str(e)})
 
 @shared_task(name='checking_event_status')
 def event_status_check():
