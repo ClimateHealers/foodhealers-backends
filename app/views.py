@@ -493,7 +493,7 @@ class FindFood(APIView):
             paginated_food_events = paginator.paginate_queryset(final_food_events, request)
 
             food_events_details = FoodEventSerializer(paginated_food_events, many=True).data
-            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details}, status=HTTP_200_OK)
+            return paginator.get_paginated_response({'success': True, 'foodEvents': food_events_details})
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -742,7 +742,7 @@ class FindFoodRecipe(APIView):
                 paginator = PageNumberPagination()
                 paginated_recipes = paginator.paginate_queryset(recipes, request)
                 recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
-                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list}, status=HTTP_200_OK)
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
             else:
                 return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
             
