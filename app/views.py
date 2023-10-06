@@ -60,6 +60,7 @@ def load_default_data():
 
 # load_default_data()
 
+# Post Refresh Token API
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
@@ -127,6 +128,7 @@ class GetRefreshToken(APIView):
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
+# Put Expo Push Token API      
 class VolunteerExpoPushToken(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -228,7 +230,7 @@ class VolunteerExpoPushToken(APIView):
         except Exception as e:
             return Response({'error': str(e), 'isAuthenticated': False, 'success': False}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# Get Choices API
 class ChoicesView(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -651,7 +653,7 @@ class Event(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# Create Volunteer Request function
 def request_volunteer(food_event, organizer):
     try:
 
@@ -1080,7 +1082,6 @@ class RequestVolunteers(APIView):
                 return Response({'success':True, 'message':'Volunteers Request successfully created'}, status=HTTP_200_OK)
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
-        
 # <------------------------------------------- END of Request Volunteers API -------------------------------------->
 
 # GET API (fetch Item Type of Request Food/ Supplies)
@@ -1283,9 +1284,9 @@ class DonateFood(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
- 
 # GET PUT and DELETE Volunteer Profile API  
 class VolunteerProfile(APIView):
+    parser_classes = [MultiPartParser]
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
     
@@ -1331,21 +1332,19 @@ class VolunteerProfile(APIView):
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['name','email','lat','lng', 'fullAddress', 'postalCode', 'state', 'city','phoneNumber'],
-            properties={
-                'name': openapi.Schema(type=openapi.TYPE_STRING, example='Find Food User'),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, example='user@findfood.com'),
-                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example=12.916540),
-                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example=77.651950),
-                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
-                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER,example=7108-2899),
-                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
-                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
-                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example=99723732),
-            },
-        ),
+        manual_parameters=[
+            openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token',),    
+            openapi.Parameter(name='name',in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Volunteer User', required=True),  
+            openapi.Parameter(name='email', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example=12.916540, required=True),
+            openapi.Parameter(name='lat', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=77.651950, required=True),
+            openapi.Parameter(name='lng', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),
+            openapi.Parameter(name='fullAddress', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA', required=True),
+            openapi.Parameter(name='postalCode', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=7108-2899),
+            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='New Jersey State', required=True),
+            openapi.Parameter(name='city', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='Newark City', required=True),
+            openapi.Parameter(name='phoneNumber', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=9972373887, required=True),
+            openapi.Parameter(name='profilePhoto', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),     
+        ],
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -1356,14 +1355,8 @@ class VolunteerProfile(APIView):
             ),
         },
         operation_description="Update Volunteer Profile API",
-        manual_parameters=[
-            openapi.Parameter(
-                name='Authorization',
-                in_=openapi.IN_HEADER,
-                type=openapi.TYPE_STRING,
-                description='Token',
-            ),
-        ],
+        consumes=['multipart/form-data'],
+
     )
 
     # update Volunteer Profile API
@@ -1464,7 +1457,7 @@ class VolunteerProfile(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# Email Function for Delete
 def send_mail_for_confirm_deletion(user_id):
     try:
         if Volunteer.objects.filter(id=user_id).exists():
@@ -1493,9 +1486,6 @@ def send_mail_for_confirm_deletion(user_id):
             return ({'success': False, 'message': 'User with Id does not exist'})
     except Exception as e:
         return ({'success': False, 'error': str(e)})
-    
-
-
 
 #  GET, POST and PUT Vehicle API
 class VehicleOperations(APIView):
@@ -1688,6 +1678,7 @@ class VehicleOperations(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
  
+# Get All Events API
 class AllEvents(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1728,6 +1719,7 @@ class AllEvents(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Get All Donations API
 class AllDonations(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1766,6 +1758,7 @@ class AllDonations(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
+# Get All Requests API
 class AllRequests(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -1901,6 +1894,7 @@ def create_scatter_graph(x_data, y_data, title, x_label, y_label):
 
     return image_png
 
+# <---------------------------------------------------------------->
 def get_last_12_months(current_date):
     
     # Get the current month and year
@@ -1933,6 +1927,7 @@ def get_last_12_months(current_date):
         
     return last_12_months[::-1]
 
+# Graph API
 class PlotView(APIView):
     def get(self, request):
 
@@ -2022,6 +2017,7 @@ class PlotView(APIView):
         context = {'bar_graphData':bar_graph_data, 'line_graphData':line_graph_data, 'scatter_graphData':scatter_graph_data, 'pie_graphData':pie_graph_data, 'updatedTime':0}
         return render(request, 'base.html', context)
 
+# Admin Dashboard Dashboard
 class AdminDashboardView(APIView):
     def get(self,request):
 
@@ -2041,6 +2037,7 @@ class AdminDashboardView(APIView):
         context = {"volunteerDetails" : user_details,'eventDetails':event_details, 'donationDetails':donation_details,  'updatedTime':0}
         return render(request, 'dashboard.html', context)
 
+# get Notification API
 class VolunteerNotification(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -2124,6 +2121,7 @@ class CalenderEvents(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
+# Post Event Volunteer API      
 class AddEventVolunteer(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -2241,6 +2239,7 @@ class AddEventVolunteer(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
    
+#  Volunteer History API
 class VolunteerHistory(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
@@ -2288,7 +2287,7 @@ class VolunteerHistory(APIView):
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)    
 
-
+# Get Event Volunteers
 class GetEventVolunteer(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
