@@ -1,5 +1,5 @@
 
-from .models import Volunteer
+from .models import Volunteer, Document
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
 from django.core.files.storage import get_storage_class
@@ -133,6 +133,7 @@ class UserProfileSerializer(Serializer):
     createdAt = serializers.SerializerMethodField()
     lastLogin = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
+    profilePhoto = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -181,6 +182,15 @@ class UserProfileSerializer(Serializer):
             return AddressSerializer(obj.address).data
         else:
             return 'address not specified'
+        
+    def get_profilePhoto(self, obj):
+        if Document.objects.filter(volunteer=obj, isActive=True).exists():
+            doc = Document.objects.get(volunteer=obj, isActive=True)
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=doc.document.name)
+            return document_url
+        else:
+            return 'Profile Photo not available'
         
 class FoodEventSerializer(Serializer):
     id = serializers.SerializerMethodField()

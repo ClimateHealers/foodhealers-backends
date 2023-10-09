@@ -61,6 +61,7 @@ urlpatterns = [
     re_path(r'volunteer-history/', views.VolunteerHistory.as_view()),
     # GET (Fetch Volunteer Details of Event API)    
     re_path(r'event-volunteer-details/(?P<event_id>[-\w]*)/', views.GetEventVolunteer.as_view()),
-
+    # Post (update Volunteer profile Photo)
+    re_path(r'volunteer-profile-photo/', views.UpdateProfilePhoto.as_view()),
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)

@@ -1286,7 +1286,6 @@ class DonateFood(APIView):
 
 # GET PUT and DELETE Volunteer Profile API  
 class VolunteerProfile(APIView):
-    parser_classes = [MultiPartParser]
     authentication_classes = [VolunteerTokenAuthentication]
     permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
     
@@ -1332,19 +1331,22 @@ class VolunteerProfile(APIView):
         
     # OpenApi specification and Swagger Documentation
     @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token',),    
-            openapi.Parameter(name='name',in_=openapi.IN_FORM, type=openapi.TYPE_STRING, description='Volunteer User', required=True),  
-            openapi.Parameter(name='email', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example=12.916540, required=True),
-            openapi.Parameter(name='lat', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=77.651950, required=True),
-            openapi.Parameter(name='lng', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, required=True),
-            openapi.Parameter(name='fullAddress', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA', required=True),
-            openapi.Parameter(name='postalCode', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=7108-2899),
-            openapi.Parameter(name='state', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='New Jersey State', required=True),
-            openapi.Parameter(name='city', in_=openapi.IN_FORM, type=openapi.TYPE_STRING, example='Newark City', required=True),
-            openapi.Parameter(name='phoneNumber', in_=openapi.IN_FORM, type=openapi.TYPE_NUMBER, example=9972373887, required=True),
-            openapi.Parameter(name='profilePhoto', in_=openapi.IN_FORM, type=openapi.TYPE_FILE, required=True),     
-        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['name', 'email','lat','lng','fullAddress','state','city','postalCode','phoneNumber'], 
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING, example="Volunteer User"),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, example="volunteer@foodhealers.com"),
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER, example=7108-2899),         
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
+                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
+            }
+        ),
+        
         responses={
             200: openapi.Schema(
                 type=openapi.TYPE_OBJECT,
@@ -1354,9 +1356,16 @@ class VolunteerProfile(APIView):
                 },
             ),
         },
-        operation_description="Update Volunteer Profile API",
-        consumes=['multipart/form-data'],
 
+        operation_description="Update Volunteer Profile API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization', 
+                in_=openapi.IN_HEADER, 
+                type=openapi.TYPE_STRING, 
+                description='Token'
+            ),  
+        ],
     )
 
     # update Volunteer Profile API
@@ -2330,3 +2339,62 @@ class GetEventVolunteer(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
+class UpdateProfilePhoto(APIView):
+    parser_classes = [MultiPartParser]
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token',),    
+            openapi.Parameter(name='profilePhoto', in_=openapi.IN_FORM, type=openapi.TYPE_FILE),     
+        ],
+
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Volunteer profile photo updated successfully'),
+                },
+            ),
+        },
+        operation_description="Update Volunteer Profile Photo API",
+        consumes=['multipart/form-data'],
+    )
+
+    def post(self, request, format=None):
+        profile_photo = request.FILES.get('profilePhoto')
+        temp_file = None
+
+        if profile_photo != None:
+            file_contents = profile_photo.read()
+            temp_file = tempfile.NamedTemporaryFile(delete=False)
+            try:
+                temp_file.write(file_contents)
+                temp_file.close()
+
+                volunteer_docs = Document.objects.filter(docType=DOCUMENT_TYPE[0][0], volunteer = request.user, isActive=True)
+                for doc in volunteer_docs:
+                    if os.path.basename(doc.document.name) == profile_photo.name:
+                        return Response({'success':False, 'message':'Volunteer profile is upto date'}, status=HTTP_400_BAD_REQUEST)
+                    else:
+                        doc.isActive = False
+                        doc.save()
+
+            except Exception as e:
+                temp_file.close()
+                return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            if temp_file:
+                volunteer_document = Document.objects.create(docType=DOCUMENT_TYPE[0][0], volunteer=request.user)
+                with open(temp_file.name, 'rb') as f:
+                    volunteer_document.document.save(profile_photo.name, File(f))
+                volunteer_document.save()
+                f.close()
+                return Response({'success':True, 'message':'Volunteer profile photo updated succesfully'}, status=HTTP_200_OK)
+            else:
+                return Response({'success':False, 'message':'Unable to read content of file'}, status=HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'success': False, 'message': 'Please upload valid profile photo'}, status=HTTP_400_BAD_REQUEST)

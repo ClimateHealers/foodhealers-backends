@@ -66,7 +66,7 @@ class DocumentAdmin(admin.ModelAdmin):
     formfield_overrides = {         
         models.FileField: {"widget": CustomAdminFileWidget}
     }
-    list_display = ('id', 'createdAt', 'docType', 'name', 'verified')
+    list_display = ('id', 'createdAt', 'docType', 'name', 'verified', 'isActive')
     search_fields = ['docType', 'volunteer__name', 'event__name', 'vehicle__make', 'food__foodName']
 
 class FoodItemAdmin(admin.ModelAdmin):

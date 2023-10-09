@@ -36,6 +36,7 @@ NOTIFICATION_TYPE = (
     ('event', 'Event'),
     ('donation', 'Donation'),
     ('volunteer','Volunteer'),
+    ('request', 'Request'),
     ('other','Other')
 )
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
@@ -218,6 +219,32 @@ class Request(models.Model):
     deliver = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     foodEvent = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     verified = models.BooleanField(default=False, null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
+
+@receiver(post_save, sender=Request)
+def send_notification_on_change(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    if instance.type.name == 'Food' or instance.type.name == 'Supplies' :
+        # Food/Supplies Request has been created
+        if created :
+            title = f'{instance.type.name} Request Under Review'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} is under review'
+            notification_type = NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+
+        # logic to check if status has changed to approved or rejected
+        elif instance.status == STATUS[0][0]:
+            title = f'{instance.type.name} Request Approved'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been approved by Food healers team'
+            notification_type= NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+
+        elif instance.status == STATUS[1][0]:
+            title = f'{instance.type.name} Request Rejected'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been rejected by Food healers team'
+            notification_type= NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
