@@ -306,6 +306,7 @@ class SignUp(APIView):
             return Response({'success': False, 'message': 'please enter valid name'}, status=HTTP_400_BAD_REQUEST)
         if is_volunteer == None or is_volunteer == '' or is_volunteer == " ":
             return Response({'success': False, 'message': 'please enter if Volunteer or not'}, status=HTTP_400_BAD_REQUEST)
+
         # if expo_push_token == None or expo_push_token == '' or expo_push_token == " ":
         #     return Response({'success': False, 'message': 'please enter valid Expo Push Token'})
 
@@ -1795,7 +1796,6 @@ class AllRequests(APIView):
 
     def get(self, request, request_type_id, format=None):
         try:        
-
             if RequestType.objects.filter(id=request_type_id, active=True).exists():
                 request_type = RequestType.objects.get(id=request_type_id, active=True)
             else:
