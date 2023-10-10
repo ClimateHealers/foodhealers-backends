@@ -26,8 +26,6 @@ urlpatterns = [
     re_path(r'all-events/', views.AllEvents.as_view()),
     # GET (to View Events added by user) and POST (to Add Events)
     re_path(r'event/', views.Event.as_view(), name='food-event'), 
-    # # GET (to View Bookmarked Events added by user) and POST (to Add Bookmarked Events) 
-    # re_path(r'bookmark/', views.BookmarkEvent.as_view(), name='bookmark-event'), ----> Not Using It 
     # GET (to fetch categories fo recipies)
     re_path(r'categories/', views.Categories.as_view(), name='fetch-category'),
     # GET (to View recipes) 
@@ -53,7 +51,15 @@ urlpatterns = [
     re_path(r'calender-events/', views.CalenderEvents.as_view(), name='calender-events'),
     # GET (View All Donations By All Users API)
     re_path(r'all-donations/', views.AllDonations.as_view()),
-
-    
+    # GET (View All Food/Supplies Requests By All Users API) AddEventVolunteer
+    re_path(r'all-requests/(?P<request_type_id>[-\w]*)/', views.AllRequests.as_view()),
+    # POST (Add Event Volunteer API) 
+    re_path(r'apply-event-volunteer/', views.AddEventVolunteer.as_view()),
+    # GET (to fetch itemTypes for Request API)
+    re_path(r'item-types/', views.ViewItemTypes.as_view()),    
+    # GET (View My Volunteering History API)
+    re_path(r'volunteer-history/', views.VolunteerHistory.as_view()),
+    # GET (Fetch Volunteer Details of Event API)    
+    re_path(r'event-volunteer-details/(?P<event_id>[-\w]*)/', views.GetEventVolunteer.as_view()),
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)

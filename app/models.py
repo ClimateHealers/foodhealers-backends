@@ -35,6 +35,7 @@ STATUS = (
 NOTIFICATION_TYPE = (
     ('event', 'Event'),
     ('donation', 'Donation'),
+    ('volunteer','Volunteer'),
     ('other','Other')
 )
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
@@ -113,6 +114,8 @@ class FoodEvent(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
     eventPhoto = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
+    requiredVolunteers = models.IntegerField(null=True, blank=True, default=0)
+    volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='food_event_volunteers') 
 
 @receiver(post_save, sender=FoodEvent)
 def send_notification_on_change(sender, instance, created , **kwargs):
@@ -231,7 +234,6 @@ class Donation(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
 
-
 @receiver(post_save, sender=Donation)
 def send_donation_notification_on_change(sender, instance, created , **kwargs):
     from .tasks import send_push_message
@@ -239,29 +241,43 @@ def send_donation_notification_on_change(sender, instance, created , **kwargs):
     # if donation has been created
     if created :
         title = 'Donation Under Review'
-        message = f'Your Donation - {instance.foodItem} is under review'
+        message = f'Your Donation - {instance.foodItem.itemName} is under review'
         notification_type = NOTIFICATION_TYPE[1][0]
         send_push_message(instance.donatedBy, title, message, notification_type)
 
     # logic to check if status has changed to approved or rejected
     elif instance.status == STATUS[0][0]:
         title = 'Donation Approved'
-        message = f'Your Donation - {instance.foodItem} has been approved by Food healers team'
+        message = f'Your Donation - {instance.foodItem.itemName} has been approved by Food healers team'
         notification_type= NOTIFICATION_TYPE[1][0]
         send_push_message(instance.donatedBy, title, message, notification_type)
 
     elif instance.status == STATUS[1][0]:
         title = 'Donation Rejected'
-        message = f'Your Donation - {instance.foodItem} has been rejected by Food healers team'
+        message = f'Your Donation - {instance.foodItem.itemName} has been rejected by Food healers team'
         notification_type= NOTIFICATION_TYPE[1][0]
         send_push_message(instance.donatedBy, title, message, notification_type)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):
     event = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
-    volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='event_volunteers') 
+    volunteer = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT) 
     request = models.ForeignKey(Request, null=True, blank=True, on_delete=models.PROTECT)
+    fromDate = models.DateTimeField(null=True, blank=True)
+    toDate = models.DateTimeField(null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+@receiver(post_save, sender=EventVolunteer)
+def send_volunteer_notification_on_applied(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    # if EventVolunteer has been created
+    if created :
+        title = 'Volunteer Registered For Your Event'
+        message = f'{instance.volunteer.name} wants to volunteer for {instance.event.name}'
+        notification_type = NOTIFICATION_TYPE[2][0]
+        send_push_message(instance.event.createdBy, title, message, notification_type)
+
 
 # 15. model to store information about django token 
 class CustomToken(models.Model):
@@ -278,7 +294,7 @@ class EventBookmark(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     isDeleted = models.BooleanField(default=False, null=True, blank=True)
 
-# model to store Information about Notifcations
+# 17. model to store Information about Notifcations
 class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)

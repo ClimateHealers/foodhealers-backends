@@ -1,0 +1,22 @@
+{
+    "requestTypes": [
+      {
+        "name": "Food",
+        "active": true
+      },
+      {
+        "name": "Supplies",
+        "active": true
+      },
+      {
+        "name": "Volunteer",
+        "active": true
+      },
+      {
+        "name": "Pickup",
+        "active": true
+
+      }
+    ]
+  }
+  

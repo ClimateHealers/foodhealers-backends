@@ -5,7 +5,7 @@
 '''
 
 import os
-from .models import Notification, CustomToken, FoodEvent, STATUS
+from .models import Notification, CustomToken, FoodEvent, STATUS, Donation
 from celery import Celery, shared_task
 from celery.utils.log import get_task_logger
 from exponent_server_sdk import PushClient, PushMessage 
@@ -22,6 +22,23 @@ def send_push_message(user, title, message, notification_type):
     try:
         Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
         
+        # Email notification Code
+        subject = title
+        email_from = settings.DEFAULT_SENDER
+        recipient_list = [user.email]
+        html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/NotificationEmail.html')).read()
+        email_text = html.replace('{{name}}', user.name).replace('{{title}}', title).replace('{{message}}', message)
+        
+        try:
+            
+            msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
+            msg.attach_alternative(email_text, "text/html")
+            msg.send()
+        
+        except Exception as e:
+            return ({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
+        
+        # Expo Notification Code
         if CustomToken.objects.filter(user=user).exists():
             custom_token = CustomToken.objects.get(user=user)
 
@@ -33,12 +50,15 @@ def send_push_message(user, title, message, notification_type):
                         body=message,
                     )
                 )
+                return ({'success': True, 'message': 'Expo Notification sent'})
+            
             except Exception as e:
-                print('==========>',str(e))
+                return({'success': False, 'message': 'Failed to send Expo notification', 'error':str(e)})
         else:
-            print('Custom Token for user not exists') 
+            return({'success': False, 'message': 'Custom Token for user not exists', 'error': 'Custom Token for user not exists'})  
+        
     except Exception as e:
-        print('Cant Send MSG', str(e))
+        return({'success':False, 'message':'Cant Send MSG', 'error':str(e)})
 
 @shared_task(name='checking_event_status')
 def event_status_check():
@@ -59,7 +79,7 @@ def event_status_check():
 @shared_task(name='pending_events_email')
 def pending_events_reminder():
     try:
-        pending_event_list = FoodEvent.objects.filter(status=STATUS[2][0]).order_by('-eventStartDate')[:5]
+        pending_event_list = FoodEvent.objects.filter(status=STATUS[2][0], active=True).order_by('-eventStartDate')[:5]
         detailslist = []
         for pending_events in pending_event_list:
             jobdetailscard = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/EventDetailsCard.txt')).read()
@@ -72,9 +92,40 @@ def pending_events_reminder():
         subject = f'Approval Pending for New Food Events'
 
         email_from = settings.DEFAULT_SENDER
-        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org']
+        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org','padma.chinram@alamanceinc.com', 'raiyan.firaz@alamanceinc.com', 'aravind.muniraj@alamanceinc.com']
 
         finalhtmlcontent = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/PendingEventsNotification.html')).read()
+        email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring)
+        try:
+            msg = EmailMultiAlternatives(subject=subject, body=email_text, from_email=email_from, to=recipient_list)
+            msg.attach_alternative(email_text, "text/html")
+            msg.send()
+            return ({'success': True, 'message': 'Message is sent'})
+        except Exception as e:
+            return ({'success': False,  'error': str(e)})
+
+    except Exception as e:
+        return ({'success': False, 'error': str(e)})
+
+@shared_task(name='pending_donations_email')
+def pending_donations_reminder():
+    try:
+        pending_donations_list = Donation.objects.filter(status=STATUS[2][0], fullfilled=False).order_by('-createdAt')[:5]
+        detailslist = []
+        for pending_donations in pending_donations_list:
+            donation_details_card = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/DonationDetailsCard.txt')).read()
+            details = donation_details_card.replace('{{food_item}}',str(pending_donations.foodItem.itemName)).replace('{{quantity}}',str(pending_donations.quantity)).replace('{{pickup_address}}', str(pending_donations.delivery.pickupAddress)).replace('{{donation_date}}',str(pending_donations.delivery.pickupDate.date())).replace('{{donation_time}}',str(pending_donations.delivery.pickupDate.time())).replace('{{donated_by}}', str(pending_donations.donatedBy.name))
+            detailslist.append(details) 
+        emaildetailstext = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/donationEmaildetails.html'), mode = 'w')
+        emaildetailstext.writelines(detailslist)
+        emaildetailstext.close()            
+        htmlstring = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/donationEmaildetails.html')).read()
+        subject = f'Approval Pending for New Food Donations'
+
+        email_from = settings.DEFAULT_SENDER
+        recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org', 'padma.chinram@alamanceinc.com', 'raiyan.firaz@alamanceinc.com', 'aravind.muniraj@alamanceinc.com']
+
+        finalhtmlcontent = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/PendingDonationsNotification.html')).read()
         email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring)
         try:
             msg = EmailMultiAlternatives(subject=subject, body=email_text, from_email=email_from, to=recipient_list)

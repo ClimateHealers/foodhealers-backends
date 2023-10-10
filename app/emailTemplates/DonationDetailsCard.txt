@@ -1,0 +1,8 @@
+<div class="card">
+    <div class="container">
+        <h2>{{donated_by}} wants to donate {{food_item}}</h2>
+        <p><b>{{quantity}} </b></p>  
+        <p>On {{donation_date}} at {{donation_time}}</p>
+        <p>From {{pickup_address}} </p>
+    </div>
+</div>
