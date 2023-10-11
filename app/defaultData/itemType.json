@@ -1,0 +1,13 @@
+{
+    "itemTypes": [
+      {
+        "name": "Food",
+        "active": true
+      },
+      {
+        "name": "Supplies",
+        "active": true
+      }
+    ]
+  }
+  

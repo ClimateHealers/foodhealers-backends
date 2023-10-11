@@ -100,10 +100,21 @@ class RequestAdmin(admin.ModelAdmin):
     filter_fields = ['createdBy', 'type', 'fullfilled', 'active']
 
 class DonationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'donationType', 'donatedBy','fullfilled')
-    search_fields = ['donationType', 'donatedBy__name']
-    filter_fields = ['donationType', 'donatedBy', 'needsPickup', 'fullfilled']
-
+    list_display = ('id', 'donatedBy', 'foodItem_name', 'donation_pickupDate', 'status', 'fullfilled') 
+    search_fields = ['foodItem__itemName','status', 'fullfilled', 'delivery__pickupDate','donationType__name']
+    
+    def foodItem_name(self, obj):
+        try:
+            return obj.foodItem.itemName
+        except:
+            return None
+    
+    def donation_pickupDate(self, obj):
+        try :
+            return obj.delivery.pickupDate
+        except:
+            return None
+        
 class EventVolunteerAdmin(admin.ModelAdmin):
     list_display = ('id', 'event', 'createdAt')
 
