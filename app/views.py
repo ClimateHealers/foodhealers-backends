@@ -2202,7 +2202,7 @@ class AddEventVolunteer(APIView):
                 volunteer = Volunteer.objects.get(id=user_id)
                 if volunteer.address == None:
                     volunteer.address = volunteer_address
-                if volunteer.phoneNumber == None:
+                if volunteer.phoneNumber == None or volunteer.phoneNumber == '' :
                     volunteer.phoneNumber = phone_number
                 volunteer.save()
             else:
