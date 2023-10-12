@@ -2,6 +2,7 @@
 . /home/ubuntu/food-env/bin/activate
 pip install -r /home/ubuntu/foodhealers-backends/requirements.txt
 cd /home/ubuntu/foodhealers-backends/
+sudo chown -R ubuntu:ubuntu *
 yes | python manage.py makemigrations
 python manage.py makemigrations
 python manage.py migrate
