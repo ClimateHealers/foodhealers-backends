@@ -326,7 +326,7 @@ class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     title = models.CharField(max_length=50, default='title', null=True, blank=True)
-    message = models.CharField(max_length=255, default='this is sample message', null=True, blank=True)
+    message = models.TextField(max_length=1000, default='this is sample message', null=True, blank=True)
     is_unread = models.BooleanField(default=True)
     modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
     notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other', null=True, blank=True)

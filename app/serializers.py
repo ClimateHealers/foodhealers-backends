@@ -703,6 +703,7 @@ class RequestSerializer(Serializer):
     foodItem = serializers.SerializerMethodField()
     deliver =   serializers.SerializerMethodField()
     foodEvent = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -768,6 +769,12 @@ class RequestSerializer(Serializer):
             return obj.foodEvent.name
         else:
             return "Event not specified" 
+
+    def get_status(self, obj):
+        if obj.status is not None:
+            return obj.status
+        else:
+            return 'pending'
         
 class ItemTypeSerializer(Serializer):
     id = serializers.SerializerMethodField()
