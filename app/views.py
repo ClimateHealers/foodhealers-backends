@@ -2449,7 +2449,7 @@ class AcceptFoodRequest(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['requestId', 'lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            required=['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
@@ -2459,6 +2459,7 @@ class AcceptFoodRequest(APIView):
                 'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
                 'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
+                'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
             }
         ),
         
@@ -2484,15 +2485,16 @@ class AcceptFoodRequest(APIView):
     )
 
     # update Food/Supplies Request API (used for Accepting By Donar)
-    def put(self, request, request_type_id, format=None):
+    def put(self, request, format=None):
 
         try:
 
-            for param in ['requestId', 'lat', 'lng', 'fullAddress','postalCode','state', 'city','phoneNumber']:
+            for param in ['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
                 if not request.data.get(param):
                     return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             
             request_id = request.data.get('requestId')
+            pickup_type_id = request.data.get('pickupRequestTypeId')
             lat = request.data.get('lat')
             lng = request.data.get('lng')
             full_address = request.data.get('fullAddress')
@@ -2534,6 +2536,12 @@ class AcceptFoodRequest(APIView):
                     status=STATUS[0][0], 
                 )  
 
+                if RequestType.objects.filter(id=pickup_type_id).exists():
+                    request_type = RequestType.objects.get(id=pickup_type_id)
+                    pickup_request = Request.objects.create(type=request_type, createdBy=user, active=True, quantity=item_request.quantity, foodItem=item_request.foodItem, deliver=delivery_details)
+                else:
+                    return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+                
                 # TRIGGER EMAIL to Food Requestor's email ID with the Food Donor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details> 
                 title = f'{item_request.type.name} Request has been Accepted'
                 message = f'''<p>Your {item_request.type.name} Request - for {item_request.quantity} of {item_request.foodItem.itemName} has been Accepted by {user.name} </p></br>
@@ -2562,5 +2570,138 @@ class AcceptFoodRequest(APIView):
                 return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
             else:
                 return Response({'success': False, 'message': f'Request with Id {request_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Accept Existing Food/Suppplies Donation 
+class AcceptFoodDonation(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            properties={
+                'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
+                'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
+                'fullAddress': openapi.Schema(type=openapi.TYPE_STRING, example='318 CLINTON AVE NEWARK NJ 07108-2899 USA'),
+                'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER, example=7108-2899),         
+                'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
+                'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
+                'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
+                'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+            }
+        ),
+        
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Request Accepted successfully'),
+                },
+            ),
+        },
+
+        operation_description="Update Food/Supplies Donation API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization', 
+                in_=openapi.IN_HEADER, 
+                type=openapi.TYPE_STRING, 
+                description='Token'
+            ),  
+        ],
+    )
+
+    # update Food/Supplies Donation API (used for Accepting By Requestor)
+    def put(self, request, format=None):
+
+        try:
+
+            for param in ['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
+                if not request.data.get(param):
+                    return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
+            
+            donation_id = request.data.get('donationId')
+            pickup_type_id = request.data.get('pickupRequestTypeId')
+            lat = request.data.get('lat')
+            lng = request.data.get('lng')
+            full_address = request.data.get('fullAddress')
+            postal_code = request.data.get('postalCode')
+            state = request.data.get('state')
+            city = request.data.get('city')
+            phone_number = request.data.get('phoneNumber')
+            drop_date_epochs = int(request.data.get('dropDate', timezone.now().timestamp()))
+            drop_date = datetime.fromtimestamp(drop_date_epochs).astimezone(timezone.utc)
+
+            user_email = request.user.email
+
+            if  Volunteer.objects.filter(email=user_email).exists():
+                user = Volunteer.objects.get(email=user_email)
+                user.phoneNumber = phone_number
+                user.save()
+
+            if Donation.objects.filter(id=donation_id, active=True, status=STATUS[0][0]).exists():
+                item_donation = Donation.objects.get(id=donation_id, active=True, status=STATUS[0][0])
+                
+                drop_address, _ = Address.objects.get_or_create(
+                    lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
+                    defaults={'postalCode': postal_code, 'state': state, 'city': city}
+                )  
+
+                delivery_details = DeliveryDetail.objects.get(id=item_donation.delivery.id)
+                delivery_details.pickupAddress = drop_address
+                delivery_details.pickupDate=drop_date
+                delivery_details.save()
+
+                food_request = Request.objects.create(
+                    type__name=item_donation.donationType.name,
+                    createdBy=user,
+                    requiredDate=drop_date,
+                    quantity=item_donation.quantity,
+                    foodItem=item_donation.foodItem,
+                    deliver=delivery_details,
+                    verified=True,
+                    status=STATUS[0][0], 
+                )  
+
+                if RequestType.objects.filter(id=pickup_type_id).exists():
+                    request_type = RequestType.objects.get(id=pickup_type_id)
+                    pickup_request = Request.objects.create(type=request_type, createdBy=user, active=True, quantity=item_donation.quantity, foodItem=item_donation.foodItem, deliver=delivery_details)
+                else:
+                    return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+                
+                # TRIGGER EMAIL to Food Donor's email ID with the Food Requestor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details> 
+                title = f'{item_donation.type.name} Donation has been Accepted'
+                message = f'''<p>Your {item_donation.type.name} Donation - for {item_donation.quantity} of {item_donation.foodItem.itemName} has been Accepted by {user.name} </p></br>
+                <p>    
+                    <h3>{item_donation.type.name} Requestor's Details : </h3>
+                    Name    :  {user.name}</br>
+                    Phone   :  {user.phoneNumber}</br>
+                    Email   :  {user.email}</br>
+                </p>
+                '''
+                notification_type= NOTIFICATION_TYPE[3][0]
+                send_push_message(item_donation.donatedBy, title, message, notification_type)
+
+                # TRIGGER EMAIL to Food Requestor's email ID with the Food Donor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
+                title = f'You Accepted {item_donation.type.name} Donation'
+                message = f'''<p>You Accepted {item_donation.quantity} of {item_donation.foodItem.itemName} from {item_donation.donatedBy.name}  on {food_request.requiredDate.date()}</p></br>
+                <p>    
+                    <h3>{item_donation.type.name} Donors's Details : </h3>
+                    Name    :  {item_donation.donatedBy.name}</br>
+                    Phone   :  {item_donation.donatedBy.phoneNumber}</br>
+                    Email   :  {item_donation.donatedBy.email}</br>
+                </p>
+                '''
+                notification_type= NOTIFICATION_TYPE[3][0]
+                send_push_message(user, title, message, notification_type)
+                return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
+            else:
+                return Response({'success': False, 'message': f'Request with Id {donation_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)

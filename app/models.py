@@ -260,6 +260,7 @@ class Donation(models.Model):
     createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
+    active = models.BooleanField(default=True, null=True, blank=True)
 
 @receiver(post_save, sender=Donation)
 def send_donation_notification_on_change(sender, instance, created , **kwargs):
