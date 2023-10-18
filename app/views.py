@@ -2514,8 +2514,6 @@ class AcceptFoodRequest(APIView):
 
             if Request.objects.filter(id=request_id, active=True, status=STATUS[0][0]).exists():
                 item_request = Request.objects.get(id=request_id, active=True, status=STATUS[0][0])
-                item_request.active = False
-                item_request.save()
                 
                 pickup_address, _ = Address.objects.get_or_create(
                     lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
@@ -2538,6 +2536,9 @@ class AcceptFoodRequest(APIView):
                     status=STATUS[0][0], 
                     active = False
                 )  
+                
+                item_request.active = False
+                item_request.save()
 
                 if RequestType.objects.filter(id=pickup_type_id).exists():
                     request_type = RequestType.objects.get(id=pickup_type_id)
@@ -2650,8 +2651,6 @@ class AcceptFoodDonation(APIView):
 
             if Donation.objects.filter(id=donation_id, active=True, status=STATUS[0][0]).exists():
                 item_donation = Donation.objects.get(id=donation_id, active=True, status=STATUS[0][0])
-                item_donation.active=False
-                item_donation.save()
                 
                 drop_address, _ = Address.objects.get_or_create(
                     lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
@@ -2663,8 +2662,13 @@ class AcceptFoodDonation(APIView):
                 delivery_details.pickupDate=drop_date
                 delivery_details.save()
 
+                if RequestType.objects.filter(id=pickup_type_id).exists():
+                    food_request_type = RequestType.objects.get(name=item_donation.donationType.name)
+                else:
+                    return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+                
                 food_request = Request.objects.create(
-                    type__name=item_donation.donationType.name,
+                    type=food_request_type,
                     createdBy=user,
                     requiredDate=drop_date,
                     quantity=item_donation.quantity,
@@ -2674,6 +2678,9 @@ class AcceptFoodDonation(APIView):
                     status=STATUS[0][0], 
                     active=False,
                 )  
+                
+                item_donation.active=False
+                item_donation.save()
 
                 if RequestType.objects.filter(id=pickup_type_id).exists():
                     request_type = RequestType.objects.get(id=pickup_type_id)
