@@ -1799,8 +1799,8 @@ class AllDonations(APIView):
 
     def get(self, request, format=None):
         try:
-            if Donation.objects.filter(fullfilled=False, status=STATUS[0][0]).exists():
-                food_donations = Donation.objects.filter(fullfilled=False, status=STATUS[0][0])
+            if Donation.objects.filter(fullfilled=False, status=STATUS[0][0], active=True).exists():
+                food_donations = Donation.objects.filter(fullfilled=False, status=STATUS[0][0], active=True)
                 food_donations_details = DonationSerializer(food_donations, many=True).data
                 return Response({'success': True, 'AllDonations': food_donations_details}, status=HTTP_200_OK)
             else:
@@ -2514,6 +2514,8 @@ class AcceptFoodRequest(APIView):
 
             if Request.objects.filter(id=request_id, active=True, status=STATUS[0][0]).exists():
                 item_request = Request.objects.get(id=request_id, active=True, status=STATUS[0][0])
+                item_request.active = False
+                item_request.save()
                 
                 pickup_address, _ = Address.objects.get_or_create(
                     lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
@@ -2525,7 +2527,7 @@ class AcceptFoodRequest(APIView):
                 delivery_details.pickupDate=pickup_date
                 delivery_details.save()
 
-                donation = Donation.objects.create(donationType=item_request.foodItem.item_type,
+                donation = Donation.objects.create(donationType=item_request.foodItem.itemType,
                     foodItem=item_request.foodItem,
                     quantity=item_request.quantity,
                     donatedBy=user,
@@ -2534,6 +2536,7 @@ class AcceptFoodRequest(APIView):
                     request=item_request,
                     verified=True,
                     status=STATUS[0][0], 
+                    active = False
                 )  
 
                 if RequestType.objects.filter(id=pickup_type_id).exists():
@@ -2647,6 +2650,8 @@ class AcceptFoodDonation(APIView):
 
             if Donation.objects.filter(id=donation_id, active=True, status=STATUS[0][0]).exists():
                 item_donation = Donation.objects.get(id=donation_id, active=True, status=STATUS[0][0])
+                item_donation.active=False
+                item_donation.save()
                 
                 drop_address, _ = Address.objects.get_or_create(
                     lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
@@ -2667,6 +2672,7 @@ class AcceptFoodDonation(APIView):
                     deliver=delivery_details,
                     verified=True,
                     status=STATUS[0][0], 
+                    active=False,
                 )  
 
                 if RequestType.objects.filter(id=pickup_type_id).exists():
