@@ -2689,10 +2689,10 @@ class AcceptFoodDonation(APIView):
                     return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
                 
                 # TRIGGER EMAIL to Food Donor's email ID with the Food Requestor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details> 
-                title = f'{item_donation.type.name} Donation has been Accepted'
-                message = f'''<p>Your {item_donation.type.name} Donation - for {item_donation.quantity} of {item_donation.foodItem.itemName} has been Accepted by {user.name} </p></br>
+                title = f'{item_donation.donationType.name} Donation has been Accepted'
+                message = f'''<p>Your {item_donation.donationType.name} Donation - for {item_donation.quantity} of {item_donation.foodItem.itemName} has been Accepted by {user.name} </p></br>
                 <p>    
-                    <h3>{item_donation.type.name} Requestor's Details : </h3>
+                    <h3>{item_donation.donationType.name} Requestor's Details : </h3>
                     Name    :  {user.name}</br>
                     Phone   :  {user.phoneNumber}</br>
                     Email   :  {user.email}</br>
@@ -2702,10 +2702,10 @@ class AcceptFoodDonation(APIView):
                 send_push_message(item_donation.donatedBy, title, message, notification_type)
 
                 # TRIGGER EMAIL to Food Requestor's email ID with the Food Donor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
-                title = f'You Accepted {item_donation.type.name} Donation'
+                title = f'You Accepted {item_donation.donationType.name} Donation'
                 message = f'''<p>You Accepted {item_donation.quantity} of {item_donation.foodItem.itemName} from {item_donation.donatedBy.name}  on {food_request.requiredDate.date()}</p></br>
                 <p>    
-                    <h3>{item_donation.type.name} Donors's Details : </h3>
+                    <h3>{item_donation.donationType.name} Donors's Details : </h3>
                     Name    :  {item_donation.donatedBy.name}</br>
                     Phone   :  {item_donation.donatedBy.phoneNumber}</br>
                     Email   :  {item_donation.donatedBy.email}</br>
