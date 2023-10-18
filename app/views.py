@@ -960,8 +960,14 @@ class RequestFoodSupplies(APIView):
             city = request.data.get('city')
             phone_number = request.data.get('phoneNumber')
 
-            user = request.user
-
+            user_email = request.user.email
+            if  Volunteer.objects.filter(email=user_email).exists():
+                user = Volunteer.objects.get(email=user_email)
+                user.phoneNumber = phone_number
+                user.save()
+            else:
+                return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            
             request_address, _ = Address.objects.get_or_create(
                 lat=lat, lng=lng, streetAddress=full_address, fullAddress=full_address, 
                 defaults={'postalCode': postal_code, 'state': state, 'city': city}
@@ -1239,8 +1245,6 @@ class DonateFood(APIView):
             if request.data.get('phoneNumber') == None:
                 return Response({'success':False, 'message':'Please enter valid phoneNumber'}, status=HTTP_400_BAD_REQUEST)
 
-            user = request.user
-
             item_type_id = request.data.get('itemTypeId')
             food_name = request.data.get('foodName')
             quantity = request.data.get('quantity')            
@@ -1254,6 +1258,14 @@ class DonateFood(APIView):
             city = request.data.get('city')
             phone_number = request.data.get('phoneNumber')
 
+            user_email = request.user.email
+            if  Volunteer.objects.filter(email=user_email).exists():
+                user = Volunteer.objects.get(email=user_email)
+                user.phoneNumber = phone_number
+                user.save()
+            else:
+                return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            
             if ItemType.objects.filter(id=item_type_id).exists():
                 item_type = ItemType.objects.get(id=item_type_id)
             else:
@@ -2506,12 +2518,13 @@ class AcceptFoodRequest(APIView):
             pickup_date = datetime.fromtimestamp(pickup_date_epochs).astimezone(timezone.utc)
 
             user_email = request.user.email
-
             if  Volunteer.objects.filter(email=user_email).exists():
                 user = Volunteer.objects.get(email=user_email)
                 user.phoneNumber = phone_number
                 user.save()
-
+            else:
+                return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            
             if Request.objects.filter(id=request_id, active=True, status=STATUS[0][0]).exists():
                 item_request = Request.objects.get(id=request_id, active=True, status=STATUS[0][0])
                 
@@ -2643,12 +2656,13 @@ class AcceptFoodDonation(APIView):
             drop_date = datetime.fromtimestamp(drop_date_epochs).astimezone(timezone.utc)
 
             user_email = request.user.email
-
             if  Volunteer.objects.filter(email=user_email).exists():
                 user = Volunteer.objects.get(email=user_email)
                 user.phoneNumber = phone_number
                 user.save()
-
+            else:
+                return Response({'success': False, 'message': 'user not found'}, status=HTTP_401_UNAUTHORIZED)
+            
             if Donation.objects.filter(id=donation_id, active=True, status=STATUS[0][0]).exists():
                 item_donation = Donation.objects.get(id=donation_id, active=True, status=STATUS[0][0])
                 
