@@ -69,5 +69,7 @@ urlpatterns = [
     re_path(r'accept-food-request/', views.AcceptFoodRequest.as_view()),
     # Post (Accept Pickup Request By Driver)
     re_path(r'accept-pickup-request/', views.AcceptPickup.as_view()),
+    # Post (Generate OTP)
+    re_path(r'generate-otp/', views.GenerateConfirmationOTP.as_view()),
 
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)
