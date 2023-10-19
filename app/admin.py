@@ -95,10 +95,16 @@ class RequestTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'createdAt', 'active')
 
 class RequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdBy','type' ,'fullfilled', 'active')
+    list_display = ('id', 'createdBy','request_type' ,'fullfilled', 'active')
     search_fields = ['createdBy__name', 'requiredDate', 'dropDate']
     filter_fields = ['createdBy', 'type', 'fullfilled', 'active']
 
+    def request_type(self, obj):
+        try:
+            return obj.type.name
+        except:
+            return None
+        
 class DonationAdmin(admin.ModelAdmin):
     list_display = ('id', 'donatedBy', 'foodItem_name', 'donation_pickupDate', 'status', 'fullfilled') 
     search_fields = ['foodItem__itemName','status', 'fullfilled', 'delivery__pickupDate','donationType__name']
@@ -116,8 +122,14 @@ class DonationAdmin(admin.ModelAdmin):
             return None
         
 class EventVolunteerAdmin(admin.ModelAdmin):
-    list_display = ('id', 'event', 'createdAt')
-
+    list_display = ('id', 'event_name', 'createdAt')
+    
+    def event_name(self, obj):
+        try:
+            return obj.event.name
+        except:
+            return None
+        
 class CustomeTokenAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'createdAt')
     search_fields = ['user__name']

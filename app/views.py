@@ -2917,6 +2917,57 @@ class AcceptPickup(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='requestTypeId', in_=openapi.IN_QUERY, type=openapi.TYPE_NUMBER, required=True),
+            openapi.Parameter(name='Authorization', in_=openapi.IN_HEADER, type=openapi.TYPE_STRING, description='Token'),
+        ],   
+
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'PickupRequests': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Fetch My Pickups API",
+    )
+
+    def get(self, request, format=None):
+        try:        
+            data = request.query_params
+
+            for param in ['requestTypeId']:
+                if not data.get(param, '').strip():
+                    return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
+
+            request_type_id = data.get('requestTypeId')
+                
+            user_email = request.user.email
+            if  Volunteer.objects.filter(email=user_email, isDriver=True).exists():
+                user = Volunteer.objects.get(email=user_email, isDriver=True)
+            else:
+                return Response({'success': False, 'message': 'Volunteer is not a Driver'}, status=HTTP_401_UNAUTHORIZED)
+
+            if RequestType.objects.filter(id=request_type_id).exists():
+                request_type = RequestType.objects.get(id=request_type_id)
+            else:
+                return Response({'success': False, 'message': 'Request Type with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+            
+            if Request.objects.filter(deliver__driver=user, type=request_type).exists(): 
+                pickup_request = Request.objects.filter(deliver__driver=user, type=request_type)
+                pickup_request_details = RequestSerializer(pickup_request, many=True).data
+                return Response({'success': True, 'AllRequests':pickup_request_details}, status=HTTP_200_OK)    
+            else:
+                return Response({'success': True,'AllRequests':[]}, status=HTTP_200_OK)     
+            
+        except Exception as e:
+            return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        
 # Generate OTP to Confirm Pickup and Deliver Food/Supplies 
 class GenerateConfirmationOTP(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
