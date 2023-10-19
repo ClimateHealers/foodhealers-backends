@@ -2607,7 +2607,7 @@ class AcceptFoodDonation(APIView):
                 'postalCode': openapi.Schema(description='Postal Code of the Area', type=openapi.TYPE_NUMBER, example=7108-2899),         
                 'state': openapi.Schema(type=openapi.TYPE_STRING, example='New Jersey State'),
                 'city': openapi.Schema(type=openapi.TYPE_STRING, example='Newark City'),
-                'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'donationId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
                 'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
             }
@@ -2712,7 +2712,7 @@ class AcceptFoodDonation(APIView):
                     Email   :  {user.email}</br>
                 </p>
                 '''
-                notification_type= NOTIFICATION_TYPE[3][0]
+                notification_type= NOTIFICATION_TYPE[1][0]
                 send_push_message(item_donation.donatedBy, title, message, notification_type)
 
                 # TRIGGER EMAIL to Food Requestor's email ID with the Food Donor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
@@ -2725,10 +2725,103 @@ class AcceptFoodDonation(APIView):
                     Email   :  {item_donation.donatedBy.email}</br>
                 </p>
                 '''
-                notification_type= NOTIFICATION_TYPE[3][0]
+                notification_type= NOTIFICATION_TYPE[1][0]
                 send_push_message(user, title, message, notification_type)
                 return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
             else:
                 return Response({'success': False, 'message': f'Request with Id {donation_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Accept Food/Supplies Pickup API
+class AcceptPickup(APIView):
+    authentication_classes = [VolunteerTokenAuthentication]
+    permission_classes = [IsAuthenticated, VolunteerPermissionAuthentication]
+    
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['requestId'], 
+            properties={
+                'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+            }
+        ),
+        
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Pickup Request Accepted successfully'),
+                },
+            ),
+        },
+
+        operation_description="Accept Food/Supplies Pickup by Driver API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization', 
+                in_=openapi.IN_HEADER, 
+                type=openapi.TYPE_STRING, 
+                description='Token'
+            ),  
+        ],
+    )
+
+    # Accept Food/Supplies Pickup API (used for Accepting pickup By Driver)
+    def post(self, request, format=None):
+
+        try:
+
+            for param in ['requestId']:
+                if not request.data.get(param):
+                    return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
+            
+            request_id = request.data.get('requestId')
+
+            user_email = request.user.email
+            if  Volunteer.objects.filter(email=user_email, isDriver=True).exists():
+                user = Volunteer.objects.get(email=user_email, isDriver=True)
+            else:
+                return Response({'success': False, 'message': 'Volunteer is not a Driver'}, status=HTTP_401_UNAUTHORIZED)
+            
+            if Request.objects.filter(id=request_id, active=True, fullfilled=False).exists():
+                pickup_request = Request.objects.get(id=request_id, active=True, fullfilled=False)
+                pickup_request.deliver.driver = user
+                pickup_request.deliver.save()
+                pickup_request.active=False
+                pickup_request.save()
+
+                if Donation.objects.filter(foodItem=pickup_request.foodItem).exists():
+                    donation_details = Donation.objects.get(foodItem=pickup_request.foodItem)
+
+                    # TRIGGER EMAIL to Driver ID with the Food Donors Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
+                    title = f'You Accepted {pickup_request.type.name} Request'
+                    message = f'''<p>You Accepted to pick and Drop {pickup_request.quantity} of {pickup_request.foodItem.itemName} </p></br>
+                    <p>    
+                        <h3> Pickup Details : </h3>
+                        Name    :  {donation_details.donatedBy.name}</br>
+                        Phone   :  {donation_details.donatedBy.phoneNumber}</br>
+                        Date    : {pickup_request.deliver.pickupDate.date()}
+                        Time    : {pickup_request.deliver.pickupDate.time()}</br>
+                        Address   :  {pickup_request.deliver.pickupAddress}</br>
+                    </p></br>
+                    <p>    
+                        <h3> Drop Details : </h3>
+                        Name    :  {donation_details.request.createdBy.name}</br>
+                        Phone   :  {donation_details.request.createdBy.phoneNumber}</br>
+                        Date    :  {pickup_request.deliver.dropDate.date()}
+                        Time    :  {pickup_request.deliver.dropDate.time()}</br>
+                        Address :  {pickup_request.deliver.dropAddress}</br>
+                    </p>
+                    '''
+                    notification_type= NOTIFICATION_TYPE[3][0]
+                    send_push_message(user, title, message, notification_type)
+                    return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
+                else:
+                    return Response({'success': False, 'message': f'Pickup and Drop Details incomplete'}, status=HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'success': False, 'message': f'Request with Id {request_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
