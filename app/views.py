@@ -2961,9 +2961,9 @@ class AcceptPickup(APIView):
             if Request.objects.filter(deliver__driver=user, type=request_type).exists(): 
                 pickup_request = Request.objects.filter(deliver__driver=user, type=request_type)
                 pickup_request_details = RequestSerializer(pickup_request, many=True).data
-                return Response({'success': True, 'AllRequests':pickup_request_details}, status=HTTP_200_OK)    
+                return Response({'success': True, 'PickupRequests':pickup_request_details}, status=HTTP_200_OK)    
             else:
-                return Response({'success': True,'AllRequests':[]}, status=HTTP_200_OK)     
+                return Response({'success': True, 'PickupRequests':[]}, status=HTTP_200_OK)     
             
         except Exception as e:
             return Response({'success': False, 'error': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
