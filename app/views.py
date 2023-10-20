@@ -2893,7 +2893,7 @@ class AcceptPickup(APIView):
                     else:
                         return Response({'success': False, 'message': 'OTP is invalid'}, status=HTTP_401_UNAUTHORIZED)
                 
-                elif otp_type == OTP_TYPE[1][0]:
+                elif otp_type == OTP_TYPE[1][0] and pickup_request.deliver.pickedup == True:
                     if pickup_request.deliver.dropOtp == otp:
                         pickup_request.deliver.delivered = True
                         pickup_request.deliver.save()
