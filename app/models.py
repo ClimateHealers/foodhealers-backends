@@ -36,8 +36,15 @@ NOTIFICATION_TYPE = (
     ('event', 'Event'),
     ('donation', 'Donation'),
     ('volunteer','Volunteer'),
+    ('request', 'Request'),
     ('other','Other')
 )
+
+OTP_TYPE = (
+    ('pickup', 'Pickup'),
+    ('drop', 'Drop'),
+)
+
 # <<<<<<<<<<<<---------------------------------- Models Start from here ---------------------------------->>>>>>>>>>>>
 
 # 1. Model to Store types of Food (food, supplies)
@@ -194,9 +201,11 @@ class DeliveryDetail(models.Model):
     pickupAddress = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT, related_name='pickup_address')
     pickupDate =  models.DateTimeField( null=True, blank=True)
     pickedup = models.BooleanField(default=False)
+    pickupOtp = models.CharField(max_length=6, null=True, blank=True)
     dropAddress = models.ForeignKey(Address, null=True, blank=True, on_delete=models.PROTECT,  related_name='drop_address')
     dropDate = models.DateTimeField( null=True, blank=True)
     delivered = models.BooleanField(default=False, null=True, blank=True)
+    dropOtp = models.CharField(max_length=6, null=True, blank=True)
     driver = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
 
 # 11. model to store information about Request type (PickUp, food, Supplies, Volunteers)
@@ -218,6 +227,32 @@ class Request(models.Model):
     deliver = models.ForeignKey(DeliveryDetail, null=True, blank=True, on_delete=models.PROTECT)
     foodEvent = models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
     verified = models.BooleanField(default=False, null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
+
+@receiver(post_save, sender=Request)
+def send_notification_on_change(sender, instance, created , **kwargs):
+    from .tasks import send_push_message
+    
+    if instance.type.name == 'Food' or instance.type.name == 'Supplies' :
+        # logic to check if status has changed to approved or rejected
+        if instance.status == STATUS[0][0]:
+            title = f'{instance.type.name} Request Approved'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been approved by Food healers team'
+            notification_type= NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+
+        elif instance.status == STATUS[1][0]:
+            title = f'{instance.type.name} Request Rejected'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been rejected by Food healers team'
+            notification_type= NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+        
+        # Food/Supplies Request has been created
+        elif created :
+            title = f'{instance.type.name} Request Under Review'
+            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} is under review'
+            notification_type = NOTIFICATION_TYPE[3][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -233,20 +268,14 @@ class Donation(models.Model):
     createdAt =  models.DateTimeField(auto_now_add=True, null=True, blank=True)
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
+    active = models.BooleanField(default=True, null=True, blank=True)
 
 @receiver(post_save, sender=Donation)
 def send_donation_notification_on_change(sender, instance, created , **kwargs):
     from .tasks import send_push_message
-    
-    # if donation has been created
-    if created :
-        title = 'Donation Under Review'
-        message = f'Your Donation - {instance.foodItem.itemName} is under review'
-        notification_type = NOTIFICATION_TYPE[1][0]
-        send_push_message(instance.donatedBy, title, message, notification_type)
 
     # logic to check if status has changed to approved or rejected
-    elif instance.status == STATUS[0][0]:
+    if instance.status == STATUS[0][0]:
         title = 'Donation Approved'
         message = f'Your Donation - {instance.foodItem.itemName} has been approved by Food healers team'
         notification_type= NOTIFICATION_TYPE[1][0]
@@ -256,6 +285,13 @@ def send_donation_notification_on_change(sender, instance, created , **kwargs):
         title = 'Donation Rejected'
         message = f'Your Donation - {instance.foodItem.itemName} has been rejected by Food healers team'
         notification_type= NOTIFICATION_TYPE[1][0]
+        send_push_message(instance.donatedBy, title, message, notification_type)
+    
+    # if donation has been created
+    elif created :
+        title = 'Donation Under Review'
+        message = f'Your Donation - {instance.foodItem.itemName} is under review'
+        notification_type = NOTIFICATION_TYPE[1][0]
         send_push_message(instance.donatedBy, title, message, notification_type)
 
 # 14. model to store information about Event Volunteers
@@ -299,7 +335,7 @@ class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     title = models.CharField(max_length=50, default='title', null=True, blank=True)
-    message = models.CharField(max_length=255, default='this is sample message', null=True, blank=True)
+    message = models.TextField(max_length=1000, default='this is sample message', null=True, blank=True)
     is_unread = models.BooleanField(default=True)
     modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
     notificationType = models.CharField(max_length=50, choices=NOTIFICATION_TYPE, default='other', null=True, blank=True)
