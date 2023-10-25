@@ -414,6 +414,12 @@ class FoodRecipeSerializer(Serializer):
         else:
             return 'preparation time not specified'
         
+    def get_preparationTime(self, obj):
+        if obj.preparationTime is not None:
+            return obj.preparationTime
+        else:
+            return 'preparation time not specified'
+        
 class RequestTypeSerializer(Serializer):
     id = serializers.SerializerMethodField()
     name =  serializers.SerializerMethodField()
