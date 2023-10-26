@@ -72,4 +72,5 @@ urlpatterns = [
     # Post (Generate OTP)
     re_path(r'generate-otp/', views.GenerateConfirmationOTP.as_view()),
 
+
 ]+static(settings.MEDIA_URL, documne_root=settings.MEDIA_ROOT)

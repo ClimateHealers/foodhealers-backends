@@ -175,3 +175,4 @@ def active_status_check():
         return ({'success': True, 'message': 'Status Updated Succesfully'})
     except Exception as e:
         return ({'success': False, 'message': str(e)})
+
