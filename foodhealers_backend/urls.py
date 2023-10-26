@@ -37,7 +37,7 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
-    url='https://api.climatehealers.com'
+    url='https://foodhealers.climatehealers.com'
 )
 
 if settings.DEBUG :
