@@ -53,7 +53,7 @@
 			<div class="intro-container">
 				<h2> Hello Staff Admin, </h2>
 				<p>
-					You have been sent this email because there are pending Food Donations that require your approval.<br>
+					You have been sent this email because there are pending Donations and Requests that require your approval.<br>
 				</p>
 				<p>
 					Please take a moment to review and approve them.
@@ -61,19 +61,41 @@
 			</div>
 
 			<div class="event-conatiner">
+				<br>
+				<h4>Donations</h4>
 				<p>
 					{{details}}
-				</p>	
-			</div>
-
-			<div class="intro-container"> 
+				</p>
+				<br>
 				<h4>
 					To View More Pending Donations,<br>
 					Please Click 
 					<a href="{{base_url}}/admin/app/donation/?q=pending">
 						<b> View Donations.</b> 
 					</a>
+				</h4>	
+				<br>
+			</div>
+			<br>
+
+			<div class="request-conatiner">
+				<br>
+				<h4>Requests</h4>
+				<p>
+					{{request_details}}
+				</p>
+				<br>
+				<h4>
+					To View More Pending Requests,<br>
+					Please Click 
+					<a href="{{base_url}}/admin/app/request/?q=pending">
+						<b> View Requests.</b> 
+					</a>
 				</h4>
+				<br>		
+			</div>
+
+			<div class="intro-container"> 
 				<br>
 				<h3>
 					Thank you,<br />

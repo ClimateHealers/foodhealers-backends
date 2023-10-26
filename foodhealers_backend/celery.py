@@ -32,12 +32,18 @@ app.conf.beat_schedule = {
 
     'daily-event-status-check-notification': {
         'task': 'checking_event_status',
-        'schedule': crontab(minute=0, hour='*/2'),
+        'schedule': crontab(minute=0, hour='*/1'),
     },
 
     'daily-pending-donation-email-notification': {
         'task': 'pending_donations_email',
         'schedule': crontab(hour=12, minute=0),
     },
+    
+    'daily-active-status-check-notification': {
+        'task': 'checking_active_status',
+        'schedule': crontab(minute=0, hour='*/1'),
+    },
+    
 }
 
