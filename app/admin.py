@@ -95,16 +95,23 @@ class RequestTypeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'createdAt', 'active')
 
 class RequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'createdBy','request_type' ,'fullfilled', 'active')
-    search_fields = ['createdBy__name', 'requiredDate', 'dropDate']
+    list_display = ('id', 'createdBy','request_type','status','fullfilled','active')
+    search_fields = ['createdBy__name','status','deliver__dropDate','type__name']
     filter_fields = ['createdBy', 'type', 'fullfilled', 'active']
+    list_filter = ('status', 'type__name')
 
     def request_type(self, obj):
         try:
             return obj.type.name
         except:
             return None
-        
+    
+    def request_dropDate(self, obj):
+        try :
+            return obj.deliver.dropdate
+        except:
+            return None
+               
 class DonationAdmin(admin.ModelAdmin):
     list_display = ('id', 'donatedBy', 'foodItem_name', 'donation_pickupDate', 'status', 'fullfilled') 
     search_fields = ['foodItem__itemName','status', 'fullfilled', 'delivery__pickupDate','donationType__name']

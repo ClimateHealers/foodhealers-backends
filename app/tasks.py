@@ -5,7 +5,7 @@
 '''
 
 import os
-from .models import Notification, CustomToken, FoodEvent, STATUS, Donation
+from .models import Notification, CustomToken, FoodEvent, STATUS, Donation, Request
 from celery import Celery, shared_task
 from celery.utils.log import get_task_logger
 from exponent_server_sdk import PushClient, PushMessage 
@@ -120,13 +120,25 @@ def pending_donations_reminder():
         emaildetailstext.writelines(detailslist)
         emaildetailstext.close()            
         htmlstring = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/donationEmaildetails.html')).read()
-        subject = f'Approval Pending for New Food Donations'
+
+        pending_request_list = Request.objects.filter(Q(status=STATUS[2][0], fullfilled=False) & Q(type__name = "Food") | Q(type__name="Supplies") ).order_by('-createdAt')[:5]
+        request_detailslist = []
+        for pending_requests in pending_request_list:
+            request_details_card = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/RequestDetailsCard.txt')).read()
+            request_details = request_details_card.replace('{{food_item}}',str(pending_requests.foodItem.itemName)).replace('{{quantity}}',str(pending_requests.quantity)).replace('{{pickup_address}}', str(pending_requests.deliver.dropAddress)).replace('{{donation_date}}',str(pending_requests.deliver.dropDate.date())).replace('{{donation_time}}',str(pending_requests.deliver.dropDate.time())).replace('{{donated_by}}', str(pending_requests.createdBy.name))
+            request_detailslist.append(request_details) 
+        request_emaildetailstext = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/requestEmaildetails.html'), mode = 'w')
+        request_emaildetailstext.writelines(request_detailslist)
+        request_emaildetailstext.close()            
+        request_htmlstring = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/requestEmaildetails.html')).read()
+
+        subject = f'Approval Pending for New Food Donations and Requests'
 
         email_from = settings.DEFAULT_SENDER
         recipient_list = ['srao@climatehealers.org','climatehealers@climatehealers.org', 'padma.chinram@alamanceinc.com', 'raiyan.firaz@alamanceinc.com', 'aravind.muniraj@alamanceinc.com']
 
         finalhtmlcontent = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/PendingDonationsNotification.html')).read()
-        email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring)
+        email_text = finalhtmlcontent.replace('{{base_url}}', settings.PRODUCTION_URL).replace('{{details}}', htmlstring).replace('{{request_details}}', request_htmlstring)
         try:
             msg = EmailMultiAlternatives(subject=subject, body=email_text, from_email=email_from, to=recipient_list)
             msg.attach_alternative(email_text, "text/html")
