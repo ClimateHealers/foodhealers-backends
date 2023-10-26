@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from taggit.managers import TaggableManager
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from .validators import validate_file_size
 
 document_path = 'user/documents'
@@ -52,7 +52,10 @@ class ItemType(models.Model):
     name =  models.CharField(max_length=50, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
-
+    
+    def __str__(self):
+        return self.name
+    
 # 2. Model to Store all types of Categories
 class Category(models.Model):
     name =  models.CharField(max_length=50, null=True, blank=True)
@@ -60,6 +63,9 @@ class Category(models.Model):
     active = models.BooleanField(default=False, null=True, blank=True)
     categoryImage = models.FileField(upload_to=document_path, default='', null=True, blank=True, validators=[validate_file_size])
 
+    def __str__(self):
+        return self.name
+    
 # 3. Model to Store all types of Address
 class Address(models.Model):
     lat = models.FloatField(default='12.317277',null=True, blank=True) 
@@ -124,29 +130,37 @@ class FoodEvent(models.Model):
     requiredVolunteers = models.IntegerField(null=True, blank=True, default=0)
     volunteers = models.ManyToManyField(Volunteer, null=True, blank=True, related_name='food_event_volunteers') 
 
-@receiver(post_save, sender=FoodEvent)
-def send_notification_on_change(sender, instance, created , **kwargs):
-    from .tasks import send_push_message
+    def __str__(self):
+        return self.name
     
-    # if event has been created
-    if created :
-        title = 'Event Under Review'
-        message = f'Your Event - {instance.name} is under review'
-        notification_type = NOTIFICATION_TYPE[0][0]
-        send_push_message(instance.createdBy, title, message, notification_type)
+@receiver(pre_save, sender=FoodEvent)
+def send_notification_on_change(sender, instance, *args, **kwargs):
+    from .tasks import send_push_message
 
-    # logic to check if status has changed to approved or rejected
-    elif instance.status == STATUS[0][0]:
-        title = 'Event Approved'
-        message = f'Your Event - {instance.name} has been approved by Food healers team'
-        notification_type= NOTIFICATION_TYPE[0][0]
-        send_push_message(instance.createdBy, title, message, notification_type)
+    if instance.pk:
+        previous_status = FoodEvent.objects.get(pk=instance.pk).status
 
-    elif instance.status == STATUS[1][0]:
-        title = 'Event Rejected'
-        message = f'Your Event - {instance.name} has been rejected by Food healers team'
-        notification_type= NOTIFICATION_TYPE[0][0]
-        send_push_message(instance.createdBy, title, message, notification_type)
+        # logic to check if status has changed to approved or rejected
+        if instance.status == STATUS[0][0] and instance.status != previous_status:
+            title = 'Event Approved'
+            message = f'Your Event - {instance.name} has been approved by Food healers team'
+            notification_type= NOTIFICATION_TYPE[0][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+
+        elif instance.status == STATUS[1][0] and instance.status != previous_status:
+            title = 'Event Rejected'
+            message = f'Your Event - {instance.name} has been rejected by Food healers team'
+            notification_type= NOTIFICATION_TYPE[0][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
+
+    else:
+
+        # if event has been created
+        if instance.status == STATUS[2][0]:
+            title = 'Event Under Review'
+            message = f'Your Event - {instance.name} is under review'
+            notification_type = NOTIFICATION_TYPE[0][0]
+            send_push_message(instance.createdBy, title, message, notification_type)
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
 class Document(models.Model):
@@ -180,6 +194,9 @@ class FoodItem(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     event =  models.ForeignKey(FoodEvent, null=True, blank=True, on_delete=models.PROTECT)
 
+    def __str__(self):
+        return self.itemName
+    
 # 9. model to store information about FoodRecipes
 class FoodRecipe(models.Model):
     foodName = models.CharField(max_length=100, default='', null=True, blank=True)
@@ -214,6 +231,9 @@ class RequestType(models.Model):
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     active = models.BooleanField(default=False, null=True, blank=True)
 
+    def __str__(self):
+        return self.name
+    
 # 12. model to store information about Requests made by user (PickUp request, food, Supplies request, Volunteers Request)
 class Request(models.Model):
     type = models.ForeignKey(RequestType, null=True, blank=True, on_delete=models.PROTECT)
@@ -229,30 +249,36 @@ class Request(models.Model):
     verified = models.BooleanField(default=False, null=True, blank=True)
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
 
-@receiver(post_save, sender=Request)
-def send_notification_on_change(sender, instance, created , **kwargs):
+@receiver(pre_save, sender=Request)
+def send_notification_on_change(sender, instance, *args, **kwargs):
     from .tasks import send_push_message
-    
-    if instance.type.name == 'Food' or instance.type.name == 'Supplies' :
-        # logic to check if status has changed to approved or rejected
-        if instance.status == STATUS[0][0]:
-            title = f'{instance.type.name} Request Approved'
-            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been approved by Food healers team'
-            notification_type= NOTIFICATION_TYPE[3][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
 
-        elif instance.status == STATUS[1][0]:
-            title = f'{instance.type.name} Request Rejected'
-            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been rejected by Food healers team'
-            notification_type= NOTIFICATION_TYPE[3][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
+    if instance.type.name == 'Food' or instance.type.name == 'Supplies' :
+
+        if instance.pk:
+            previous_status = Request.objects.get(pk=instance.pk).status
+
+            # logic to check if status has changed to approved or rejected
+            if instance.status == STATUS[0][0] and instance.status != previous_status:
+                title = f'{instance.type.name} Request Approved'
+                message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been approved by Food healers team'
+                notification_type= NOTIFICATION_TYPE[3][0]
+                send_push_message(instance.createdBy, title, message, notification_type)
+
+            elif instance.status == STATUS[1][0] and instance.status != previous_status:
+                title = f'{instance.type.name} Request Rejected'
+                message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been rejected by Food healers team'
+                notification_type= NOTIFICATION_TYPE[3][0]
+                send_push_message(instance.createdBy, title, message, notification_type)
         
-        # Food/Supplies Request has been created
-        elif created :
-            title = f'{instance.type.name} Request Under Review'
-            message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} is under review'
-            notification_type = NOTIFICATION_TYPE[3][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
+        else:
+
+            # Food/Supplies Request has been created
+            if instance.status == STATUS[2][0] :
+                title = f'{instance.type.name} Request Under Review'
+                message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} is under review'
+                notification_type = NOTIFICATION_TYPE[3][0]
+                send_push_message(instance.createdBy, title, message, notification_type)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -270,29 +296,33 @@ class Donation(models.Model):
     status = models.CharField(max_length=20, null=True, blank=True, choices=STATUS, default=STATUS[2][0])
     active = models.BooleanField(default=True, null=True, blank=True)
 
-@receiver(post_save, sender=Donation)
-def send_donation_notification_on_change(sender, instance, created , **kwargs):
+@receiver(pre_save, sender=Donation)
+def send_donation_notification_on_change(sender, instance, *args, **kwargs):
     from .tasks import send_push_message
 
-    # logic to check if status has changed to approved or rejected
-    if instance.status == STATUS[0][0]:
-        title = 'Donation Approved'
-        message = f'Your Donation - {instance.foodItem.itemName} has been approved by Food healers team'
-        notification_type= NOTIFICATION_TYPE[1][0]
-        send_push_message(instance.donatedBy, title, message, notification_type)
+    if instance.pk:
+        previous_status = Donation.objects.get(pk=instance.pk).status
 
-    elif instance.status == STATUS[1][0]:
-        title = 'Donation Rejected'
-        message = f'Your Donation - {instance.foodItem.itemName} has been rejected by Food healers team'
-        notification_type= NOTIFICATION_TYPE[1][0]
-        send_push_message(instance.donatedBy, title, message, notification_type)
-    
-    # if donation has been created
-    elif created :
-        title = 'Donation Under Review'
-        message = f'Your Donation - {instance.foodItem.itemName} is under review'
-        notification_type = NOTIFICATION_TYPE[1][0]
-        send_push_message(instance.donatedBy, title, message, notification_type)
+        # logic to check if status has changed to approved or rejected
+        if instance.status == STATUS[0][0] and instance.status != previous_status:
+            title = 'Donation Approved'
+            message = f'Your Donation - {instance.foodItem.itemName} has been approved by Food healers team'
+            notification_type= NOTIFICATION_TYPE[1][0]
+            send_push_message(instance.donatedBy, title, message, notification_type)
+
+        elif instance.status == STATUS[1][0] and instance.status != previous_status:
+            title = 'Donation Rejected'
+            message = f'Your Donation - {instance.foodItem.itemName} has been rejected by Food healers team'
+            notification_type= NOTIFICATION_TYPE[1][0]
+            send_push_message(instance.donatedBy, title, message, notification_type)
+
+    else:
+        # if donation has been created
+        if instance.status == STATUS[2][0]:
+            title = 'Donation Under Review'
+            message = f'Your Donation - {instance.foodItem.itemName} is under review'
+            notification_type = NOTIFICATION_TYPE[1][0]
+            send_push_message(instance.donatedBy, title, message, notification_type)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):
