@@ -929,7 +929,7 @@ class RequestFoodSupplies(APIView):
             
             if request.data.get('quantity') == None:                
                 return  Response({'success': False, 'message': 'please enter valid quantity'}, status=HTTP_400_BAD_REQUEST)
-            
+              
             if request.data.get('lat') == None:
                 return Response({'success': False, 'message': 'please enter valid latitude'}, status=HTTP_400_BAD_REQUEST)
             
