@@ -134,7 +134,7 @@ class FoodEvent(models.Model):
         return self.name
     
 @receiver(pre_save, sender=FoodEvent)
-def send_notification_on_change(sender, instance, *args, **kwargs):
+def send_event_notification_on_change(sender, instance, *args, **kwargs):
     from .tasks import send_push_message
 
     if instance.pk:
