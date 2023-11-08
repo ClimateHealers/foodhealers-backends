@@ -3038,6 +3038,27 @@ class AcceptPickup(APIView):
                             donation_details.request.save()
                             donation_details.fullfilled=True
                             donation_details.save()
+
+                            is_email_notification = False
+
+                            # TRIGGER Notification to Donor Congratulating on Completion of Donation
+                            title = f'Congratulations!! Your {donation_details.donationType.name} Donation was successfully completed.' 
+                            message = f'''Congratulations {donation_details.donatedBy.name} on successfully donating {donation_details.foodItem.itemName} to {donation_details.request.createdBy.name}.'''
+                            notification_type= NOTIFICATION_TYPE[1][0] 
+                            send_push_message(donation_details.donatedBy, title, message, notification_type, is_email_notification)
+
+                            # TRIGGER Notification to Requestor Congratulating on Completion of Request
+                            title = f'Congratulations!! Your {donation_details.donationType.name} Request was successfully completed.'
+                            message = f'''Congratulations {donation_details.request.createdBy.name} on successfully receiving {donation_details.foodItem.itemName} from {donation_details.donatedBy.name}.'''
+                            notification_type= NOTIFICATION_TYPE[3][0] 
+                            send_push_message(donation_details.request.createdBy, title, message, notification_type, is_email_notification)
+
+                            # TRIGGER Notification to Driver Congratulating on Completion of Pickup Request
+                            title = f'Congratulations!! On successfully completing {donation_details.donationType.name} Delivery' 
+                            message = f'''Congratulations {pickup_request.deliver.driver.name} on successfully delivering {donation_details.foodItem.itemName} to {donation_details.request.createdBy.name}.'''
+                            notification_type= NOTIFICATION_TYPE[3][0] 
+                            send_push_message(pickup_request.deliver.driver, title, message, notification_type, is_email_notification)
+
                             return Response({'success': True, 'message': 'Successfully updated request details'}, status=HTTP_200_OK)
                         else:
                             return Response({'success': False, 'message': f'Pickup and Drop Details incomplete'}, status=HTTP_400_BAD_REQUEST)
