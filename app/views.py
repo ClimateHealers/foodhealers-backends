@@ -2146,6 +2146,105 @@ class VolunteerNotification(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['notificationId'], 
+            properties={
+                'notificationId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully updated volunteer notifications'),
+                },
+            ),
+        },
+
+        operation_description="Update Volunteer Notifications API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # Updated My notifications 
+    def put(self, request, format=None):
+        try:
+            if request.data.get('notificationId') != None:
+                notification_id = request.data.get('notificationId')
+            else:
+                return Response({'success': False, 'message': 'Please enter valid notification Id'}, status=HTTP_400_BAD_REQUEST)
+            
+            if Notification.objects.filter(id=notification_id).exists():
+                notification = Notification.objects.get(id=notification_id)
+                notification.is_unread = False
+                notification.modifiedAt = timezone.now()
+                notification.save()
+                return Response({'success': True, 'message': 'Successfully updated volunteer notifications'}, status=HTTP_200_OK)
+            else:
+                return Response({'success': False, 'message': f'Notification with id {notification_id} not found'}, status=HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['notificationId'], 
+            properties={
+                'notificationId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+            },
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, default='Successfully deleted volunteer notifications'),
+                },
+            ),
+        },
+
+        operation_description="Delete Volunteer Notifications API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+        ],
+    )
+
+    # Delete My notifications 
+    def delete(self, request, format=None):
+        try:
+            if request.data.get('notificationId') != None:
+                notification_id = request.data.get('notificationId')
+            else:
+                return Response({'success': False, 'message': 'Please enter valid notification Id'}, status=HTTP_400_BAD_REQUEST)
+            
+            if Notification.objects.filter(id=notification_id).exists():
+                notification = Notification.objects.get(id=notification_id)
+                notification.is_unread = False
+                notification.modifiedAt = timezone.now()
+                notification.isDeleted = True
+                notification.save()
+                return Response({'success': True, 'message': 'Successfully deleted volunteer notifications'}, status=HTTP_200_OK)
+            else:
+                return Response({'success': False, 'message': f'Notification with id {notification_id} not found'}, status=HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+                
 # FETCH EVENTS API According to Calender Dates
 class CalenderEvents(APIView):
 
@@ -2566,27 +2665,29 @@ class AcceptFoodRequest(APIView):
                 title = f'{item_request.type.name} Request has been Accepted'
                 message = f'''<p>Your {item_request.type.name} Request - for {item_request.quantity} of {item_request.foodItem.itemName} has been Accepted by {user.name} </p></br>
                 <p>    
-                    <h3>{item_request.type.name} Donor's Details : </h3>
-                    Name    :  {user.name}</br>
-                    Phone   :  {user.phoneNumber}</br>
-                    Email   :  {user.email}</br>
+                <h3>{item_request.type.name} Donor's Details : </h3>
+                Name    :  {user.name}</br>
+                Phone   :  {user.phoneNumber}</br>
+                Email   :  {user.email}</br>
                 </p>
                 '''
                 notification_type= NOTIFICATION_TYPE[3][0]
-                send_push_message(item_request.createdBy, title, message, notification_type)
+                is_email_notification = True
+                send_push_message(item_request.createdBy, title, message, notification_type, is_email_notification)
 
                 # TRIGGER EMAIL to Food Donor's email ID with the Food Requestor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
                 title = f'You Accepted {item_request.type.name} Request'
                 message = f'''<p>You Accepted to Donate {item_request.quantity} of {item_request.foodItem.itemName} to {item_request.createdBy.name} on {item_request.requiredDate.date()}</p></br>
                 <p>    
-                    <h3>{item_request.type.name} Requestor's Details : </h3>
-                    Name    :  {item_request.createdBy.name}</br>
-                    Phone   :  {item_request.createdBy.phoneNumber}</br>
-                    Email   :  {item_request.createdBy.email}</br>
+                <h3>{item_request.type.name} Requestor's Details : </h3>
+                Name    :  {item_request.createdBy.name}</br>
+                Phone   :  {item_request.createdBy.phoneNumber}</br>
+                Email   :  {item_request.createdBy.email}</br>
                 </p>
                 '''
                 notification_type= NOTIFICATION_TYPE[3][0]
-                send_push_message(user, title, message, notification_type)
+                is_email_notification = True
+                send_push_message(user, title, message, notification_type, is_email_notification)
                 return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
             else:
                 return Response({'success': False, 'message': f'Request with Id {request_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
@@ -2710,27 +2811,29 @@ class AcceptFoodDonation(APIView):
                 title = f'{item_donation.donationType.name} Donation has been Accepted'
                 message = f'''<p>Your {item_donation.donationType.name} Donation - for {item_donation.quantity} of {item_donation.foodItem.itemName} has been Accepted by {user.name} </p></br>
                 <p>    
-                    <h3>{item_donation.donationType.name} Requestor's Details : </h3>
-                    Name    :  {user.name}</br>
-                    Phone   :  {user.phoneNumber}</br>
-                    Email   :  {user.email}</br>
+                <h3>{item_donation.donationType.name} Requestor's Details : </h3>
+                Name    :  {user.name}</br>
+                Phone   :  {user.phoneNumber}</br>
+                Email   :  {user.email}</br>
                 </p>
                 '''
                 notification_type= NOTIFICATION_TYPE[1][0]
-                send_push_message(item_donation.donatedBy, title, message, notification_type)
+                is_email_notification = True
+                send_push_message(item_donation.donatedBy, title, message, notification_type, is_email_notification)
 
                 # TRIGGER EMAIL to Food Requestor's email ID with the Food Donor's Details like <Name>, <Phone Number>, <Address> and <Email ID> for the <Food Name, Qty and other details>
                 title = f'You Accepted {item_donation.donationType.name} Donation'
                 message = f'''<p>You Accepted {item_donation.quantity} of {item_donation.foodItem.itemName} from {item_donation.donatedBy.name}  on {food_request.requiredDate.date()}</p></br>
                 <p>    
-                    <h3>{item_donation.donationType.name} Donors's Details : </h3>
-                    Name    :  {item_donation.donatedBy.name}</br>
-                    Phone   :  {item_donation.donatedBy.phoneNumber}</br>
-                    Email   :  {item_donation.donatedBy.email}</br>
+                <h3>{item_donation.donationType.name} Donors's Details : </h3>
+                Name    :  {item_donation.donatedBy.name}</br>
+                Phone   :  {item_donation.donatedBy.phoneNumber}</br>
+                Email   :  {item_donation.donatedBy.email}</br>
                 </p>
                 '''
                 notification_type= NOTIFICATION_TYPE[1][0]
-                send_push_message(user, title, message, notification_type)
+                is_email_notification = True
+                send_push_message(user, title, message, notification_type, is_email_notification)
                 return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
             else:
                 return Response({'success': False, 'message': f'Request with Id {donation_id} does not exists'}, status=HTTP_400_BAD_REQUEST)
@@ -2804,24 +2907,54 @@ class AcceptPickup(APIView):
                     title = f'You Accepted {pickup_request.type.name} Request'
                     message = f'''<p>You Accepted to pick and Drop {pickup_request.quantity} of {pickup_request.foodItem.itemName} </p></br>
                     <p>    
-                        <h3> Pickup Details : </h3>
-                        Name    :  {donation_details.donatedBy.name}</br>
-                        Phone   :  {donation_details.donatedBy.phoneNumber}</br>
-                        Date    : {pickup_request.deliver.pickupDate.date()}
-                        Time    : {pickup_request.deliver.pickupDate.time()}</br>
-                        Address   :  {pickup_request.deliver.pickupAddress}</br>
+                    <h3> Pickup Details : </h3>
+                    Name    :  {donation_details.donatedBy.name}</br>
+                    Phone   :  {donation_details.donatedBy.phoneNumber}</br>
+                    Date    : {pickup_request.deliver.pickupDate.date()}
+                    Time    : {pickup_request.deliver.pickupDate.time()}</br>
+                    Address   :  {pickup_request.deliver.pickupAddress}</br>
                     </p></br>
                     <p>    
-                        <h3> Drop Details : </h3>
-                        Name    :  {donation_details.request.createdBy.name}</br>
-                        Phone   :  {donation_details.request.createdBy.phoneNumber}</br>
-                        Date    :  {pickup_request.deliver.dropDate.date()}
-                        Time    :  {pickup_request.deliver.dropDate.time()}</br>
-                        Address :  {pickup_request.deliver.dropAddress}</br>
+                    <h3> Drop Details : </h3>
+                    Name    :  {donation_details.request.createdBy.name}</br>
+                    Phone   :  {donation_details.request.createdBy.phoneNumber}</br>
+                    Date    :  {pickup_request.deliver.dropDate.date()}
+                    Time    :  {pickup_request.deliver.dropDate.time()}</br>
+                    Address :  {pickup_request.deliver.dropAddress}</br>
                     </p>
                     '''
                     notification_type= NOTIFICATION_TYPE[3][0]
-                    send_push_message(user, title, message, notification_type)
+                    is_email_notification = True
+                    send_push_message(user, title, message, notification_type, is_email_notification)
+
+                    # TRIGGER EMAIL to Food Donor's email ID with the Driver Details like <Name>, <Phone Number>, <Address> and <Email ID> 
+                    title = f'{user.name} has Accepted to Pick {pickup_request.foodItem.itemName}'
+                    message = f'''<p>{user.name} Accepted to Pickup {pickup_request.quantity} of {pickup_request.foodItem.itemName} on {pickup_request.deliver.pickupDate.date()} at {pickup_request.deliver.pickupDate.time()}</p></br>
+                    <p>    
+                    <h3> Driver Details : </h3>
+                    Name    :  {user.name}</br>
+                    Phone   :  {user.phoneNumber}</br>
+                    Email   :  {user.email}</br>
+                    </p>
+                    '''
+                    notification_type= NOTIFICATION_TYPE[4][0] 
+                    is_email_notification = True
+                    send_push_message(donation_details.donatedBy, title, message, notification_type, is_email_notification)
+
+                    # TRIGGER EMAIL to Food Requestor's email ID with the Driver Details like <Name>, <Phone Number>, <Address> and <Email ID>
+                    title = f'{user.name} has Accepted to Deliver {pickup_request.foodItem.itemName}'
+                    message = f'''<p>{user.name} Accepted to Deliver {pickup_request.quantity} of {pickup_request.foodItem.itemName} on {pickup_request.deliver.dropDate.date()} at {pickup_request.deliver.dropDate.time()}</p></br>
+                    <p>    
+                    <h3> Driver Details : </h3>
+                    Name    :  {user.name}</br>
+                    Phone   :  {user.phoneNumber}</br>
+                    Email   :  {user.email}</br>
+                    </p>
+                    '''
+                    notification_type= NOTIFICATION_TYPE[4][0] 
+                    is_email_notification = True
+                    send_push_message(donation_details.request.createdBy, title, message, notification_type, is_email_notification)
+
                     return Response({'success': True, 'message': 'Successfully requested items'}, status=HTTP_200_OK)
                 else:
                     return Response({'success': False, 'message': f'Pickup and Drop Details incomplete'}, status=HTTP_400_BAD_REQUEST)
@@ -3038,7 +3171,8 @@ class GenerateConfirmationOTP(APIView):
                     title = f'Your OTP for Pickup Verification'
                     message = f'Your Food healers Secure Pickup Code is {otp} and its valid for next 24 hours. Share this Pickup Code with the Volunteer after handing over your parcel.'
                     notification_type= NOTIFICATION_TYPE[4][0]
-                    send_push_message(donation_details.donatedBy, title, message, notification_type)
+                    is_email_notification = True
+                    send_push_message(donation_details.donatedBy, title, message, notification_type, is_email_notification)
                     return Response({'success': True, 'message': 'OTP sent Successfully'}, status=HTTP_200_OK)
                     
                 elif otp_type == OTP_TYPE[1][0]:
@@ -3047,7 +3181,8 @@ class GenerateConfirmationOTP(APIView):
                     title = f'Your OTP for Delivery Verification'
                     message = f'Your Food healers Secure Delivery Code is {otp} and its valid for next 24 hours. Share this Delivery Code with the Volunteer to receive the packacge'
                     notification_type= NOTIFICATION_TYPE[4][0]
-                    send_push_message(donation_details.request.createdBy, title, message, notification_type)
+                    is_email_notification = True
+                    send_push_message(donation_details.request.createdBy, title, message, notification_type, is_email_notification)
                     return Response({'success': True, 'message': 'OTP sent Successfully'}, status=HTTP_200_OK)
                 else:
                     return Response({'success': False, 'message': 'Invalid OTP Type'}, status=HTTP_400_BAD_REQUEST)
