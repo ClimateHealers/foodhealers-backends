@@ -37,9 +37,11 @@ def send_push_message(user, title, message, notification_type, is_email_notifica
                 print({'success': True, 'message': 'Email Notification sent'})
 
                 soup = BeautifulSoup(message, 'html.parser')
-                message = soup.get_text()
-                print(message)
-            
+                details = soup.get_text()
+                lines = details.split('\n')
+                cleaned_lines = [line.split(":")[0].strip() + ":" + line.split(":")[1].strip() if ':' in line else line for line in lines]
+                message = '\n'.join(cleaned_lines)
+                
             except Exception as e:
                 return({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
 
