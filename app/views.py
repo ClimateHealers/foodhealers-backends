@@ -929,6 +929,9 @@ class RequestFoodSupplies(APIView):
             
             if request.data.get('quantity') == None:                
                 return  Response({'success': False, 'message': 'please enter valid quantity'}, status=HTTP_400_BAD_REQUEST)
+              
+            if request.data.get('lat') == None:
+                return Response({'success': False, 'message': 'please enter valid latitude'}, status=HTTP_400_BAD_REQUEST)
             
             if request.data.get('lat') == None:
                 return Response({'success': False, 'message': 'please enter valid latitude'}, status=HTTP_400_BAD_REQUEST)
@@ -3038,7 +3041,6 @@ class AcceptPickup(APIView):
                             donation_details.request.save()
                             donation_details.fullfilled=True
                             donation_details.save()
-
                             is_email_notification = False
 
                             # TRIGGER Notification to Donor Congratulating on Completion of Donation
