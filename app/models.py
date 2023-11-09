@@ -134,7 +134,7 @@ class FoodEvent(models.Model):
         return self.name
     
 @receiver(pre_save, sender=FoodEvent)
-def send_notification_on_change(sender, instance, *args, **kwargs):
+def send_event_notification_on_change(sender, instance, *args, **kwargs):
     from .tasks import send_push_message
 
     if instance.pk:
@@ -145,13 +145,15 @@ def send_notification_on_change(sender, instance, *args, **kwargs):
             title = 'Event Approved'
             message = f'Your Event - {instance.name} has been approved by Food healers team'
             notification_type= NOTIFICATION_TYPE[0][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
 
         elif instance.status == STATUS[1][0] and instance.status != previous_status:
             title = 'Event Rejected'
             message = f'Your Event - {instance.name} has been rejected by Food healers team'
             notification_type= NOTIFICATION_TYPE[0][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
 
     else:
 
@@ -160,7 +162,8 @@ def send_notification_on_change(sender, instance, *args, **kwargs):
             title = 'Event Under Review'
             message = f'Your Event - {instance.name} is under review'
             notification_type = NOTIFICATION_TYPE[0][0]
-            send_push_message(instance.createdBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
 
 # 7. Model to store all the files related to driver, vehicle, Events etc
 class Document(models.Model):
@@ -263,13 +266,15 @@ def send_notification_on_change(sender, instance, *args, **kwargs):
                 title = f'{instance.type.name} Request Approved'
                 message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been approved by Food healers team'
                 notification_type= NOTIFICATION_TYPE[3][0]
-                send_push_message(instance.createdBy, title, message, notification_type)
+                is_email_notification = False
+                send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
 
             elif instance.status == STATUS[1][0] and instance.status != previous_status:
                 title = f'{instance.type.name} Request Rejected'
                 message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} has been rejected by Food healers team'
                 notification_type= NOTIFICATION_TYPE[3][0]
-                send_push_message(instance.createdBy, title, message, notification_type)
+                is_email_notification = False
+                send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
         
         else:
 
@@ -278,7 +283,8 @@ def send_notification_on_change(sender, instance, *args, **kwargs):
                 title = f'{instance.type.name} Request Under Review'
                 message = f'Your {instance.type.name} Request - for {instance.quantity} of {instance.foodItem.itemName} is under review'
                 notification_type = NOTIFICATION_TYPE[3][0]
-                send_push_message(instance.createdBy, title, message, notification_type)
+                is_email_notification = False
+                send_push_message(instance.createdBy, title, message, notification_type, is_email_notification)
 
 # 13. model to store information about Donations
 class Donation(models.Model):
@@ -308,13 +314,15 @@ def send_donation_notification_on_change(sender, instance, *args, **kwargs):
             title = 'Donation Approved'
             message = f'Your Donation - {instance.foodItem.itemName} has been approved by Food healers team'
             notification_type= NOTIFICATION_TYPE[1][0]
-            send_push_message(instance.donatedBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.donatedBy, title, message, notification_type, is_email_notification)
 
         elif instance.status == STATUS[1][0] and instance.status != previous_status:
             title = 'Donation Rejected'
             message = f'Your Donation - {instance.foodItem.itemName} has been rejected by Food healers team'
             notification_type= NOTIFICATION_TYPE[1][0]
-            send_push_message(instance.donatedBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.donatedBy, title, message, notification_type, is_email_notification)
 
     else:
         # if donation has been created
@@ -322,7 +330,8 @@ def send_donation_notification_on_change(sender, instance, *args, **kwargs):
             title = 'Donation Under Review'
             message = f'Your Donation - {instance.foodItem.itemName} is under review'
             notification_type = NOTIFICATION_TYPE[1][0]
-            send_push_message(instance.donatedBy, title, message, notification_type)
+            is_email_notification = False
+            send_push_message(instance.donatedBy, title, message, notification_type, is_email_notification)
 
 # 14. model to store information about Event Volunteers
 class EventVolunteer(models.Model):
@@ -342,7 +351,8 @@ def send_volunteer_notification_on_applied(sender, instance, created , **kwargs)
         title = 'Volunteer Registered For Your Event'
         message = f'{instance.volunteer.name} wants to volunteer for {instance.event.name}'
         notification_type = NOTIFICATION_TYPE[2][0]
-        send_push_message(instance.event.createdBy, title, message, notification_type)
+        is_email_notification = False
+        send_push_message(instance.event.createdBy, title, message, notification_type, is_email_notification)
 
 
 # 15. model to store information about django token 
@@ -364,7 +374,8 @@ class EventBookmark(models.Model):
 class Notification(models.Model):
     user = models.ForeignKey(Volunteer, null=True, blank=True, on_delete=models.PROTECT)
     createdAt = models.DateTimeField(auto_now_add=True, null=True, blank=True)
-    title = models.CharField(max_length=50, default='title', null=True, blank=True)
+    title = models.CharField(max_length=100, default='title', null=True, blank=True)
+
     message = models.TextField(max_length=1000, default='this is sample message', null=True, blank=True)
     is_unread = models.BooleanField(default=True)
     modifiedAt = models.DateTimeField(null=True, blank=True)  # updated when read
