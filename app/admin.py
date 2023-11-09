@@ -113,8 +113,9 @@ class RequestAdmin(admin.ModelAdmin):
             return None
                
 class DonationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'donatedBy', 'foodItem_name', 'donation_pickupDate', 'status', 'fullfilled') 
-    search_fields = ['foodItem__itemName','status', 'fullfilled', 'delivery__pickupDate','donationType__name']
+    list_display = ('id', 'donatedBy','donation_type', 'foodItem_name', 'donation_pickupDate', 'status', 'fullfilled','active') 
+    search_fields = ['foodItem__itemName','status', 'fullfilled', 'delivery__pickupDate', 'donationType__name', 'active']
+    list_filter = ('status', 'donationType__name')
     
     def foodItem_name(self, obj):
         try:
@@ -125,6 +126,12 @@ class DonationAdmin(admin.ModelAdmin):
     def donation_pickupDate(self, obj):
         try :
             return obj.delivery.pickupDate
+        except:
+            return None
+    
+    def donation_type(self, obj):
+        try:
+            return obj.donationType.name
         except:
             return None
         
