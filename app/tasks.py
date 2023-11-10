@@ -14,29 +14,38 @@ from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q
 import logging
+from bs4 import BeautifulSoup
 
 logger = get_task_logger(__name__)
 app = Celery()
 
-def send_push_message(user, title, message, notification_type):
+def send_push_message(user, title, message, notification_type, is_email_notification):
     try:
-        Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
-        
-        # Email notification Code
-        subject = title
-        email_from = settings.DEFAULT_SENDER
-        recipient_list = [user.email]
-        html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/NotificationEmail.html')).read()
-        email_text = html.replace('{{name}}', user.name).replace('{{title}}', title).replace('{{message}}', message)
-        
-        try:
+
+        if is_email_notification:
+            # Email notification Code
+            subject = title
+            email_from = settings.DEFAULT_SENDER
+            recipient_list = [user.email]
+            html = open(os.path.join(settings.PROJECT_DIR,'emailTemplates/NotificationEmail.html')).read()
+            email_text = html.replace('{{name}}', user.name).replace('{{title}}', title).replace('{{message}}', message)
             
-            msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
-            msg.attach_alternative(email_text, "text/html")
-            msg.send()
-        
-        except Exception as e:
-            return ({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
+            try:
+                msg = EmailMultiAlternatives(subject=subject, from_email=email_from, to=recipient_list)
+                msg.attach_alternative(email_text, "text/html")
+                msg.send()
+                print({'success': True, 'message': 'Email Notification sent'})
+
+                soup = BeautifulSoup(message, 'html.parser')
+                details = soup.get_text()
+                lines = details.split('\n')
+                cleaned_lines = [line.split(":")[0].strip() + ":" + line.split(":")[1].strip() if ':' in line else line for line in lines]
+                message = '\n'.join(cleaned_lines)
+                
+            except Exception as e:
+                return({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
+
+        Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
         
         # Expo Notification Code
         if CustomToken.objects.filter(user=user).exists():
@@ -50,14 +59,18 @@ def send_push_message(user, title, message, notification_type):
                         body=message,
                     )
                 )
-                return ({'success': True, 'message': 'Expo Notification sent'})
+                print({'success': True, 'message': 'Expo Notification sent'})
+                return({'success': True, 'message': 'Expo Notification sent'})
             
             except Exception as e:
+                print({'success': False, 'message': 'Failed to send Expo notification', 'error':str(e)})
                 return({'success': False, 'message': 'Failed to send Expo notification', 'error':str(e)})
         else:
+            print({'success': False, 'message': 'Custom Token for user not exists', 'error': 'Custom Token for user not exists'})
             return({'success': False, 'message': 'Custom Token for user not exists', 'error': 'Custom Token for user not exists'})  
         
     except Exception as e:
+        print({'success':False, 'message':'Cant Send MSG', 'error':str(e)})
         return({'success':False, 'message':'Cant Send MSG', 'error':str(e)})
 
 @shared_task(name='checking_event_status')
