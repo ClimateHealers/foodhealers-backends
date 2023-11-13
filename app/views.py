@@ -1666,6 +1666,12 @@ class VehicleOperations(APIView):
                 vehicle_details = VehicleSerializer(vehicle).data
                 return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details}, status=HTTP_400_BAD_REQUEST)
             else:
+
+                old_vehicle_list = Vehicle.objects.filter(owner=user)
+                for old_vehicle in old_vehicle_list:
+                    old_vehicle.active = False
+                    old_vehicle.save()
+                
                 vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour, active=active, createdAt=timezone.now())
                 vehicle_details = VehicleSerializer(vehicle).data
 
@@ -1735,6 +1741,11 @@ class VehicleOperations(APIView):
             user = request.user
 
             if Vehicle.objects.filter(id=vehicle_id, owner=user).exists():
+                old_vehicle_list = Vehicle.objects.filter(owner=user)
+                for old_vehicle in old_vehicle_list:
+                    old_vehicle.active = False
+                    old_vehicle.save()
+
                 vehicle = Vehicle.objects.get(id=vehicle_id, owner=user)
                 vehicle.vehicleColour = vehicle_colour
                 vehicle.plateNumber = plate_number
