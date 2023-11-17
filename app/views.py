@@ -2577,7 +2577,7 @@ class AcceptFoodRequest(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            required=['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','pickupDate'], 
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
@@ -2588,6 +2588,7 @@ class AcceptFoodRequest(APIView):
                 'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
                 'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'pickupDate':openapi.Schema(type=openapi.TYPE_NUMBER),
             }
         ),
         
@@ -2617,7 +2618,7 @@ class AcceptFoodRequest(APIView):
 
         try:
 
-            for param in ['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
+            for param in ['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','pickupDate']:
                 if not request.data.get(param):
                     return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             
@@ -2717,7 +2718,7 @@ class AcceptFoodDonation(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            required=['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','dropDate'], 
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
@@ -2728,6 +2729,7 @@ class AcceptFoodDonation(APIView):
                 'donationId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
                 'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'dropDate':openapi.Schema(type=openapi.TYPE_NUMBER),
             }
         ),
         
@@ -2757,7 +2759,7 @@ class AcceptFoodDonation(APIView):
 
         try:
 
-            for param in ['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
+            for param in ['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','dropDate']:
                 if not request.data.get(param):
                     return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             

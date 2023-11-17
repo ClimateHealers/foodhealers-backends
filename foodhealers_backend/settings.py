@@ -220,8 +220,8 @@ MEDIA_URL = 'https://%s/%s/' % (AWS_S3_MEDIA_CUSTOM_DOMAIN, AWS_MEDIA_LOCATION)
 
 # Send in Blue Settings
 SENDINBLUE_API_KEY = EMAIL_SENDINBLUE_API_KEY
-EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_HOST_USER = 'climatehealers@climatehealers.org'
+EMAIL_HOST = 'smtp-relay.sendinblue.com'
+EMAIL_HOST_USER = 'srao@climatehealers.org'
 EMAIL_HOST_PASSWORD = SENDINBLUE_EMAIL_HOST_PASSWORD
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
