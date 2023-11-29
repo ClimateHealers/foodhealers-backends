@@ -43,6 +43,7 @@ def send_push_message(user, title, message, notification_type, is_email_notifica
                 message = '\n'.join(cleaned_lines)
                 
             except Exception as e:
+                print({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
                 return({'success': False, 'message': 'Failed to send email notification', 'error': str(e)})
 
         Notification.objects.create(user=user, title=title, message=message, notificationType=notification_type)
@@ -114,8 +115,10 @@ def pending_events_reminder():
                 msg = EmailMultiAlternatives(subject=subject, body=email_text, from_email=email_from, to=recipient_list)
                 msg.attach_alternative(email_text, "text/html")
                 msg.send()
+                print({'success': True, 'message': 'Message is sent'})
                 return ({'success': True, 'message': 'Message is sent'})
             except Exception as e:
+                print({'success': False,  'error': str(e)})
                 return ({'success': False,  'error': str(e)})
 
     except Exception as e:
@@ -158,8 +161,10 @@ def pending_donations_reminder():
                 msg = EmailMultiAlternatives(subject=subject, body=email_text, from_email=email_from, to=recipient_list)
                 msg.attach_alternative(email_text, "text/html")
                 msg.send()
+                print({'success': True, 'message': 'Message is sent'})
                 return ({'success': True, 'message': 'Message is sent'})
             except Exception as e:
+                print({'success': False,  'error': str(e)})
                 return ({'success': False,  'error': str(e)})
 
     except Exception as e:

@@ -1666,6 +1666,12 @@ class VehicleOperations(APIView):
                 vehicle_details = VehicleSerializer(vehicle).data
                 return Response({'success': False, 'message': 'Vehicle with data already exists', 'vehicleDetails': vehicle_details}, status=HTTP_400_BAD_REQUEST)
             else:
+
+                old_vehicle_list = Vehicle.objects.filter(owner=user)
+                for old_vehicle in old_vehicle_list:
+                    old_vehicle.active = False
+                    old_vehicle.save()
+                
                 vehicle = Vehicle.objects.create(make=make, model=model, plateNumber=plate_number, owner=user, vehicleColour=vehicle_colour, active=active, createdAt=timezone.now())
                 vehicle_details = VehicleSerializer(vehicle).data
 
@@ -1735,6 +1741,11 @@ class VehicleOperations(APIView):
             user = request.user
 
             if Vehicle.objects.filter(id=vehicle_id, owner=user).exists():
+                old_vehicle_list = Vehicle.objects.filter(owner=user)
+                for old_vehicle in old_vehicle_list:
+                    old_vehicle.active = False
+                    old_vehicle.save()
+
                 vehicle = Vehicle.objects.get(id=vehicle_id, owner=user)
                 vehicle.vehicleColour = vehicle_colour
                 vehicle.plateNumber = plate_number
@@ -2566,7 +2577,7 @@ class AcceptFoodRequest(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            required=['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','pickupDate'], 
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
@@ -2577,6 +2588,7 @@ class AcceptFoodRequest(APIView):
                 'requestId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
                 'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'pickupDate':openapi.Schema(type=openapi.TYPE_NUMBER),
             }
         ),
         
@@ -2606,7 +2618,7 @@ class AcceptFoodRequest(APIView):
 
         try:
 
-            for param in ['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
+            for param in ['requestId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','pickupDate']:
                 if not request.data.get(param):
                     return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             
@@ -2706,7 +2718,7 @@ class AcceptFoodDonation(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
-            required=['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber'], 
+            required=['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','dropDate'], 
             properties={
                 'lat': openapi.Schema(type=openapi.FORMAT_FLOAT, example='12.916540'),
                 'lng': openapi.Schema(type=openapi.FORMAT_FLOAT, example='77.651950'),
@@ -2717,6 +2729,7 @@ class AcceptFoodDonation(APIView):
                 'donationId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
                 'phoneNumber': openapi.Schema(type=openapi.TYPE_NUMBER, example='+91 9972373887'),
                 'pickupRequestTypeId': openapi.Schema(type=openapi.TYPE_NUMBER, example=1),
+                'dropDate':openapi.Schema(type=openapi.TYPE_NUMBER),
             }
         ),
         
@@ -2746,7 +2759,7 @@ class AcceptFoodDonation(APIView):
 
         try:
 
-            for param in ['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber']:
+            for param in ['donationId','pickupRequestTypeId','lat','lng','fullAddress','postalCode','state','city','phoneNumber','dropDate']:
                 if not request.data.get(param):
                     return Response({'success': False, 'message': f'please enter valid {param}'}, status=HTTP_400_BAD_REQUEST)
             
