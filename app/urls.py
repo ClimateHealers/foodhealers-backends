@@ -30,6 +30,8 @@ urlpatterns = [
     re_path(r'categories/', views.Categories.as_view(), name='fetch-category'),
     # GET (to View recipes) 
     re_path(r'recipe/(?P<category_id>[-\w]*)/', views.FindFoodRecipe.as_view(), name='food-recipe'),
+    # GET (SEARCH RECIPE KEYWORD)
+    re_path(r'search-recipe/', views.SearchFoodRecipe.as_view(), name='search-food-recipe'),
     # POST (to Add recipes)
     re_path(r'add-recipe/(?P<category_id>[-\w]*)/', views.PostFoodRecipe.as_view(), name='Post-food-recipe'),
 

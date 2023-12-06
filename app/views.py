@@ -752,6 +752,54 @@ class FindFoodRecipe(APIView):
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+# GET Food Recipe API
+class SearchFoodRecipe(APIView):
+        
+    # OpenApi specification and Swagger Documentation
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'success': openapi.Schema(type=openapi.TYPE_BOOLEAN, default=True),
+                    'foodRecipes': openapi.Schema(type=openapi.TYPE_ARRAY, items=openapi.Schema(type=openapi.TYPE_OBJECT),),
+                },
+            ),
+        },
+
+        operation_description="Search Food Recipe API",
+        manual_parameters=[
+            openapi.Parameter(
+                name='Authorization',
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                description='Token',
+            ),
+            openapi.Parameter(name='search_keyword', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),
+        ],
+    )
+
+    def get(self, request, format=None):
+        try:           
+
+            if not request.query_params.get('search_keyword', '').strip():
+                return Response({'success': False, 'message': f'please enter valid search_keyword'}, status=HTTP_400_BAD_REQUEST)
+            search_keyword = request.query_params.get('search_keyword', '')
+
+            if FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword)).exists():
+                recipes = FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword))
+                paginator = PageNumberPagination()
+                paginated_recipes = paginator.paginate_queryset(recipes, request)
+                recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
+                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
+            else:
+                return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # POST Food Recipe API
 class PostFoodRecipe(APIView):
     authentication_classes = [VolunteerTokenAuthentication]
