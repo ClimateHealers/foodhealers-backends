@@ -23,7 +23,9 @@ DOCUMENT_TYPE = (
     ('profile_photo','Profile Photo'),
     ('event_photo','Event Photo'),
     ('food_photo','Food Photo'),
-    ('vehicle_photo','Vehicle Photo')
+    ('vehicle_photo','Vehicle Photo'),
+    ('event_sharing','Event Sharing'),
+    ('volunteer_sharing','Volunteer Sharing'),
 )
 
 STATUS = (
@@ -186,6 +188,8 @@ class Document(models.Model):
             return self.food
         elif self.docType == DOCUMENT_TYPE[3][0]:
             return self.vehicle.make
+        else :
+            return self.event.name
         
 # 8. model to store information about food Items
 class FoodItem(models.Model):

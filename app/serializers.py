@@ -1,5 +1,5 @@
 
-from .models import Volunteer, Document
+from .models import Volunteer, Document, DOCUMENT_TYPE
 from rest_framework import serializers
 from rest_framework.serializers import Serializer
 from django.core.files.storage import get_storage_class
@@ -206,6 +206,8 @@ class FoodEventSerializer(Serializer):
     eventPhoto = serializers.SerializerMethodField()
     requiredVolunteers = serializers.IntegerField()
     active = serializers.BooleanField()
+    eventSharingPhoto = serializers.SerializerMethodField()
+    volunteerSharingPhoto = serializers.SerializerMethodField()
 
     def get_id(self, obj):
         return obj.id
@@ -285,6 +287,24 @@ class FoodEventSerializer(Serializer):
             return obj.active
         else:
             return False 
+        
+    def get_eventSharingPhoto(self, obj): # to be modified
+        if obj is not None and Document.objects.filter(event=obj, docType=DOCUMENT_TYPE[4][0]).exists():
+            doc = Document.objects.get(event=obj, docType=DOCUMENT_TYPE[4][0])
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=doc.document.name)
+            return document_url
+        else:
+            return 'Event Sharing Photo not available'
+
+    def get_volunteerSharingPhoto(self, obj): # to be modified
+        if obj is not None and Document.objects.filter(event=obj, docType=DOCUMENT_TYPE[5][0]).exists():
+            doc = Document.objects.get(event=obj, docType=DOCUMENT_TYPE[5][0])
+            media_storage = get_storage_class()()
+            document_url = media_storage.url(name=doc.document.name)
+            return document_url
+        else:
+            return 'Volunteer Sharing Photo not available'
 
 class BookmarkedEventSerializer(Serializer):
     id = serializers.SerializerMethodField()
