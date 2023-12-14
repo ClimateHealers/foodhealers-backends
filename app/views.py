@@ -78,9 +78,6 @@ def generate_image_with_text(text, event_id, doc_type):
 
         # Create a new image with a white background
         image = Image.new('RGB', image_size, background_color)
-
-        # Load a font (you may need to provide the path to a font file on your system)
-        font = ImageFont.truetype('app/fonts/OpenSans-Bold.ttf', size=24)
         
         # Create a drawing object
         draw = ImageDraw.Draw(image)
@@ -88,11 +85,37 @@ def generate_image_with_text(text, event_id, doc_type):
         # Define the maximum width for the text to fit in the image
         max_width = image_size[0] - 100
         
+        # initial height for the text
+        y = 20
+        
+        # Load font 
+        font = ImageFont.truetype('app/fonts/OpenSans-ExtraBold.ttf', size=36)
+        header_text = "Climate Healers"
+        
+        # Add Climate Healers Header
+        _, _, header_text_width, header_text_height = draw.textbbox((0,0), header_text, font=font)
+        x = (image_size[0] - header_text_width) // 2
+        draw.text((x,y), header_text, font=font, fill='white')
+        y+=20+header_text_height
+
+        # Change font
+        font = ImageFont.truetype('app/fonts/OpenSans-Bold.ttf', size=30)
+        sub_head_text = food_event.name
+
+        # Add Sub Header Event Name
+        _, _, sub_head_text_width, sub_head_text_height = draw.textbbox((0,0), sub_head_text, font=font)
+        x = (image_size[0] - sub_head_text_width) // 2
+        draw.text((x,y), sub_head_text, font=font, fill='white')
+        draw.line([(x, y + sub_head_text_height + 10), (x + sub_head_text_width, y + sub_head_text_height+10)], fill='white', width=3)
+        y+=2*sub_head_text_height
+
         # Split the text into lines that fit within the specified width
         lines = []
         words = text.split()
         current_line = words[0]
-        
+
+        # Change font
+        font = ImageFont.truetype('app/fonts/OpenSans-SemiBold.ttf', size=24)
         for word in words[1:]:
             # Check if adding the next word exceeds the maximum width
             if draw.textbbox((0,0), current_line + ' ' + word, font=font)[2] <= max_width:
@@ -106,9 +129,7 @@ def generate_image_with_text(text, event_id, doc_type):
         # Calculate the total height needed for the text
         total_height = sum([draw.textbbox((0,0), line, font=font)[3] for line in lines])
         
-        # Calculate the starting y-coordinate to center the text vertically
-        y = (image_size[1] - total_height) // 2
-        
+
         # Draw each line of text on the image
         for line in lines:
             _, _, text_width, text_height = draw.textbbox((0,0), line, font=font)
@@ -696,10 +717,10 @@ class Event(APIView):
                 doc.save()
                 f.close()
 
-                event_sharing_text = f'''I'm attending {food_event.name} Event from {food_event.eventStartDate.strftime("%B %d %I:%M %p")} to {food_event.eventEndDate.strftime("%B %d %I:%M %p")}. Join me at {food_event.address}. '''
+                event_sharing_text = f'''I'm attending {food_event.name} Event from {food_event.eventStartDate.strftime("%d %B %I:%M %p")} to {food_event.eventEndDate.strftime("%d %B %I:%M %p")}. Join me at {food_event.address}. '''
                 event_sharing_resp = generate_image_with_text(event_sharing_text, food_event.id, DOCUMENT_TYPE[4][0])
 
-                volunteer_sharing_text = f'''I'm Volunteering at {food_event.name} Event from {food_event.eventStartDate.strftime("%B %d %I:%M %p")} to {food_event.eventEndDate.strftime("%B %d %I:%M %p")}. Join me at {food_event.address}. '''
+                volunteer_sharing_text = f'''I'm Volunteering at {food_event.name} Event from {food_event.eventStartDate.strftime("%d %B %I:%M %p")} to {food_event.eventEndDate.strftime("%d %B %I:%M %p")}. Join me at {food_event.address}. '''
                 volunteer_sharing_resp = generate_image_with_text(volunteer_sharing_text, food_event.id, DOCUMENT_TYPE[5][0])
                 print(event_sharing_resp,volunteer_sharing_resp)
 
