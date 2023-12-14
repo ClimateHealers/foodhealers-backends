@@ -90,7 +90,7 @@ def generate_image_with_text(text, event_id, doc_type):
         
         # Load font 
         font = ImageFont.truetype('app/fonts/OpenSans-ExtraBold.ttf', size=36)
-        header_text = "Climate Healers"
+        header_text = "Food Healers"
         
         # Add Climate Healers Header
         _, _, header_text_width, header_text_height = draw.textbbox((0,0), header_text, font=font)
