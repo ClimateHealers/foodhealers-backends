@@ -38,6 +38,8 @@ matplotlib.use('Agg')
 import json
 from .tasks import send_push_message
 import secrets
+from PIL import Image, ImageDraw, ImageFont
+from django.core.files.base import ContentFile
 
 # <------------------------------- Function Call to Extract Recipe Data ---------------------------------------------------------------->    
 # from .local_dev_utils import pcrm_extract_recipe_page, fok_extract_recipe_page, sharan_extract_recipe_page, veganista_extract_recipe_page, plantbased_extract_recipe_page
@@ -63,6 +65,113 @@ def load_default_data():
 
 # load_default_data()
 
+
+
+def generate_image_with_text(text, event_id, doc_type):
+
+    try:
+
+        food_event = FoodEvent.objects.get(id=event_id)
+        
+        image_size=(620, 360)
+        background_color="green"
+
+        # Create a new image with a white background
+        image = Image.new('RGB', image_size, background_color)
+        
+        # Create a drawing object
+        draw = ImageDraw.Draw(image)
+        
+        # Define the maximum width for the text to fit in the image
+        max_width = image_size[0] - 100
+        
+        # initial height for the text
+        y = 20
+        
+        # Load font 
+        font = ImageFont.truetype('app/fonts/OpenSans-ExtraBold.ttf', size=36)
+        header_text = "Food Healers"
+        
+        # Add Climate Healers Header
+        _, _, header_text_width, header_text_height = draw.textbbox((0,0), header_text, font=font)
+        x = (image_size[0] - header_text_width) // 2
+        draw.text((x,y), header_text, font=font, fill='white')
+        y+=20+header_text_height
+
+        # Change font
+        font = ImageFont.truetype('app/fonts/OpenSans-Bold.ttf', size=30)
+        sub_head_text = food_event.name
+
+        # Add Sub Header Event Name
+        _, _, sub_head_text_width, sub_head_text_height = draw.textbbox((0,0), sub_head_text, font=font)
+        x = (image_size[0] - sub_head_text_width) // 2
+        draw.text((x,y), sub_head_text, font=font, fill='white')
+        draw.line([(x, y + sub_head_text_height + 10), (x + sub_head_text_width, y + sub_head_text_height+10)], fill='white', width=3)
+        y+=2*sub_head_text_height
+
+        # Split the text into lines that fit within the specified width
+        lines = []
+        words = text.split()
+        current_line = words[0]
+
+        # Change font
+        font = ImageFont.truetype('app/fonts/OpenSans-SemiBold.ttf', size=24)
+        for word in words[1:]:
+            # Check if adding the next word exceeds the maximum width
+            if draw.textbbox((0,0), current_line + ' ' + word, font=font)[2] <= max_width:
+                current_line += ' ' + word
+            else:
+                lines.append(current_line)
+                current_line = word
+        
+        lines.append(current_line)
+        
+        # Calculate the total height needed for the text
+        total_height = sum([draw.textbbox((0,0), line, font=font)[3] for line in lines])
+        
+
+        # Draw each line of text on the image
+        for line in lines:
+            _, _, text_width, text_height = draw.textbbox((0,0), line, font=font)
+            x = (image_size[0] - text_width) // 2
+            draw.text((x, y), line, font=font, fill='white')
+            y += text_height
+        
+        # Save the image
+        image.save('output_image.png')
+
+        img_w, img_h = image.size
+
+        # Open the background image
+        background = Image.open(food_event.eventPhoto)
+        bg_w, bg_h = background.size
+
+        image = image.resize((bg_w, bg_h//2))
+
+        new_image = Image.new('RGB',(bg_w, 3*bg_h//2), (0,0,0))
+        new_image.paste(background,(0,0))
+        new_image.paste(image, (0, bg_h))
+        new_image = new_image.resize((1080,1350))
+        # new_image.save("merged_image.png")
+
+        buffer = io.BytesIO()
+        new_image.save(buffer, format='PNG')
+        buffer.seek(0)
+
+        # Create a Document object and save the image to its 'document' field
+        doc = Document.objects.create(
+            docType=doc_type,
+            createdAt=timezone.now(),
+            event=food_event
+        )
+
+        filename = str(timezone.now().timestamp())+food_event.name+'sharing.png'
+        doc.document.save(filename, ContentFile(buffer.read()))
+        doc.save()
+        return ({'success': True, 'message':'Succuesfully generated image'})
+    except Exception as e:
+        return ({'success': False, 'message': str(e)},)
+    
 # Post Refresh Token API
 class GetRefreshToken(APIView):
     # OpenApi specification and Swagger Documentation
@@ -607,6 +716,13 @@ class Event(APIView):
 
                 doc.save()
                 f.close()
+
+                event_sharing_text = f'''I'm attending {food_event.name} Event from {food_event.eventStartDate.strftime("%d %B %I:%M %p")} to {food_event.eventEndDate.strftime("%d %B %I:%M %p")}. Join me at {food_event.address}. '''
+                event_sharing_resp = generate_image_with_text(event_sharing_text, food_event.id, DOCUMENT_TYPE[4][0])
+
+                volunteer_sharing_text = f'''I'm Volunteering at {food_event.name} Event from {food_event.eventStartDate.strftime("%d %B %I:%M %p")} to {food_event.eventEndDate.strftime("%d %B %I:%M %p")}. Join me at {food_event.address}. '''
+                volunteer_sharing_resp = generate_image_with_text(volunteer_sharing_text, food_event.id, DOCUMENT_TYPE[5][0])
+                print(event_sharing_resp,volunteer_sharing_resp)
 
             if  food_event.requiredVolunteers!= None:
                 volunteer_result = request_volunteer(food_event, organizer)
