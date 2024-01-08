@@ -893,6 +893,7 @@ class SearchFoodRecipe(APIView):
                 description='Token',
             ),
             openapi.Parameter(name='search_keyword', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True),
+            openapi.Parameter(name='category_id', in_=openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ],
     )
 
@@ -903,15 +904,30 @@ class SearchFoodRecipe(APIView):
                 return Response({'success': False, 'message': f'please enter valid search_keyword'}, status=HTTP_400_BAD_REQUEST)
             search_keyword = request.query_params.get('search_keyword', '')
 
-            if FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword)).exists():
-                recipes = FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword))
-                paginator = PageNumberPagination()
-                paginated_recipes = paginator.paginate_queryset(recipes, request)
-                recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
-                return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
+            category_id = int(request.query_params.get('category_id', 0))
+
+            if category_id != 0:
+                if Category.objects.filter(id=category_id).exists():
+                    category = Category.objects.get(id=category_id)
+                else:
+                    return Response({'success': False, 'message': 'Category with id does not exist'}, status=HTTP_400_BAD_REQUEST)
+                
+                if FoodRecipe.objects.filter(Q(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword)) & Q(category=category)).exists():
+                    recipes = FoodRecipe.objects.filter(Q(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword)) & Q(category=category))
+                else:
+                    return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)   
             else:
-                return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
+        
+                if FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword)).exists():
+                    recipes = FoodRecipe.objects.filter(Q(foodName__icontains=search_keyword)|Q(ingredients__icontains=search_keyword)|Q(cookingInstructions__icontains=search_keyword)|Q(recipeCredits__icontains=search_keyword))
+                else:
+                    return Response({'success': True, 'recipeList': []}, status=HTTP_200_OK)
             
+            paginator = PageNumberPagination()
+            paginated_recipes = paginator.paginate_queryset(recipes, request)
+            recipe_list = FoodRecipeSerializer(paginated_recipes, many=True).data
+            return paginator.get_paginated_response({'success':True, 'recipeList': recipe_list})
+        
         except Exception as e:
             return Response({'success': False, 'message': str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
 
