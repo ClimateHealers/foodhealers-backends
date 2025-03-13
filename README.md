@@ -33,3 +33,4 @@ python manage.py runserver
 celery -A foodhealers_backend worker -l INFO
 
 # celery -A foodhealers_backend beat --loglevel=info
+
