@@ -99,7 +99,7 @@ def event_status_check():
             active=True
         ).update(active=False)
         
-        return ({'success': True, 'message': 'Status updated Successfully, Works'})
+        return ({'success': True, 'message': 'Status updated Successfully. CI/CD Works'})
     except Exception as e:
         return ({'success': False, 'message': str(e)})
 
@@ -203,7 +203,7 @@ def active_status_check():
             expired_volunteer.active = False
             expired_volunteer.save()
 
-        return ({'success': True, 'message': 'Status Updated Succesfully'})
+        return ({'success': True, 'message': 'Status Updated Successfully'})
     except Exception as e:
         return ({'success': False, 'message': str(e)})
 
