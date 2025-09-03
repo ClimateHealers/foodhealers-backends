@@ -78,14 +78,27 @@ def send_push_message(user, title, message, notification_type, is_email_notifica
 def event_status_check():
     try:
         today_date = timezone.now()
-        active_food_events_list = FoodEvent.objects.filter(Q(eventStartDate__lte=today_date) & Q(eventEndDate__gte=today_date), active=False)
-        for food_events in active_food_events_list:
-            food_events.active = True
-            food_events.save()
-        expired_food_events_list = FoodEvent.objects.filter(Q(eventStartDate__gt=today_date) | Q(eventEndDate__lt=today_date), active=True)
-        for food_events in expired_food_events_list:
-            food_events.active = False
-            food_events.save()
+        # active_food_events_list = FoodEvent.objects.filter(Q(eventStartDate__lte=today_date) & Q(eventEndDate__gte=today_date), active=False)
+        # for food_events in active_food_events_list:
+        #     food_events.active = True
+        #     food_events.save()
+        # expired_food_events_list = FoodEvent.objects.filter(Q(eventStartDate__gt=today_date) | Q(eventEndDate__lt=today_date), active=True)
+        # for food_events in expired_food_events_list:
+        #     food_events.active = False
+        #     food_events.save()
+        
+        # Mark all ongoing + upcoming events as active
+        FoodEvent.objects.filter(
+            eventEndDate__gte=today_date,
+            active=False
+        ).update(active=True)
+
+        # Mark expired events as inactive
+        FoodEvent.objects.filter(
+            eventEndDate__lt=today_date,
+            active=True
+        ).update(active=False)
+        
         return ({'success': True, 'message': 'Status updated Successfully'})
     except Exception as e:
         return ({'success': False, 'message': str(e)})
